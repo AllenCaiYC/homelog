@@ -1,0 +1,936 @@
+<!doctype html>
+<html lang="en-GB"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>HomeLog · Property Records</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:var(--surface);color:var(--text);font:15px/1.55 "Segoe UI Variable","Segoe UI",system-ui,"PingFang SC","Hiragino Sans GB","Microsoft YaHei","Noto Sans CJK SC",sans-serif}header{background:var(--card);border-bottom:1px solid var(--border)}nav,main{max-width:1110px;margin:auto;padding:0 24px}nav{height:72px;display:flex;align-items:center;gap:12px}button.logo{font-size:24px;margin-right:auto}main{padding-top:38px;padding-bottom:60px}button,input,textarea,select{font:inherit}button{cursor:pointer;border:1px solid var(--border);border-radius:6px;background:var(--card);color:inherit;padding:9px 15px}button:hover{border-color:#0f6cbd}button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible{outline:3px solid #479ef5;outline-offset:2px}.primary{background:var(--accent);color:var(--card);border-color:var(--accent)}.hero,.grid{display:grid;grid-template-columns:1fr 1fr;gap:22px}.hero{background:var(--tint);border-radius:12px;align-items:center;padding:clamp(24px,5vw,60px);margin-bottom:26px}.hero h1{font-size:clamp(36px,6vw,64px);line-height:1.14;letter-spacing:-.03em;margin:12px 0 19px}.hero p{max-width:350px}.eyebrow{color:var(--accent);font-size:14px;font-weight:700;letter-spacing:0}.card{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:23px;margin-bottom:16px}h1,h2,h3{line-height:1.25}h2,h3{margin-top:0}p{color:var(--muted)}.plan{display:grid;grid-template-columns:1.25fr 1fr;grid-template-rows:106px 84px;gap:5px;padding:8px;background:var(--outline);border:12px solid var(--surface);border-radius:10px;box-shadow:0 12px 28px #00000012;max-width:370px;margin:auto;width:100%}.plan button{border:0;border-radius:0;background:var(--tint);font-size:14px}.plan button[aria-pressed=true]{background:var(--accent);color:#fff;font-weight:600}.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}.spread{justify-content:space-between}.muted,small{color:var(--muted)}.steps{margin-bottom:18px;color:var(--accent);font-weight:600}.panel{max-width:780px;margin:auto}.choices button{flex:1;text-align:left;min-width:160px}.choices button[aria-pressed=true]{background:var(--tint);border-color:var(--accent)}label{display:block;margin:12px 0;font-weight:600}input:not([type=file]),textarea,select{display:block;width:100%;padding:10px;margin-top:5px;border:1px solid var(--outline);border-radius:8px;background:var(--card);color:inherit}input[type=file]{display:block;margin-top:5px;max-width:100%}textarea{min-height:85px}img,video,iframe{max-width:100%;border-radius:6px;max-height:300px}iframe{width:100%;height:300px;border:1px solid var(--border)}.pill{border-radius:20px;background:var(--tint);padding:4px 10px;font-size:13px}.timeline{padding-left:24px}.timeline li{padding:4px}.timeline [aria-current=step]{font-weight:700;color:var(--accent)}.dashplan{transform:none;margin:0 auto 20px}.evidence img{height:170px;width:100%;object-fit:contain;background:var(--surface)}#notice{max-width:1110px;margin:auto;padding:0 24px;color:var(--accent)}#notice:not(:empty){padding-top:12px}@media(max-width:640px){.hero,.grid{grid-template-columns:1fr}nav,main{padding-left:15px;padding-right:15px}nav{gap:6px}nav button{padding:7px}.hero{gap:25px}}
+.floor-map{position:relative;width:min(100%,430px);margin:0 auto 22px}.floor-map img{display:block;width:100%;height:auto;max-height:none;border-radius:12px}.pin,.item-number{display:inline-grid;place-items:center;border-radius:50%;background:var(--accent);color:var(--card);font-weight:700;width:36px;height:36px}.pin{position:absolute;transform:translate(-50%,-50%);padding:0;border:2px solid var(--card);box-shadow:0 2px 7px #0006}.pin:hover{background:#115ea3;border-color:var(--card)}.item-list{list-style:none;padding:0;margin:0}.item-list li+li{margin-top:8px}.item-list button{display:flex;align-items:center;gap:12px;width:100%;text-align:left}.item-list .item-number{width:28px;height:28px}.item-list .arrow{margin-left:auto}.asset-photo{display:block;width:100%;max-height:420px;object-fit:contain;background:var(--surface)}.history li{margin-bottom:8px}
+
+:root{color-scheme:light;--surface:#f5f5f5;--card:#fff;--text:#242424;--muted:#595959;--accent:#0f6cbd;--tint:#e8f2ff;--border:#e0e0e0;--outline:#adadad}
+:root[data-theme=dark]{color-scheme:dark;--surface:#1a1a1a;--card:#242424;--text:#f5f5f5;--muted:#d6d6d6;--accent:#115ea3;--tint:#263b50;--border:#484848;--outline:#8d8d8d}
+header{position:sticky;top:0;z-index:2}nav{min-height:60px;height:auto;padding-top:8px;padding-bottom:8px;flex-wrap:wrap}nav button{border-color:transparent;background:transparent}nav button[aria-current=page]{background:var(--tint)}.logo{display:flex;align-items:center;gap:8px;white-space:nowrap}.logo-mark{display:grid;place-items:center;width:28px;height:28px;background:#0f6cbd;color:#fff;border-radius:6px;font-size:19px}.primary,.pin,.item-number{color:#fff}.card{box-shadow:0 2px 6px #0000000a}.welcome-cover{display:block;width:100%;height:auto;max-height:none;border-radius:8px}.hero h1{font-size:clamp(34px,5vw,54px)}.eyebrow,.steps,#notice,.timeline [aria-current=step]{color:var(--text)}.item-list button:hover{background:var(--tint)}a{color:#0f6cbd}:root[data-theme=dark] a{color:#78b9f2}.account-summary{display:flex;align-items:center;gap:14px;margin-bottom:16px}.avatar{display:grid;place-items:center;width:48px;height:48px;border-radius:50%;background:var(--tint);font-size:20px;font-weight:600}.repair-list{list-style:none;padding:0}.repair-list li+li{margin-top:8px}.repair-list button{width:100%;text-align:left}.help{font-size:14px}.filter[aria-pressed=true]{background:var(--tint);border-color:var(--outline)}button[hidden]{display:none}@media(min-width:800px){.grid.comparison{grid-template-columns:repeat(3,minmax(0,1fr))}}
+.back-row:has(button:not([hidden])){margin:-20px 0 20px}.back-row button{background:transparent;border-color:transparent;padding-left:0;color:var(--text)}.back-row button:hover{background:var(--tint)}button.logo{font-size:22px;font-weight:650;padding:6px 10px;margin-left:0}.back-row button{padding-inline:10px}.repair-progress{margin:16px 0;padding:12px 14px;border:1px solid var(--border);border-radius:6px}.repair-progress summary{cursor:pointer}.repair-meter{display:block;width:100%;height:9px;margin:0 0 16px;accent-color:var(--accent)}.repair-progress .timeline{margin-bottom:0}
+.setup-actions{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,180px),1fr));gap:10px;margin:16px 0}.setup-actions button{min-width:0;width:100%;height:100%;min-height:46px;text-align:center}.postcode-result{background:var(--tint);padding:16px;border-radius:8px}.postcode-result img{display:block;width:100%;height:auto;max-width:180px;max-height:none;margin:12px auto}.property-plan img{display:block;width:auto;height:auto;max-height:440px;margin:0 auto 16px}
+.file-picker{position:relative;display:flex;align-items:center;flex-wrap:wrap;gap:8px;margin-top:6px;width:fit-content;max-width:100%}.file-picker input[type=file]{position:absolute;width:1px;height:1px;margin:0;opacity:0}.file-picker-button{display:inline-block;padding:8px 14px;border:1px solid var(--outline);border-radius:6px;background:var(--card);color:var(--text);cursor:pointer}.file-picker:hover .file-picker-button{background:var(--tint)}.file-picker input:focus-visible+.file-picker-button{outline:3px solid #479ef5;outline-offset:2px}.file-picker-status{color:var(--muted);font-weight:400;overflow-wrap:anywhere}
+.repair-photos figure{margin:0}.repair-photos figcaption{padding-top:8px}
+nav select.lang-switch{display:inline-block;width:auto;margin:0;padding:7px 8px;border-color:var(--border);font-size:14px}nav select.lang-switch[hidden]{display:none}@media(max-width:480px){.logo-text{display:none}nav{flex-wrap:nowrap}nav button{padding:7px 8px}}.notes{white-space:pre-wrap;overflow-wrap:anywhere}.dash-head{margin-bottom:18px}.dash-head h1{margin:4px 0 6px}.pin:hover{filter:brightness(1.2)}.pill.urgent{background:#fde7e9;color:#a4262c;font-weight:600}:root[data-theme=dark] .pill.urgent{background:#442726;color:#ffb4b4}.repair-list .pill{margin-left:6px}.photo-missing{padding:24px;text-align:center;background:var(--surface);border-radius:6px;color:var(--muted)}h1:focus,h2:focus{outline:none}
+:root{--wall:#0f6cbd;--shared:#e3f4e7;--warn:#a4262c;--selected:#b9d9fb}
+:root[data-theme=dark]{--wall:#5a9fd8;--shared:#23402c;--warn:#ffb4b4;--selected:#2f5a85}
+.grid.three{grid-template-columns:repeat(auto-fit,minmax(min(100%,240px),1fr))}
+.floorplan{display:block;width:100%;max-width:400px;max-height:none;margin:8px auto 12px;font-family:inherit;border-radius:0}
+.floorplan rect{stroke:var(--wall);stroke-width:3}
+.floorplan .outer{fill:none;stroke-width:7;pointer-events:none}
+.floorplan text{text-anchor:middle;dominant-baseline:middle;fill:var(--text);font-size:12px;font-weight:600;pointer-events:none}
+.floorplan .cap{font-size:10px;font-weight:400;fill:var(--muted)}
+.room rect{fill:var(--tint)}.room.vacant rect{fill:var(--card)}.room.shared rect{fill:var(--shared)}.room.locked rect{fill:var(--surface)}.room.locked text{fill:var(--muted);font-weight:400}
+.room[data-space]{cursor:pointer}.room[data-space]:hover rect{filter:brightness(.94)}
+.room.selected rect{fill:var(--selected);stroke-width:6}
+.room:focus,.pin-svg:focus{outline:none}.room:focus-visible rect{stroke:#479ef5;stroke-width:6}
+.circ rect{fill:var(--surface)}.circ text{fill:var(--muted);font-weight:400;font-size:10px}
+.repair-dot{fill:#d13438;stroke:var(--card);stroke-width:2}
+.pin-svg{cursor:pointer}.pin-svg circle{fill:var(--accent);stroke:#fff;stroke-width:2}.pin-svg text{fill:#fff;font-size:11px;font-weight:700}.pin-svg:hover circle{filter:brightness(1.2)}.pin-svg:focus-visible circle{stroke:#479ef5;stroke-width:4}
+.floor-tabs{justify-content:center}
+.legend{display:flex;flex-wrap:wrap;gap:6px 14px;justify-content:center;font-size:13px;color:var(--muted);margin-bottom:12px}
+.swatch{display:inline-block;width:14px;height:14px;border:2px solid var(--wall);border-radius:3px;vertical-align:-2px;margin-right:5px}
+.s-mine,.s-let{background:var(--tint)}.s-vacant{background:var(--card)}.s-shared{background:var(--shared)}.s-locked{background:var(--surface)}.s-repair{background:#d13438;border-color:var(--card);border-radius:50%}
+.space-panel{border-top:1px solid var(--border);padding-top:16px;margin-top:4px}.space-panel img{display:block;width:100%;max-height:260px;object-fit:cover}
+.item-list.compact{margin:12px 0}.item-list.compact button{padding:7px 12px}
+.space-list{list-style:none;padding:0;margin:0 0 16px}.space-list li+li{margin-top:6px}.space-list button{width:100%;text-align:left}.space-list button[aria-pressed=true]{border-color:var(--accent);background:var(--tint)}
+.snippet{display:block;color:var(--muted);font-size:14px;margin-top:2px}
+.img-placeholder{display:grid;place-content:center;justify-items:center;gap:4px;min-height:150px;width:100%;background:var(--surface);border:1px dashed var(--outline);border-radius:6px;color:var(--muted);text-align:center}.img-placeholder span{font-size:24px}
+.segmented{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0 18px}.segmented button{flex:1;min-width:150px}.segmented button[aria-pressed=true]{background:var(--accent);border-color:var(--accent);color:#fff}
+.account-list{list-style:none;padding:0;margin:0 0 18px}.account-list li+li{margin-top:8px}.account-list button{display:flex;align-items:center;gap:12px;width:100%;text-align:left}.account-list button:hover{background:var(--tint)}.account-list .arrow{margin-left:auto}
+.avatar.small{width:36px;height:36px;font-size:16px;flex:none}
+.email-signin{margin-top:8px}
+.prop-grid{list-style:none;padding:0;margin:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,300px),1fr));gap:16px}
+.prop-card{display:flex;flex-direction:column;width:100%;height:100%;padding:0;text-align:left;overflow:hidden;border-radius:8px;background:var(--card)}
+.prop-card .cover,.prop-card .img-placeholder{display:block;width:100%;height:150px;max-height:none;object-fit:cover;border-radius:0;border-width:0 0 1px}
+.prop-body{display:flex;flex-direction:column;gap:6px;padding:16px}.prop-body small{color:var(--muted)}.prop-stats{font-size:14px}
+.attention{font-size:14px;font-weight:600}.attention.warn{color:var(--warn)}
+.tenancy-list{list-style:none;padding:0;margin:0}.tenancy-list li{display:flex;gap:12px;justify-content:space-between;align-items:center;flex-wrap:wrap;padding:12px 0;border-top:1px solid var(--border)}
+.code-box{display:flex;align-items:center;gap:6px}.code-box code{font-size:14px;padding:5px 8px;border-radius:6px;background:var(--tint);letter-spacing:.04em}.code-box button{padding:5px 10px;font-size:14px}
+.choice-card{display:flex;flex-direction:column}.choice-card button{margin-top:auto;align-self:flex-start}
+.space-editor{padding-left:22px}.space-editor li{display:grid;grid-template-columns:2fr 1.3fr auto auto;gap:10px;align-items:end;padding:6px 0}.space-editor label{margin:0}
+.check{display:flex!important;align-items:center;gap:6px;font-weight:400;white-space:nowrap;padding-bottom:10px}.check input{width:auto!important;display:inline!important;margin:0!important}
+.space-editor .remove{margin-bottom:2px}
+.steps-list{padding-left:22px;margin:14px 0 20px}.steps-list li{margin:6px 0}
+.uploaded-plan{margin-bottom:12px}
+@media(max-width:640px){.space-editor li{grid-template-columns:1fr 1fr}.space-editor li label:first-child{grid-column:1/-1}}
+</style>
+<header><nav aria-label="Main navigation"><button type="button" class="logo" data-go="start" aria-label="HomeLog home"><span class="logo-mark" aria-hidden="true">⌂</span><span class="logo-text">HomeLog</span></button><button data-go="home">Dashboard</button><button id="account-nav" data-go="profile">Account</button><select id="lang-switch" class="lang-switch" aria-label="Language"></select></nav></header>
+<div id="notice" role="status"></div><main><div class="back-row"><button type="button" data-go="back" hidden>← Back</button></div><div id="app"></div></main>
+<script>
+// ── Language dictionary ──────────────────────────────────────────────
+// To add a language: copy the `en` block, give it a new code (e.g. 'zh-CN'),
+// translate the values and keep every key. Missing keys fall back to English.
+// Values may contain simple HTML; keep {placeholders} unchanged.
+const i18n={
+ en:{
+  'lang.name':'English','locale':'en-GB',
+  'app.title':'HomeLog · Property Records',
+  'nav.label':'Main navigation','nav.home':'HomeLog home','nav.dashboard':'Dashboard','nav.properties':'My properties','nav.account':'Account','nav.signIn':'Sign in','nav.back':'← Back',
+
+  'common.optional':'Optional','common.optionalUpTo2MB':'Optional · Up to 2 MB','common.chooseFile':'Choose file','common.noFile':'No file chosen','common.photoTaken':'Photo taken {date}','common.photoTakenOn':'Photo taken on',
+  'img.pending':'Photo coming soon',
+
+  'type.bedroom':'Bedroom','type.kitchen':'Kitchen','type.living':'Living room','type.bathroom':'Bathroom','type.other':'Other space',
+  'space.bedroomN':'Bedroom {n}','space.bathroomN':'Bathroom {n}','space.kitchenN':'Kitchen {n}','space.livingN':'Living room {n}','space.otherN':'Space {n}','space.kitchenLiving':'Kitchen & living',
+  'space.openRepairs':'Open repairs here: {n}','space.report':'Report an issue here',
+  'priority.Routine':'Routine','priority.Urgent':'Urgent',
+  'role.tenant':'Tenant','role.landlord':'Landlord / manager',
+  'status.0':'Reported','status.1':'Shared (demo)','status.2':'In progress','status.3':'Awaiting sign-off','status.4':'Signed off',
+  'filter.All':'All','filter.Open':'Open','filter.Signed off':'Signed off',
+  'people.you':'You','people.unknown':'Former tenant',
+
+  'demo.tWei':'12 Alder Road · Bedroom 1 · room let','demo.tAisha':'12 Alder Road · Bedroom 3 · just moved in','demo.tTom':'Riverside Flat 4B · joint tenancy','demo.tNew':'New tenant · no home linked yet',
+  'demo.llMain':'Two properties · one let by room, one joint tenancy','demo.llNew':'New landlord · no properties yet',
+
+  'signin.title':'Sign in','signin.intro':'Choose a demo account. Everything runs in this browser, so you can switch between landlord and tenants to see both sides.',
+  'signin.roleLabel':'I am a','signin.as.tenant':'I’m a tenant','signin.as.landlord':'I’m a landlord or manager','signin.demoAccounts':'Demo accounts',
+  'signin.withEmail':'Sign in with email instead','signin.email':'Email','signin.password':'Password','signin.hint':'All demo accounts use the password <strong>test</strong>.','signin.submit':'Sign in',
+
+  'profile.title':'Account','profile.testAccount':'Demo account','profile.displayName':'Display name','profile.save':'Save profile',
+  'settings.title':'Settings','settings.appearance':'Appearance','settings.system':'Match device','settings.light':'Light','settings.dark':'Dark','settings.language':'Language 语言','settings.save':'Save settings',
+  'demoData.title':'Demo data','demoData.body':'All accounts, properties, photos and repair reports are stored in this browser. Signing out keeps them, so you can sign in as someone else.',
+  'demoData.signOut':'Sign out','demoData.resetTitle':'Reset demo data','demoData.resetBody':'This restores the original demo properties and removes everything you added in this browser.','demoData.reset':'Reset all demo data',
+
+  'start.title':'Your home, from move-in onwards','start.intro':'Save move-in photos room by room. Keep repair reports, progress and sign-off together.','start.signIn':'Sign in','start.view':'View my home','start.viewProperties':'View my properties','start.moveIn':'Start move-in',
+  'start.inventoryTitle':'Move-in inventory','start.inventoryBody':'Upload a floor plan or walkthrough video and follow the prompts to record rooms, fixtures and existing damage.',
+  'start.repairsTitle':'Repairs and sign-off','start.repairsBody':'Report issues with photos and review move-in records and pre-repair photos before signing off.',
+  'start.landlordTitle':'For landlords and managers','start.landlordBody':'Manage several properties, let them as a whole or room by room, and invite each tenant with their own code.',
+
+  'dash.eyebrow':'Dashboard','dash.personal':'Personal record','dash.roomTenant':'Room in a shared house','dash.jointTenant':'Joint tenancy','dash.floorPlan':'Floor plan','dash.items':'Property items',
+  'home.signInPrompt':'Sign in to view your home or properties.','home.noProperty':'No home linked yet.','home.startMoveIn':'Start move-in','home.moveInDate':'Move-in: {date}','home.report':'+ Report a repair',
+  'home.noRecord':'No move-in record for this room yet.','home.editInventory':'Edit move-in inventory','home.viewUpload':'View uploaded floor plan or video',
+
+  'll.eyebrow':'Landlord dashboard','ll.title':'My properties','ll.summary':'{n} properties · sorted by what needs attention','ll.add':'+ Add property','ll.addFirst':'Add your first property',
+  'll.welcomeTitle':'Welcome, {name}','ll.welcomeBody':'Set up your first property. Tenants then join with an invite code and see the move-in inventory you recorded.',
+  'll.step1':'Add the address and a floor plan','ll.step2':'Choose whole-home or room-by-room letting and list the rooms','ll.step3':'Record each room’s condition, then share the invite codes',
+  'll.unfinished':'Unfinished setup','ll.continueSetup':'Continue the move-in inventory',
+  'll.letRooms':'{let} of {total} rooms let','ll.jointTenants':'{n} joint tenants','ll.vacantWhole':'Vacant','ll.openRepairs':'Open repairs: {n}',
+  'll.attnUrgent':'Urgent repairs needing action: {n}','ll.attnInventory':'Inventories awaiting tenant confirmation: {n}','ll.attnOpen':'Repairs in progress: {n}','ll.attnVacant':'Vacant rooms: {n} · share the invite code','ll.attnNone':'Nothing needs attention',
+
+  'mode.rooms':'Let room by room','mode.joint':'Whole home · joint tenancy','mode.roomsShort':'By room','mode.jointShort':'Whole home',
+  'mode.title':'How is this property let?','mode.intro':'This decides who can see which rooms. You can mix shared and private spaces when letting by room.',
+  'mode.jointBody':'All tenants sign one agreement and share the whole home. Everyone sees every room.','mode.jointExample':'Example: three friends renting a flat together.',
+  'mode.roomsBody':'Each tenant has their own agreement and bedroom. Kitchen, bathrooms and living room are shared areas.','mode.roomsExample':'Example: a student house share (HMO).',
+  'mode.chooseJoint':'Let as a whole home','mode.chooseRooms':'Let room by room',
+  'kind.let':'Let','kind.vacant':'Vacant','kind.shared':'Shared area','kind.yours':'Your room',
+
+  'plan.private':'Private','plan.shared':'Shared','plan.vacant':'Vacant','plan.yours':'Your room','plan.hall':'Hall','plan.landing':'Landing','plan.openRepair':'open repair',
+  'plan.floors':'Floors','plan.label':'Floor plan: {floor}','plan.selectHint':'Select a room on the plan to see its move-in record and repairs.',
+  'floor.ground':'Ground floor','floor.first':'First floor','floor.second':'Second floor','floor.flat':'Floor plan',
+  'legend.mine':'Yours','legend.let':'Let','legend.vacant':'Vacant','legend.shared':'Shared area','legend.locked':'Another tenant’s room','legend.repair':'Open repair',
+
+  'spaces.bedrooms':'Bedrooms','spaces.myRoom':'My room','spaces.shared':'Shared areas','spaces.rooms':'Rooms','spaces.titleLandlord':'Rooms and inventory','spaces.titleOwn':'Move-in inventory',
+  'spaces.editTitle':'List the rooms','spaces.editIntro':'Add every room you want to record. You can rename them.','spaces.editIntroRooms':'Add every room. Tick “Shared area” for kitchens, bathrooms and living rooms that all tenants use; each other room gets its own invite code.',
+  'spaces.name':'Room name','spaces.type':'Type','spaces.sharedArea':'Shared area','spaces.remove':'Remove','spaces.removeLabel':'Remove {name}','spaces.add':'+ Add room','spaces.next':'Next · Move-in inventory',
+  'landlord.title':'Landlord’s move-in inventory','landlord.badge':'Shared by landlord · Read only','landlord.body':'Recorded by your landlord at handover. Check it against the room and report anything that does not match.',
+
+  'tenancy.title':'Tenancies and invite codes','tenancy.helpRooms':'Each room has its own code. A tenant who uses it sees their room and the shared areas only.','tenancy.helpJoint':'All joint tenants use the same code and see the whole home.',
+  'tenancy.wholeHome':'Whole home','tenancy.dates':'{start} – {end}','tenancy.open':'no end date','tenancy.shareCode':'Share this code with the new tenant','tenancy.copy':'Copy','tenancy.copyLabel':'Copy invite code {code}',
+  'inventory.confirmed':'Inventory confirmed','inventory.pending':'Inventory awaiting tenant confirmation','inventory.none':'No inventory check yet',
+
+  'repairs.title':'Repairs','repairs.empty':'No repairs in this view.',
+  'repair.by':'by {name}','repair.reportedBy':'Reported by {name} on {date}','repair.reportedByYou':'You reported this on {date}','repair.firstNoticed':'First noticed {date}','repair.progress':'Repair progress','repair.progressAria':'Repair progress: {status}',
+  'repair.sharedInfo':'The property manager and contractor would receive the room, exact location, issue description, priority and photo.',
+  'repair.advance.0':'Simulate sharing with property manager and contractor','repair.advance.1':'Simulate repair start','repair.advance.2':'Simulate repair completion',
+  'repair.atMoveIn':'At move-in · {room}','repair.noBaseline':'No move-in record for this room.','repair.before':'Before repair','repair.after':'After repair',
+  'repair.reviewTitle':'Review completed repair','repair.reviewHint':'Try to take the photo from the same angle as the pre-repair photo.','repair.signOffNotes':'Sign-off notes','repair.afterPhoto':'Post-repair photo','repair.signOff':'Sign off and simulate sharing','repair.reopen':'Issue remains · Send back for repair',
+
+  'moveIn.title':'How would you like to get started?','moveIn.linkTitle':'Join with an invite code','moveIn.linkBody':'Use the code from your landlord to open your room and the move-in inventory they recorded.','moveIn.linkButton':'Enter invite code',
+  'moveIn.ownTitle':'Keep my own records','moveIn.ownBody':'Your landlord doesn’t use HomeLog? Set up a personal record to document the condition, report issues and track repairs.','moveIn.ownButton':'Set up my own record',
+  'link.title':'Join with an invite code','link.intro':'Enter the invite code your landlord gave you.','link.code':'Invite code','link.placeholder':'e.g. ALDER-B2',
+  'link.hint':'Demo codes: <strong>ALDER-B2</strong> joins the vacant bedroom in a shared house; <strong>RIVER-4B</strong> joins a joint tenancy.','link.submit':'Join',
+
+  'flow.step':'Step {n} of {total}',
+  'setup.title':'Find a floor plan','setup.postcode':'Property postcode','setup.postcodePlaceholder':'e.g. E1 8ER','setup.hint':'Try <strong>E1 8ER</strong> for a sample floor plan.','setup.find':'Find floor plans','setup.upload':'Skip · Upload my own','setup.sampleResult':'Sample result','setup.planAlt':'{name} sample floor plan','setup.usePlan':'Use this floor plan','setup.noMatch':'No matching demo floor plans. Check the postcode or upload your own plan.',
+  'upload.title':'Add property details','upload.name':'Property name','upload.namePlaceholder':'e.g. 8 Elm Street','upload.address':'Address or flat number','upload.date':'Move-in date','upload.availableDate':'Available from',
+  'upload.methodPlan':'Upload floor plan','upload.methodVideo':'Record or select walkthrough','upload.nextMode':'Next · How it’s let','upload.nextSpaces':'Next · List the rooms',
+  'upload.videoLabel':'Walkthrough video','upload.planLabel':'Floor plan','upload.videoHelp':'You can record on your phone. The demo keeps your video for reference and draws a simple room plan.','upload.planHelp':'Accepts PNG, JPG, WebP or PDF.',
+
+  'records.title':'Room inventory','records.count':'{count} / {total} rooms','records.whatToRecord':'What to record',
+  'records.tip.bedroom':'Record the condition of the door lock, curtains, bed, wardrobe and flooring.','records.tip.kitchen':'Check the sink, worktops, hob, oven, fridge and other appliances.','records.tip.living':'Take a wide photo, then check the walls, flooring, windows and furniture.','records.tip.bathroom':'Photograph corners, seals and drains. Look for leaks or mould.','records.tip.other':'Take a wide photo and note any existing marks or damage.',
+  'records.condition':'Room condition','records.conditionPlaceholder':'e.g. Old scratches near the window. Everything else is in good condition.','records.photo':'Move-in photo','records.save':'Save room','records.finish':'Finish setup','records.done':'Done',
+  'records.importTitle':'Import an existing inventory','records.importLabel':'Paste your inventory','records.importPlaceholder':'Living room: Walls in good condition\nBathroom: Old crack in washbasin','records.importButton':'Import by room',
+
+  'asset.eyebrow':'Item {id} · {room}','asset.photoAlt':'{name} photo','asset.illustrative':'Illustrative photo','asset.condition':'Condition at move-in','asset.report':'Report a new issue','asset.history':'Repair history','asset.previous':'Previous repair · Demo','asset.noHistory':'No repairs recorded for this item.',
+  'item.alder-hob.name':'Hob and oven','item.alder-hob.notes':'All four rings and the oven work. Light everyday wear on the oven door.',
+  'item.alder-fridge.name':'Fridge-freezer','item.alder-fridge.notes':'Cooling normally. Small crack on one door shelf.','item.alder-fridge.history':'The door seal was replaced in 2025.',
+  'item.alder-boiler.name':'Combi boiler','item.alder-boiler.notes':'Pressure normal. Last gas safety check: August 2026.','item.alder-boiler.history':'Annual service completed in August 2026.',
+  'item.alder-b1-window.name':'Bedroom 1 bay window','item.alder-b1-window.notes':'Opens, closes and locks. Small chip on the windowsill paint.',
+  'item.alder-shower.name':'Bath and shower','item.alder-shower.notes':'Good water pressure. Silicone along the bath in good condition at move-in.',
+  'item.alder-b3-desk.name':'Bedroom 3 desk','item.alder-b3-desk.notes':'Sturdy. Two light scratches on the surface.',
+  'item.river-washer.name':'Washing machine','item.river-washer.notes':'Integrated machine. Tested on a short cycle, drains normally.',
+  'item.river-hob.name':'Induction hob','item.river-hob.notes':'All zones work. Glass surface clean, no chips.',
+  'item.river-window.name':'Bedroom 1 window','item.river-window.notes':'Opens and locks. Minor scuff on the frame. Blind works.',
+  'item.river-basin.name':'Bathroom basin','item.river-basin.notes':'Drains normally. Small hairline crack near the overflow.','item.river-basin.history':'The waste fitting was resealed before the tenancy.',
+
+  'report.titleItem':'Report a new issue','report.title':'Report a repair','report.intro':'Describe what happened and how it affects use. Add a photo that shows the issue clearly.','report.room':'Room',
+  'report.sharedHelp':'Issues in shared areas are visible to everyone who lives here, so housemates can see it has already been reported.',
+  'report.location':'Exact location or fixture','report.locationPlaceholder':'e.g. Under the kitchen sink','report.description':'Issue description','report.noticed':'Date first noticed','report.priority':'Priority','report.photo':'Upload a photo','report.save':'Save report',
+
+  'msg.storageFull':'Browser storage is full. Changes will last until you close or refresh this page.','msg.signedIn':'Signed in as {name}.','msg.signedOut':'Signed out. Your demo data is still here.','msg.reset':'Demo data reset.',
+  'msg.codeCopied':'Invite code {code} copied.','msg.roomLinked':'Joined {name}. Your landlord’s move-in inventory is ready to view.','msg.planFound':'One sample floor plan found.','msg.noPlans':'No matching demo floor plans.',
+  'msg.spacesSaved':'Rooms saved. Now record each room’s condition.','msg.roomSaved':'Move-in record saved for {room}.','msg.imported':'Rooms imported: {count}','msg.moveInSaved':'Move-in record saved.','msg.propertyCreated':'Property added. Share the invite codes with your tenants.',
+  'msg.reportSaved':'Repair report saved.','msg.signedOff':'Sign-off saved and sharing simulated.','msg.profileSaved':'Profile saved.','msg.settingsSaved':'Settings saved.',
+  'err.fileTooLarge':'Choose a file no larger than 2 MB.','err.fileType':'Choose a supported file format.','err.fileRead':'Could not read the file.','err.fileLoading':'The file is still loading. Please wait.',
+  'err.signIn':'Use a demo account email and the password test.','err.alreadyHaveHome':'You already have a home in HomeLog. Reset the demo data from Account to try another code.',
+  'err.roomCode':'Invite code not found. Try ALDER-B2 or RIVER-4B.','err.roomTaken':'This room already has a tenant. Ask your landlord for the right code.',
+  'err.postcodeRequired':'Enter the property postcode.','err.nameRequired':'Enter a property name.','err.needSpace':'Keep at least one room.','err.spaceNames':'Give every room a name.','err.needLettable':'Untick “Shared area” for at least one bedroom so it can be let.',
+  'err.conditionRequired':'Enter the room condition.','err.importFormat':'Use Room: condition, with one room per line.','err.reportRequired':'Enter the location and describe the issue.','err.signOffRequired':'Enter your sign-off notes.','err.displayName':'Enter your display name.'
+ },
+ 'zh-CN':{
+  'lang.name':'简体中文','locale':'zh-CN',
+  'app.title':'HomeLog · 房屋记录',
+  'nav.label':'主导航','nav.home':'HomeLog 首页','nav.dashboard':'我的房屋','nav.properties':'我的房产','nav.account':'账户','nav.signIn':'登录','nav.back':'← 返回',
+
+  'common.optional':'选填','common.optionalUpTo2MB':'选填 · 最大 2 MB','common.chooseFile':'选择文件','common.noFile':'未选择文件','common.photoTaken':'拍摄于 {date}','common.photoTakenOn':'拍摄日期',
+  'img.pending':'照片即将添加',
+
+  'type.bedroom':'卧室','type.kitchen':'厨房','type.living':'客厅','type.bathroom':'卫生间','type.other':'其他空间',
+  'space.bedroomN':'卧室 {n}','space.bathroomN':'卫生间 {n}','space.kitchenN':'厨房 {n}','space.livingN':'客厅 {n}','space.otherN':'空间 {n}','space.kitchenLiving':'厨房和客厅',
+  'space.openRepairs':'这里进行中的报修：{n}','space.report':'报告这个房间的问题',
+  'priority.Routine':'一般','priority.Urgent':'紧急',
+  'role.tenant':'租客','role.landlord':'房东 / 管理方',
+  'status.0':'已报修','status.1':'已转交（演示）','status.2':'维修中','status.3':'待验收','status.4':'已验收',
+  'filter.All':'全部','filter.Open':'处理中','filter.Signed off':'已验收',
+  'people.you':'你','people.unknown':'前租客',
+
+  'demo.tWei':'12 Alder Road · 卧室 1 · 按间出租','demo.tAisha':'12 Alder Road · 卧室 3 · 刚入住','demo.tTom':'Riverside Flat 4B · 联合租约','demo.tNew':'新租客 · 还没有关联房屋',
+  'demo.llMain':'两套房产 · 一套按间出租，一套整租','demo.llNew':'新房东 · 还没有房产',
+
+  'signin.title':'登录','signin.intro':'选择一个演示账户。所有数据都在当前浏览器里，你可以在房东和租客之间切换，看到双方的视角。',
+  'signin.roleLabel':'我是','signin.as.tenant':'我是租客','signin.as.landlord':'我是房东或管理方','signin.demoAccounts':'演示账户',
+  'signin.withEmail':'改用邮箱登录','signin.email':'邮箱','signin.password':'密码','signin.hint':'所有演示账户的密码都是 <strong>test</strong>。','signin.submit':'登录',
+
+  'profile.title':'账户','profile.testAccount':'演示账户','profile.displayName':'显示名称','profile.save':'保存资料',
+  'settings.title':'设置','settings.appearance':'外观','settings.system':'跟随设备','settings.light':'浅色','settings.dark':'深色','settings.language':'语言 Language','settings.save':'保存设置',
+  'demoData.title':'演示数据','demoData.body':'所有账户、房产、照片和报修记录都保存在当前浏览器中。退出登录不会清除数据，你可以换一个账户登录。',
+  'demoData.signOut':'退出登录','demoData.resetTitle':'重置演示数据','demoData.resetBody':'恢复最初的演示房产，并删除你在这个浏览器里添加的所有内容。','demoData.reset':'重置全部演示数据',
+
+  'start.title':'从入住开始，管好你的家','start.intro':'按房间保存入住照片，把报修、进度和验收记录集中在一起。','start.signIn':'登录','start.view':'查看我的房屋','start.viewProperties':'查看我的房产','start.moveIn':'开始入住登记',
+  'start.inventoryTitle':'入住清单','start.inventoryBody':'上传户型图或看房视频，按提示逐个记录房间、设施和已有损坏。',
+  'start.repairsTitle':'报修与验收','start.repairsBody':'拍照报修；验收前可以对照入住记录和维修前照片。',
+  'start.landlordTitle':'房东和管理方','start.landlordBody':'管理多套房产，可以整套出租或按间出租，每位租客用自己的邀请码加入。',
+
+  'dash.eyebrow':'我的房屋','dash.personal':'个人记录','dash.roomTenant':'合租房中的一间','dash.jointTenant':'联合租约','dash.floorPlan':'户型图','dash.items':'房屋物品',
+  'home.signInPrompt':'登录后查看你的房屋或房产。','home.noProperty':'还没有关联房屋。','home.startMoveIn':'开始入住登记','home.moveInDate':'入住日期：{date}','home.report':'+ 报修',
+  'home.noRecord':'这个房间还没有入住记录。','home.editInventory':'编辑入住清单','home.viewUpload':'查看上传的户型图或视频',
+
+  'll.eyebrow':'房东面板','ll.title':'我的房产','ll.summary':'{n} 套房产 · 按需要处理的事项排序','ll.add':'+ 添加房产','ll.addFirst':'添加第一套房产',
+  'll.welcomeTitle':'欢迎，{name}','ll.welcomeBody':'先建立第一套房产。租客之后用邀请码加入，就能看到你记录的入住清单。',
+  'll.step1':'填写地址并添加户型图','ll.step2':'选择整套出租或按间出租，列出房间','ll.step3':'记录每个房间的状况，然后把邀请码发给租客',
+  'll.unfinished':'未完成的设置','ll.continueSetup':'继续填写入住清单',
+  'll.letRooms':'已出租 {let}/{total} 间','ll.jointTenants':'{n} 位联合租客','ll.vacantWhole':'空置','ll.openRepairs':'进行中的报修：{n}',
+  'll.attnUrgent':'{n} 个紧急报修需要处理','ll.attnInventory':'{n} 份清单等待租客确认','ll.attnOpen':'{n} 个报修处理中','ll.attnVacant':'{n} 间空置 · 可以发送邀请码','ll.attnNone':'暂无需要处理的事项',
+
+  'mode.rooms':'按间出租','mode.joint':'整套出租 · 联合租约','mode.roomsShort':'按间','mode.jointShort':'整套',
+  'mode.title':'这套房产怎么出租？','mode.intro':'这决定了谁能看到哪些房间。按间出租时，可以同时有私人房间和公共区域。',
+  'mode.jointBody':'所有租客签同一份合同，共用整套房子，每个人都能看到所有房间。','mode.jointExample':'例如：三个朋友一起租一套公寓。',
+  'mode.roomsBody':'每位租客单独签合同、各住一间卧室。厨房、卫生间和客厅是公共区域。','mode.roomsExample':'例如：学生合租房（HMO）。',
+  'mode.chooseJoint':'整套出租','mode.chooseRooms':'按间出租',
+  'kind.let':'已出租','kind.vacant':'空置','kind.shared':'公共区域','kind.yours':'你的房间',
+
+  'plan.private':'私人','plan.shared':'公共','plan.vacant':'空置','plan.yours':'你的房间','plan.hall':'门厅','plan.landing':'楼梯间','plan.openRepair':'有进行中的报修',
+  'plan.floors':'楼层','plan.label':'户型图：{floor}','plan.selectHint':'点击户型图上的房间，查看入住记录和报修。',
+  'floor.ground':'一层','floor.first':'二层','floor.second':'三层','floor.flat':'户型图',
+  'legend.mine':'你的','legend.let':'已出租','legend.vacant':'空置','legend.shared':'公共区域','legend.locked':'其他租客的房间','legend.repair':'进行中的报修',
+
+  'spaces.bedrooms':'卧室','spaces.myRoom':'我的房间','spaces.shared':'公共区域','spaces.rooms':'房间','spaces.titleLandlord':'房间与入住清单','spaces.titleOwn':'入住清单',
+  'spaces.editTitle':'列出房间','spaces.editIntro':'添加所有需要记录的房间，名称可以修改。','spaces.editIntroRooms':'添加所有房间。厨房、卫生间、客厅这些大家共用的空间请勾选“公共区域”；其余每个房间都会有自己的邀请码。',
+  'spaces.name':'房间名称','spaces.type':'类型','spaces.sharedArea':'公共区域','spaces.remove':'删除','spaces.removeLabel':'删除 {name}','spaces.add':'+ 添加房间','spaces.next':'下一步 · 入住清单',
+  'landlord.title':'房东的入住清单','landlord.badge':'房东共享 · 只读','landlord.body':'这是房东在交房时做的记录。请对照房间实际情况核对，如有不符请报修。',
+
+  'tenancy.title':'租约与邀请码','tenancy.helpRooms':'每个房间都有自己的邀请码。租客用它加入后，只能看到自己的房间和公共区域。','tenancy.helpJoint':'所有联合租客使用同一个邀请码，可以看到整套房子。',
+  'tenancy.wholeHome':'整套房子','tenancy.dates':'{start} 至 {end}','tenancy.open':'未定结束日期','tenancy.shareCode':'把这个邀请码发给新租客','tenancy.copy':'复制','tenancy.copyLabel':'复制邀请码 {code}',
+  'inventory.confirmed':'清单已确认','inventory.pending':'清单等待租客确认','inventory.none':'还没有核对清单',
+
+  'repairs.title':'报修','repairs.empty':'这里还没有报修记录。',
+  'repair.by':'报修人：{name}','repair.reportedBy':'{name}于 {date} 报修','repair.reportedByYou':'你于 {date} 报修','repair.firstNoticed':'首次发现于 {date}','repair.progress':'维修进度','repair.progressAria':'维修进度：{status}',
+  'repair.sharedInfo':'物业经理和维修人员会收到房间、具体位置、问题描述、紧急程度和照片。',
+  'repair.advance.0':'模拟转交给物业经理和维修人员','repair.advance.1':'模拟开始维修','repair.advance.2':'模拟完成维修',
+  'repair.atMoveIn':'入住时 · {room}','repair.noBaseline':'这个房间没有入住记录。','repair.before':'维修前','repair.after':'维修后',
+  'repair.reviewTitle':'验收维修结果','repair.reviewHint':'尽量从和维修前照片相同的角度拍摄。','repair.signOffNotes':'验收备注','repair.afterPhoto':'维修后照片','repair.signOff':'确认验收并模拟通知','repair.reopen':'问题仍在 · 退回重修',
+
+  'moveIn.title':'你想怎样开始？','moveIn.linkTitle':'用邀请码加入','moveIn.linkBody':'输入房东给你的邀请码，打开你的房间和房东记录的入住清单。','moveIn.linkButton':'输入邀请码',
+  'moveIn.ownTitle':'自己建立记录','moveIn.ownBody':'房东不用 HomeLog？自己建立一份记录，记下房屋状况、报修并跟踪维修进度。','moveIn.ownButton':'建立我的记录',
+  'link.title':'用邀请码加入','link.intro':'输入房东给你的邀请码。','link.code':'邀请码','link.placeholder':'例如 ALDER-B2',
+  'link.hint':'演示邀请码：<strong>ALDER-B2</strong> 加入合租房里空置的卧室；<strong>RIVER-4B</strong> 加入联合租约。','link.submit':'加入',
+
+  'flow.step':'第 {n} 步，共 {total} 步',
+  'setup.title':'查找户型图','setup.postcode':'房屋邮编（Postcode）','setup.postcodePlaceholder':'例如 E1 8ER','setup.hint':'输入 <strong>E1 8ER</strong> 可以找到示例户型图。','setup.find':'查找户型图','setup.upload':'跳过 · 上传自己的','setup.sampleResult':'示例结果','setup.planAlt':'{name} 示例户型图','setup.usePlan':'使用这张户型图','setup.noMatch':'没有找到匹配的演示户型图。请检查邮编，或上传你自己的户型图。',
+  'upload.title':'填写房屋信息','upload.name':'房屋名称','upload.namePlaceholder':'例如 8 Elm Street','upload.address':'地址或房号','upload.date':'入住日期','upload.availableDate':'可入住日期',
+  'upload.methodPlan':'上传户型图','upload.methodVideo':'录制或选择看房视频','upload.nextMode':'下一步 · 出租方式','upload.nextSpaces':'下一步 · 列出房间',
+  'upload.videoLabel':'看房视频','upload.planLabel':'户型图','upload.videoHelp':'可以直接用手机录制。演示会保留你的视频作参考，并生成一张简单的房间示意图。','upload.planHelp':'支持 PNG、JPG、WebP 或 PDF。',
+
+  'records.title':'房间清单','records.count':'{count} / {total} 个房间','records.whatToRecord':'需要记录',
+  'records.tip.bedroom':'记录门锁、窗帘、床、衣柜和地板的状况。','records.tip.kitchen':'检查水槽、台面、灶台、烤箱、冰箱和其他电器。','records.tip.living':'先拍一张全景，再检查墙面、地板、窗户和家具。','records.tip.bathroom':'拍下墙角、密封胶和下水口，留意是否有漏水或霉斑。','records.tip.other':'拍一张全景，记下已有的痕迹或损坏。',
+  'records.condition':'房间状况','records.conditionPlaceholder':'例如：窗边有旧划痕，其他地方状况良好。','records.photo':'入住照片','records.save':'保存房间','records.finish':'完成设置','records.done':'完成',
+  'records.importTitle':'导入已有清单','records.importLabel':'粘贴你的清单','records.importPlaceholder':'客厅：墙面状况良好\n卫生间：洗手盆有旧裂纹','records.importButton':'按房间导入',
+
+  'asset.eyebrow':'物品 {id} · {room}','asset.photoAlt':'{name} 照片','asset.illustrative':'示意照片','asset.condition':'入住时状况','asset.report':'报告新问题','asset.history':'维修记录','asset.previous':'以往维修 · 演示','asset.noHistory':'这个物品还没有维修记录。',
+  'item.alder-hob.name':'灶台和烤箱','item.alder-hob.notes':'四个灶头和烤箱都能正常使用。烤箱门有日常使用的轻微磨损。',
+  'item.alder-fridge.name':'冰箱','item.alder-fridge.notes':'制冷正常。门上有一层隔板有小裂纹。','item.alder-fridge.history':'2025 年更换过门封条。',
+  'item.alder-boiler.name':'燃气锅炉','item.alder-boiler.notes':'水压正常。上次燃气安全检查：2026 年 8 月。','item.alder-boiler.history':'2026 年 8 月完成年度保养。',
+  'item.alder-b1-window.name':'卧室 1 飘窗','item.alder-b1-window.notes':'开关和上锁正常。窗台油漆有一处小缺口。',
+  'item.alder-shower.name':'浴缸和淋浴','item.alder-shower.notes':'水压良好。入住时浴缸边的密封胶状况良好。',
+  'item.alder-b3-desk.name':'卧室 3 书桌','item.alder-b3-desk.notes':'结实。桌面有两道轻微划痕。',
+  'item.river-washer.name':'洗衣机','item.river-washer.notes':'嵌入式洗衣机。试过一个短程，排水正常。',
+  'item.river-hob.name':'电磁炉','item.river-hob.notes':'所有加热区都正常。玻璃面干净，没有缺口。',
+  'item.river-window.name':'卧室 1 窗户','item.river-window.notes':'开关和上锁正常。窗框有轻微擦痕。百叶帘正常。',
+  'item.river-basin.name':'卫生间洗手盆','item.river-basin.notes':'排水正常。溢水口附近有一道细裂纹。','item.river-basin.history':'租约开始前重新密封了下水配件。',
+
+  'report.titleItem':'报告新问题','report.title':'报修','report.intro':'描述发生了什么、对使用有什么影响，并附上一张能看清问题的照片。','report.room':'房间',
+  'report.sharedHelp':'公共区域的报修住在这里的所有人都能看到，室友就知道已经有人报过了。',
+  'report.location':'具体位置或设施','report.locationPlaceholder':'例如：厨房水槽下方','report.description':'问题描述','report.noticed':'首次发现日期','report.priority':'紧急程度','report.photo':'上传照片','report.save':'提交报修',
+
+  'msg.storageFull':'浏览器存储空间已满。关闭或刷新页面后，本次修改将会丢失。','msg.signedIn':'已登录：{name}','msg.signedOut':'已退出登录，演示数据仍然保留。','msg.reset':'演示数据已重置。',
+  'msg.codeCopied':'已复制邀请码 {code}。','msg.roomLinked':'已加入 {name}，可以查看房东的入住清单了。','msg.planFound':'找到 1 张示例户型图。','msg.noPlans':'没有匹配的演示户型图。',
+  'msg.spacesSaved':'房间已保存，接下来记录每个房间的状况。','msg.roomSaved':'{room}的入住记录已保存。','msg.imported':'已导入 {count} 个房间','msg.moveInSaved':'入住记录已保存。','msg.propertyCreated':'房产已添加，把邀请码发给你的租客吧。',
+  'msg.reportSaved':'报修已提交。','msg.signedOff':'验收已保存，并已模拟通知。','msg.profileSaved':'资料已保存。','msg.settingsSaved':'设置已保存。',
+  'err.fileTooLarge':'请选择不超过 2 MB 的文件。','err.fileType':'请选择支持的文件格式。','err.fileRead':'无法读取该文件。','err.fileLoading':'文件仍在加载，请稍候。',
+  'err.signIn':'请使用演示账户的邮箱，密码为 test。','err.alreadyHaveHome':'你在 HomeLog 里已经有房屋了。如需试用其他邀请码，请先在“账户”中重置演示数据。',
+  'err.roomCode':'找不到这个邀请码。可以试试 ALDER-B2 或 RIVER-4B。','err.roomTaken':'这个房间已经有租客了，请向房东确认邀请码。',
+  'err.postcodeRequired':'请输入房屋邮编。','err.nameRequired':'请输入房屋名称。','err.needSpace':'至少保留一个房间。','err.spaceNames':'请给每个房间填写名称。','err.needLettable':'请至少有一间卧室不勾选“公共区域”，这样才能出租。',
+  'err.conditionRequired':'请填写房间状况。','err.importFormat':'请按“房间：状况”的格式，每行一个房间。','err.reportRequired':'请填写具体位置并描述问题。','err.signOffRequired':'请填写验收备注。','err.displayName':'请输入显示名称。'
+ }
+};
+
+// ── Translation helpers ──────────────────────────────────────────────
+// Stored data keeps English IDs (space types, priority, role, filter) so saved
+// records survive a language change; only the labels are translated.
+let lang='en';
+function t(k,vars={}){
+ const s=i18n[lang]?.[k]??i18n.en[k]??k;
+ return s.replace(/\{(\w+)\}/g,(m,n)=>n in vars?String(vars[n]):m);
+}
+const has=k=>k in i18n.en;
+const esc=(s='')=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const statusLabel=i=>t('status.'+i);
+const priorityLabel=p=>t('priority.'+p);
+const today=()=>new Date().toISOString().slice(0,10);
+
+// ── Demo data ────────────────────────────────────────────────────────
+// Everything lives in one browser "database" so several demo accounts can
+// work on the same properties (landlord, tenants in a shared house, …).
+const STORE='homelog-v2',LEGACY='zhujidemo-v1',DEMO_PASSWORD='test';
+const SPACE_TYPES=['bedroom','kitchen','living','bathroom','other'];
+function seedDb(){
+ const acc=(id,name,email,role,demo)=>({id,name,email,role,...(demo?{demo}:{})});
+ const accounts=Object.fromEntries([
+  acc('t-wei','Wei Zhang','wei@homelog.demo','tenant','demo.tWei'),
+  acc('t-aisha','Aisha Khan','aisha@homelog.demo','tenant','demo.tAisha'),
+  acc('t-tom','Tom Becker','tom@homelog.demo','tenant','demo.tTom'),
+  acc('t-new','Test User','test@homelog.demo','tenant','demo.tNew'),
+  acc('ll-main','Priya Shah','landlord@homelog.demo','landlord','demo.llMain'),
+  acc('ll-new','Alex Morgan','new.landlord@homelog.demo','landlord','demo.llNew'),
+  acc('t-lucas','Lucas Silva','lucas@homelog.demo','tenant'),
+  acc('t-mina','Mina Park','mina@homelog.demo','tenant'),
+  acc('t-sofia','Sofia Rossi','sofia@homelog.demo','tenant')
+ ].map(a=>[a.id,a]));
+ const sp=(id,type,shared,photo,n)=>({id,type,shared,photo,nameKey:n?'space.'+type+'N':'type.'+type,...(n?{n}:{})});
+ const rec=(notes,photo,date='2026-08-28')=>({notes,photo:photo?{demo:photo}:null,photoDate:date,by:'ll-main'});
+ const alderRecords={
+  b1:rec('Front bedroom with bay window. Carpet clean. Small chip on the windowsill paint. Wardrobe, desk and chair in good condition.','alder-bedroom-1'),
+  b2:rec('Carpet clean. Chest of drawers and desk in good condition. Window opens and locks.','alder-bedroom-2'),
+  b3:rec('Small single room. Two light scratches on the desk. Carpet and wardrobe in good condition.','alder-bedroom-3'),
+  b4:rec('Loft room with skylight. Skylight opens and closes. Carpet clean.','alder-bedroom-4'),
+  b5:rec('Loft room. Wardrobe door slightly stiff. Carpet clean.','alder-bedroom-5'),
+  kitchen:rec('Hob, oven and fridge-freezer working. Small crack on one fridge door shelf. Worktops have light wear.','alder-kitchen'),
+  living:rec('Sofa and coffee table in good condition. Laminate has light scratches by the door.','alder-living'),
+  bath1:rec('Bath, shower and basin working. Silicone along the bath in good condition.','alder-bathroom-1'),
+  bath2:rec('Shower cubicle working. Grout slightly discoloured in one corner.','alder-bathroom-2')
+ };
+ const alder={id:'alder',ownerId:'ll-main',name:'12 Alder Road',address:'Alder Road, London E3 · Demo',mode:'rooms',ready:true,plan:{svg:'alder'},cover:'alder-road-exterior',
+  spaces:[sp('b1','bedroom',false,'alder-bedroom-1',1),sp('b2','bedroom',false,'alder-bedroom-2',2),sp('b3','bedroom',false,'alder-bedroom-3',3),sp('b4','bedroom',false,'alder-bedroom-4',4),sp('b5','bedroom',false,'alder-bedroom-5',5),
+   sp('kitchen','kitchen',true,'alder-kitchen'),sp('living','living',true,'alder-living'),sp('bath1','bathroom',true,'alder-bathroom-1',1),sp('bath2','bathroom',true,'alder-bathroom-2',2)],
+  tenancies:[
+   {id:'alder-b1',spaceIds:['b1'],tenantIds:['t-wei'],code:'ALDER-B1',start:'2026-09-01',end:'2027-06-30',inventory:'confirmed'},
+   {id:'alder-b2',spaceIds:['b2'],tenantIds:[],code:'ALDER-B2',inventory:'none'},
+   {id:'alder-b3',spaceIds:['b3'],tenantIds:['t-aisha'],code:'ALDER-B3',start:'2026-11-12',end:'2027-08-31',inventory:'pending'},
+   {id:'alder-b4',spaceIds:['b4'],tenantIds:['t-lucas'],code:'ALDER-B4',start:'2026-09-01',end:'2027-06-30',inventory:'confirmed'},
+   {id:'alder-b5',spaceIds:['b5'],tenantIds:['t-mina'],code:'ALDER-B5',start:'2026-09-08',end:'2027-07-07',inventory:'confirmed'}
+  ],
+  records:alderRecords,
+  items:[
+   {id:'alder-hob',spaceId:'kitchen',floor:'g',x:205,y:300,photo:'item-alder-hob'},
+   {id:'alder-fridge',spaceId:'kitchen',floor:'g',x:30,y:300,photo:'item-alder-fridge'},
+   {id:'alder-boiler',spaceId:'kitchen',floor:'g',x:118,y:378,photo:'item-alder-boiler'},
+   {id:'alder-b1-window',spaceId:'b1',floor:'g',x:75,y:18,photo:'item-alder-b1-window'},
+   {id:'alder-shower',spaceId:'bath1',floor:'1',x:28,y:236,photo:'item-alder-shower'},
+   {id:'alder-b3-desk',spaceId:'b3',floor:'1',x:210,y:376,photo:'item-alder-b3-desk'}
+  ],
+  tickets:[
+   {id:'k1',spaceId:'kitchen',reporterId:'t-wei',created:'2026-11-08',noticed:'2026-11-07',location:'Under the kitchen sink',description:'Water is dripping from a pipe joint under the sink. The cupboard base is wet.',priority:'Urgent',status:2,photo:{demo:'repair-leak-before'},photoDate:'2026-11-08',baseline:alderRecords.kitchen},
+   {id:'k2',spaceId:'bath1',itemId:'alder-shower',reporterId:'t-aisha',created:'2026-11-14',location:'Silicone along the bath',description:'Black mould spots on the silicone and grout along the bath edge.',priority:'Routine',status:0,photo:{demo:'repair-mould-before'},photoDate:'2026-11-14',baseline:alderRecords.bath1},
+   {id:'k5',spaceId:'b4',reporterId:'t-lucas',created:'2026-10-20',location:'Carpet by the bed',description:'Coffee spilled on the carpet next to the bed and left a dark stain.',priority:'Routine',status:4,photo:{demo:'repair-carpet-before'},photoDate:'2026-10-20',baseline:alderRecords.b4,after:{notes:'Carpet professionally cleaned. Stain removed.',photo:{demo:'repair-carpet-after'},photoDate:'2026-10-24'}},
+   {id:'k3',spaceId:'b1',reporterId:'t-wei',created:'2026-10-02',location:'Wardrobe door',description:'The wardrobe door hangs crooked because the top hinge is broken.',priority:'Routine',status:4,photo:{demo:'repair-wardrobe-before'},photoDate:'2026-10-02',baseline:alderRecords.b1,after:{notes:'Hinge replaced. Door closes properly now.',photo:{demo:'repair-wardrobe-after'},photoDate:'2026-10-06'}}
+  ]
+ };
+ const riverRecords={
+  rkl:rec('Kitchen units, oven and induction hob working. Washing machine tested. Laminate in good condition.','riverside-kitchen-living','2026-09-10'),
+  rb1:rec('Mirrored wardrobe slides smoothly. Minor scuff on the window frame.','riverside-bedroom-1','2026-09-10'),
+  rb2:rec('Desk, chair and wardrobe in good condition. Blind works.','riverside-bedroom-2','2026-09-10'),
+  rbath:rec('Bath and shower working. Small hairline crack near the basin overflow.','riverside-bathroom','2026-09-10')
+ };
+ const riverside={id:'riverside',ownerId:'ll-main',name:'Riverside Flat 4B',address:'Riverside Walk, London SE16 · Demo',mode:'joint',ready:true,plan:{svg:'riverside'},cover:'riverside-flat-exterior',
+  spaces:[{id:'rkl',type:'kitchen',nameKey:'space.kitchenLiving',shared:false,photo:'riverside-kitchen-living'},sp('rb1','bedroom',false,'riverside-bedroom-1',1),sp('rb2','bedroom',false,'riverside-bedroom-2',2),sp('rbath','bathroom',false,'riverside-bathroom')],
+  tenancies:[{id:'river-joint',spaceIds:['rkl','rb1','rb2','rbath'],tenantIds:['t-tom','t-sofia'],code:'RIVER-4B',start:'2026-09-15',end:'2027-09-14',inventory:'confirmed'}],
+  records:riverRecords,
+  items:[
+   {id:'river-washer',spaceId:'rkl',floor:'f',x:22,y:22,photo:'item-riverside-washer'},
+   {id:'river-hob',spaceId:'rkl',floor:'f',x:60,y:22,photo:'item-riverside-hob'},
+   {id:'river-window',spaceId:'rb1',floor:'f',x:338,y:22,photo:'item-riverside-window'},
+   {id:'river-basin',spaceId:'rbath',floor:'f',x:22,y:238,photo:'item-riverside-basin'}
+  ],
+  tickets:[
+   {id:'k4',spaceId:'rbath',itemId:'river-basin',reporterId:'t-tom',created:'2026-11-12',location:'Bathroom basin',description:'The basin tap is loose and turns in its fitting.',priority:'Routine',status:1,photo:null,baseline:riverRecords.rbath}
+  ]
+ };
+ return {version:2,seq:100,session:null,prefs:{theme:'system',lang:'en'},accounts,properties:[alder,riverside]};
+}
+// Old single-property data (before accounts existed) becomes a personal
+// record owned by the "Test User" tenant.
+function migrateLegacy(d,old){
+ d.prefs.theme=old.theme||d.prefs.theme;d.prefs.lang=old.lang||d.prefs.lang;
+ if(!old.account)return;
+ d.session='t-new';d.accounts['t-new'].name=old.account.name||'Test User';
+ if(!old.ready||old.linkedRoom||old.demoProperty)return;
+ const ids={'Living room':'living','Bedroom':'bedroom','Kitchen':'kitchen','Bathroom':'bathroom','客厅':'living','卧室':'bedroom','厨房':'kitchen','浴室':'bathroom'};
+ const spaces=[['living','living'],['bedroom','bedroom'],['kitchen','kitchen'],['bathroom','bathroom']].map(([id,type])=>({id,type,shared:false,nameKey:'type.'+type}));
+ const records={};for(const [name,r] of Object.entries(old.records||{}))if(ids[name])records[ids[name]]=r;
+ const tickets=(old.tickets||[]).map((x,i)=>({...x,id:'m'+i,spaceId:ids[x.room]||'living',reporterId:'t-new',priority:{'一般':'Routine','紧急':'Urgent'}[x.priority]||x.priority}));
+ d.properties.push({id:'p'+(d.seq++),ownerId:'t-new',selfManaged:true,name:old.name,address:old.address||'',date:old.date||'',mode:'joint',ready:true,plan:old.plan||null,spaces,records,tickets,items:[],
+  tenancies:[{id:'self',spaceIds:spaces.map(s=>s.id),tenantIds:['t-new']}]});
+}
+function loadDb(){
+ try{const d=JSON.parse(localStorage.getItem(STORE)||'null');if(d?.version===2)return d}catch{}
+ const d=seedDb();
+ try{const old=JSON.parse(localStorage.getItem(LEGACY)||'null');if(old)migrateLegacy(d,old)}catch{}
+ return d;
+}
+let db=loadDb();
+
+// ── Lookups and permissions ─────────────────────────────────────────
+const me=()=>db.accounts[db.session]||null;
+const isLandlord=()=>me()?.role==='landlord';
+const prop=id=>db.properties.find(p=>p.id===id);
+const tenancyOf=(p,a=me())=>a?p?.tenancies.find(x=>x.tenantIds.includes(a.id)):null;
+const myProps=()=>{const a=me();return a?db.properties.filter(p=>p.ownerId===a.id||tenancyOf(p,a)):[]};
+const tenantHome=()=>myProps().find(p=>p.ready)||null;
+const isManager=p=>!!p&&p.ownerId===db.session;           // landlord, or tenant keeping a personal record
+const landlordView=p=>isManager(p)&&!p.selfManaged;
+const spaceOf=(p,id)=>p?.spaces.find(s=>s.id===id);
+const spaceName=s=>s?(s.name||t(s.nameKey,{n:s.n})):'';
+const itemName=i=>t('item.'+i.id+'.name');
+const tenancyForSpace=(p,id)=>p.tenancies.find(x=>x.spaceIds.includes(id));
+function visibleSpaceIds(p){
+ if(isManager(p))return p.spaces.map(s=>s.id);
+ const tn=tenancyOf(p);if(!tn)return [];
+ return p.spaces.filter(s=>tn.spaceIds.includes(s.id)||s.shared).map(s=>s.id);
+}
+const canSee=(p,id)=>visibleSpaceIds(p).includes(id);
+const visibleTickets=p=>p.tickets.filter(x=>canSee(p,x.spaceId));
+const firstName=id=>id===db.session?t('people.you'):(db.accounts[id]?.name||'').split(' ')[0];
+const personName=id=>id===db.session?t('people.you'):(db.accounts[id]?.name||t('people.unknown'));
+
+// ── Navigation state ────────────────────────────────────────────────
+let page='start',trail=[];
+let propId=null,spaceSel=null,floorSel=null,itemSel=null,ticketSel=null,editId=null,recordSpace=null;
+let signinRole='tenant',repairFilter='All',reportCtx={},draft=null;
+let method='upload',material=null,materialPending=false,materialVersion=0,importText='',drafts={};
+let postcodeQuery='',postcodeSearched=false,foundProperty=null;
+const sampleProperty={name:'Harbour Court · Flat 3',address:'Harbour Street, London E1 · Demo'};
+const postcodeKey=value=>value.toUpperCase().replace(/\s/g,'');
+const app=document.querySelector('#app'),notice=document.querySelector('#notice');
+const darkQuery=window.matchMedia?.('(prefers-color-scheme: dark)');
+const applyTheme=()=>{const th=db.prefs.theme;document.documentElement.dataset.theme=th==='system'?(darkQuery?.matches?'dark':'light'):th};
+darkQuery?.addEventListener?.('change',applyTheme);
+
+function save(message=''){
+ try{localStorage.setItem(STORE,JSON.stringify(db));notice.textContent=message}
+ catch{notice.textContent=t('msg.storageFull')}
+}
+const SIGNED_IN=['move-in','link','setup','upload','mode','spaces','records','property','report','repair','asset'];
+function go(next,{replace=false}={}){
+ if(!me()&&SIGNED_IN.includes(next))next='signin';
+ if(isLandlord()&&['move-in','link'].includes(next))next='home';
+ if(next==='back')page=trail.pop()||'start';
+ else if(next!==page){if(!replace)trail.push(page);page=next}
+ notice.textContent='';render();window.scrollTo(0,0);
+ const heading=app.querySelector('h1,h2');if(heading){heading.tabIndex=-1;heading.focus({preventScroll:true})}
+}
+const btn=(label,to,primary=false)=>`<button type="button" class="${primary?'primary':''}" data-go="${to}">${label}</button>`;
+const actionBtn=(label,action,primary=false,extra='')=>`<button type="button" class="${primary?'primary':''}" data-action="${action}" ${extra}>${label}</button>`;
+const filePicker=attrs=>`<span class="file-picker"><input ${attrs}><span class="file-picker-button" aria-hidden="true">${t('common.chooseFile')}</span><span class="file-picker-status" aria-live="polite">${t('common.noFile')}</span></span>`;
+const optional=(upTo2MB=false)=>`<small>${t(upTo2MB?'common.optionalUpTo2MB':'common.optional')}</small>`;
+const pill=(text,cls='')=>`<span class="pill ${cls}">${text}</span>`;
+const priorityPill=p=>p==='Urgent'?pill(priorityLabel('Urgent'),'urgent'):'';
+
+// ── Images ──────────────────────────────────────────────────────────
+// Demo photos are looked up as demo/<name>.jpg, then .webp, then .png.
+// If none exists yet, a "photo coming soon" placeholder is shown instead.
+const demoImg=(name,alt='',cls='')=>`<img class="${cls}" src="demo/${name}.jpg" data-demo="${name}" data-next="webp,png" alt="${esc(alt)}" loading="lazy">`;
+function media(file){
+ if(!file)return '';
+ if(file.demo)return demoImg(file.demo,file.name||'');
+ const src=esc(file.src),name=esc(file.name);
+ if(file.type.startsWith('image/'))return `<img src="${src}" alt="${name}">`;
+ if(file.type.startsWith('video/'))return `<video src="${src}" controls></video>`;
+ return `<iframe src="${src}" title="${name}"></iframe>`;
+}
+function photoDate(date){
+ if(!/^\d{4}-\d{2}-\d{2}$/.test(date||''))return '';
+ const value=new Date(date+'T00:00:00Z');
+ if(Number.isNaN(value.getTime()))return '';
+ return `<time datetime="${date}">${new Intl.DateTimeFormat(t('locale'),{dateStyle:'medium',timeZone:'UTC'}).format(value)}</time>`;
+}
+const dateText=date=>photoDate(date)||esc(date);
+function evidence(item,placeholder){return item?`${media(item.photo)}${item.photo&&item.photoDate?`<small>${t('common.photoTaken',{date:photoDate(item.photoDate)})}</small>`:''}<p class="notes">${esc(item.notes||item.description)}</p>`:`<p>${placeholder}</p>`}
+
+// ── Floor plans ─────────────────────────────────────────────────────
+// Rooms are [spaceId, x, y, width, height] in plan units. A sixth value marks
+// a hallway or landing (not a space) and gives its label key.
+const PLANS={
+ alder:{floors:[
+  {id:'g',nameKey:'floor.ground',w:240,h:400,rooms:[['b1',0,0,150,140],['hall',150,0,90,270,'plan.hall'],['living',0,140,150,130],['kitchen',0,270,240,130]]},
+  {id:'1',nameKey:'floor.first',w:240,h:400,rooms:[['b2',0,0,150,150],['landing',150,0,90,260,'plan.landing'],['bath1',0,150,150,110],['b3',0,260,240,140]]},
+  {id:'2',nameKey:'floor.second',w:240,h:400,rooms:[['b4',0,0,150,170],['landing2',150,0,90,230,'plan.landing'],['b5',0,170,150,230],['bath2',150,230,90,170]]}
+ ]},
+ riverside:{floors:[{id:'f',nameKey:'floor.flat',w:360,h:260,rooms:[['rkl',0,0,200,160],['rb1',200,0,160,130],['rb2',200,130,160,130],['rbath',0,160,110,100],['hall',110,160,90,100,'plan.hall']]}]}
+};
+// Properties without a drawn plan get a simple tile layout of their spaces.
+function schematic(p){
+ const n=p.spaces.length,rows=Math.ceil(n/2);
+ return {schematic:true,floors:[{id:'s',nameKey:'floor.flat',w:300,h:rows*96,rooms:p.spaces.map((s,i)=>{const last=i===n-1&&n%2;return [s.id,last?0:(i%2)*150,Math.floor(i/2)*96,last?300:150,96]})}]};
+}
+const planDef=p=>PLANS[p.plan?.svg]||schematic(p);
+function spaceState(p,s){
+ const visible=canSee(p,s.id),tn=tenancyForSpace(p,s.id);
+ const repair=visible&&p.tickets.some(x=>x.spaceId===s.id&&x.status<4);
+ let kind;
+ if(!visible)kind='locked';
+ else if(p.mode==='rooms'&&s.shared)kind='shared';
+ else if(landlordView(p))kind=tn?.tenantIds.length?'let':'vacant';
+ else kind='mine';
+ return {kind,repair,tn};
+}
+function spaceCaption(p,s,st){
+ if(st.kind==='locked')return t('plan.private');
+ if(st.kind==='shared')return t('plan.shared');
+ if(st.kind==='vacant')return t('plan.vacant');
+ if(st.kind==='let')return st.tn.tenantIds.map(firstName).join(', ');
+ return p.mode==='rooms'&&!s.shared?t('plan.yours'):'';
+}
+function floorPlan(p){
+ const floors=planDef(p).floors;
+ const f=floors.find(x=>x.id===floorSel)||floors.find(x=>x.rooms.some(r=>r[0]===spaceSel))||floors[0];
+ const kinds=new Set();let repairs=false;
+ const rooms=f.rooms.map(([id,x,y,w,h,labelKey])=>{
+  const cx=x+w/2,cy=y+h/2;
+  if(labelKey)return `<g class="circ"><rect x="${x}" y="${y}" width="${w}" height="${h}"/><text x="${cx}" y="${cy}">${t(labelKey)}</text></g>`;
+  const s=spaceOf(p,id);if(!s)return '';
+  const st=spaceState(p,s),cap=spaceCaption(p,s,st),sel=id===spaceSel,label=esc(spaceName(s));
+  kinds.add(st.kind);repairs||=st.repair;
+  const attrs=st.kind==='locked'?'aria-hidden="true"':`data-space="${id}" role="button" tabindex="0" aria-pressed="${sel}" aria-label="${label}${cap?', '+esc(cap):''}${st.repair?', '+t('plan.openRepair'):''}"`;
+  return `<g class="room ${st.kind}${sel?' selected':''}" ${attrs}><rect x="${x}" y="${y}" width="${w}" height="${h}"/><text x="${cx}" y="${cap?cy-7:cy}">${label}</text>${cap?`<text class="cap" x="${cx}" y="${cy+9}">${esc(cap)}</text>`:''}${st.repair?`<circle class="repair-dot" cx="${x+w-12}" cy="${y+12}" r="5"/>`:''}</g>`;
+ }).join('');
+ const pins=(p.items||[]).map((it,i)=>({it,n:i+1})).filter(({it})=>it.floor===f.id&&canSee(p,it.spaceId)).map(({it,n})=>`<g class="pin-svg" data-item="${it.id}" role="button" tabindex="0" aria-label="${n}. ${esc(itemName(it))}"><circle cx="${it.x}" cy="${it.y}" r="11"/><text x="${it.x}" y="${it.y+1}">${n}</text></g>`).join('');
+ const pad=6;
+ const tabs=floors.length>1?`<div class="row floor-tabs" role="group" aria-label="${t('plan.floors')}">${floors.map(x=>`<button type="button" class="filter" data-floor="${x.id}" aria-pressed="${x.id===f.id}">${t(x.nameKey)}</button>`).join('')}</div>`:'';
+ const legendKinds=['mine','let','vacant','shared','locked'].filter(k=>kinds.has(k)&&!(k==='mine'&&kinds.size===1));
+ const legend=legendKinds.length||repairs?`<div class="legend">${legendKinds.map(k=>`<span><i class="swatch s-${k}"></i>${t('legend.'+k)}</span>`).join('')}${repairs?`<span><i class="swatch s-repair"></i>${t('legend.repair')}</span>`:''}</div>`:'';
+ return `${tabs}<svg class="floorplan" viewBox="${-pad} ${-pad} ${f.w+2*pad} ${f.h+2*pad}" role="group" aria-label="${t('plan.label',{floor:t(f.nameKey)})}">${rooms}<rect class="outer" x="0" y="0" width="${f.w}" height="${f.h}"/>${pins}</svg>${legend}`;
+}
+
+// ── Pages: start, sign-in, account ──────────────────────────────────
+function start(){
+ const a=me();
+ const [label,to]=!a?['start.signIn','signin']:a.role==='landlord'?['start.viewProperties','home']:tenantHome()?['start.view','home']:['start.moveIn','move-in'];
+ return `<section class="hero"><div><h1>${t('start.title')}</h1><p>${t('start.intro')}</p><div class="row">${btn(t(label),to,true)}</div></div><img class="welcome-cover" src="demo/welcome-cover.png" alt=""></section><div class="grid three"><section class="card"><h3>${t('start.inventoryTitle')}</h3><p>${t('start.inventoryBody')}</p></section><section class="card"><h3>${t('start.repairsTitle')}</h3><p>${t('start.repairsBody')}</p></section><section class="card"><h3>${t('start.landlordTitle')}</h3><p>${t('start.landlordBody')}</p></section></div>`;
+}
+const avatar=(name,cls='')=>`<span class="avatar ${cls}" aria-hidden="true">${esc((name||'?').slice(0,1).toUpperCase())}</span>`;
+function signIn(){
+ const list=Object.values(db.accounts).filter(a=>a.demo&&a.role===signinRole);
+ return `<div class="panel"><section class="card"><h1>${t('signin.title')}</h1><p>${t('signin.intro')}</p><div class="segmented" role="group" aria-label="${t('signin.roleLabel')}">${['tenant','landlord'].map(r=>`<button type="button" data-signin-role="${r}" aria-pressed="${signinRole===r}">${t('signin.as.'+r)}</button>`).join('')}</div><h2>${t('signin.demoAccounts')}</h2><ul class="account-list">${list.map(a=>`<li><button type="button" data-login="${a.id}">${avatar(a.name,'small')}<span><strong>${esc(a.name)}</strong><br><small>${t(a.demo)}</small></span><span class="arrow" aria-hidden="true">›</span></button></li>`).join('')}</ul><details class="email-signin"><summary>${t('signin.withEmail')}</summary><form id="signin"><label>${t('signin.email')} <input name="email" type="email" required autocomplete="username" placeholder="${list[0]?.email||''}"></label><label>${t('signin.password')} <input name="password" type="password" required autocomplete="current-password"></label><p class="help">${t('signin.hint')}</p><button class="primary">${t('signin.submit')}</button></form></details></section></div>`;
+}
+function profile(){
+ const a=me();if(!a)return signIn();
+ const option=(value,label,current)=>`<option value="${value}" ${current===value?'selected':''}>${label}</option>`;
+ const th=db.prefs.theme;
+ return `<div class="panel"><section class="card"><h1>${t('profile.title')}</h1><div class="account-summary">${avatar(a.name)}<div><strong>${esc(a.name)}</strong><br><small>${esc(a.email)} · ${t('role.'+a.role)} · ${t('profile.testAccount')}</small></div></div><form id="profile"><label>${t('profile.displayName')} <input name="displayName" required maxlength="60" value="${esc(a.name)}"></label><button class="primary">${t('profile.save')}</button></form></section><section class="card"><h2>${t('settings.title')}</h2><form id="settings"><label>${t('settings.appearance')} <select name="theme">${option('system',t('settings.system'),th)}${option('light',t('settings.light'),th)}${option('dark',t('settings.dark'),th)}</select></label><button class="primary">${t('settings.save')}</button></form></section><section class="card"><h2>${t('demoData.title')}</h2><p>${t('demoData.body')}</p><div class="row">${actionBtn(t('demoData.signOut'),'signout')}</div><details><summary>${t('demoData.resetTitle')}</summary><p>${t('demoData.resetBody')}</p>${actionBtn(t('demoData.reset'),'reset')}</details></section></div>`;
+}
+
+// ── Pages: dashboards ───────────────────────────────────────────────
+function home(){
+ const a=me();
+ if(!a)return `<section class="panel card"><h1>${t('dash.eyebrow')}</h1><p>${t('home.signInPrompt')}</p>${btn(t('start.signIn'),'signin',true)}</section>`;
+ if(a.role==='landlord')return portfolio();
+ const p=tenantHome();
+ if(!p)return `<section class="panel card"><h1>${t('dash.eyebrow')}</h1><p>${t('home.noProperty')}</p>${btn(t('home.startMoveIn'),'move-in',true)}</section>`;
+ propId=p.id;return propertyView(p);
+}
+function occupancy(p){
+ if(p.mode==='rooms'){const let_=p.tenancies.filter(x=>x.tenantIds.length).length;return t('ll.letRooms',{let:let_,total:p.tenancies.length})}
+ const n=p.tenancies[0]?.tenantIds.length||0;return n?t('ll.jointTenants',{n}):t('ll.vacantWhole');
+}
+function attention(p){
+ const open=p.tickets.filter(x=>x.status<4),urgent=open.filter(x=>x.priority==='Urgent').length;
+ const pending=p.tenancies.filter(x=>x.inventory==='pending').length,vacant=p.tenancies.filter(x=>!x.tenantIds.length).length;
+ const score=urgent*100+open.length*10+pending*5+vacant;
+ const line=urgent?t('ll.attnUrgent',{n:urgent}):pending?t('ll.attnInventory',{n:pending}):open.length?t('ll.attnOpen',{n:open.length}):vacant?t('ll.attnVacant',{n:vacant}):t('ll.attnNone');
+ return {open:open.length,urgent,score,line,warn:urgent>0};
+}
+function portfolio(){
+ const a=me(),mine=myProps(),ready=mine.filter(p=>p.ready),unfinished=mine.filter(p=>!p.ready);
+ if(!ready.length&&!unfinished.length)return `<section class="panel card"><div class="eyebrow">${t('ll.eyebrow')}</div><h1>${t('ll.welcomeTitle',{name:esc(a.name.split(' ')[0])})}</h1><p>${t('ll.welcomeBody')}</p><ol class="steps-list"><li>${t('ll.step1')}</li><li>${t('ll.step2')}</li><li>${t('ll.step3')}</li></ol>${actionBtn(t('ll.addFirst'),'add-property',true)}</section>`;
+ const cards=ready.map(p=>({p,at:attention(p)})).sort((x,y)=>y.at.score-x.at.score).map(({p,at})=>`<li><button type="button" class="prop-card" data-prop="${p.id}">${p.cover?demoImg(p.cover,'','cover'):''}<span class="prop-body"><span class="row spread"><strong>${esc(p.name)}</strong>${pill(t(p.mode==='rooms'?'mode.roomsShort':'mode.jointShort'))}</span><small>${esc(p.address)}</small><span class="prop-stats">${occupancy(p)} · ${t('ll.openRepairs',{n:at.open})}${at.urgent?' '+priorityPill('Urgent'):''}</span><span class="attention ${at.warn?'warn':''}">${at.line}</span></span></button></li>`).join('');
+ return `<div class="row spread dash-head"><div><div class="eyebrow">${t('ll.eyebrow')}</div><h1>${t('ll.title')}</h1><p>${t('ll.summary',{n:ready.length})}</p></div>${actionBtn(t('ll.add'),'add-property',true)}</div>${unfinished.length?`<section class="card"><h2>${t('ll.unfinished')}</h2><ul class="repair-list">${unfinished.map(p=>`<li><button type="button" data-continue="${p.id}"><strong>${esc(p.name)}</strong><br><small>${t('ll.continueSetup')}</small></button></li>`).join('')}</ul></section>`:''}<ul class="prop-grid">${cards}</ul>`;
+}
+function propertyPage(){const p=prop(propId);return p&&myProps().includes(p)?propertyView(p):home()}
+function spaceKindLabel(p,s){
+ const st=spaceState(p,s);
+ return {let:t('kind.let'),vacant:t('kind.vacant'),shared:t('kind.shared'),mine:p.mode==='rooms'&&!s.shared?t('kind.yours'):''}[st.kind]||'';
+}
+function spacePanel(p){
+ const s=spaceOf(p,spaceSel);
+ if(!s)return `<p class="help">${t('plan.selectHint')}</p>`;
+ const items=(p.items||[]).map((it,i)=>({it,n:i+1})).filter(({it})=>it.spaceId===s.id);
+ const tickets=visibleTickets(p).filter(x=>x.spaceId===s.id&&x.status<4);
+ const kind=spaceKindLabel(p,s);
+ return `<section class="space-panel" aria-live="polite"><div class="row spread"><h3>${esc(spaceName(s))}</h3>${kind?pill(kind):''}</div>${evidence(p.records[s.id],t('home.noRecord'))}${items.length?`<ol class="item-list compact">${items.map(({it,n})=>`<li><button type="button" data-item="${it.id}"><span class="item-number">${n}</span><span>${esc(itemName(it))}</span><span class="arrow" aria-hidden="true">›</span></button></li>`).join('')}</ol>`:''}${tickets.length?`<p><strong>${t('space.openRepairs',{n:tickets.length})}</strong></p><ul class="repair-list">${tickets.map(ticketRow(p)).join('')}</ul>`:''}${landlordView(p)?'':actionBtn(t('space.report'),'report-space')}</section>`;
+}
+function spacesCard(p){
+ const vis=visibleSpaceIds(p),tn=tenancyOf(p);
+ const entry=s=>{const r=p.records[s.id];const st=spaceState(p,s);
+  const side=landlordView(p)?(st.kind==='let'?st.tn.tenantIds.map(personName).join(', '):st.kind==='vacant'?t('plan.vacant'):t('plan.shared')):'';
+  return `<li><button type="button" data-space="${s.id}" aria-pressed="${s.id===spaceSel}"><strong>${esc(spaceName(s))}</strong>${r?' ✓':''}${side?`<br><small>${esc(side)}</small>`:''}${!landlordView(p)&&r?`<span class="notes snippet">${esc(r.notes)}</span>`:''}</button></li>`};
+ const groups=[];
+ if(p.mode==='rooms'){
+  if(landlordView(p))groups.push(['spaces.bedrooms',p.spaces.filter(s=>!s.shared)]);
+  else groups.push(['spaces.myRoom',p.spaces.filter(s=>tn?.spaceIds.includes(s.id))]);
+  groups.push(['spaces.shared',p.spaces.filter(s=>s.shared&&vis.includes(s.id))]);
+ } else groups.push(['spaces.rooms',p.spaces.filter(s=>vis.includes(s.id))]);
+ const fromLandlord=!isManager(p);
+ return `<section class="card"><div class="row spread"><h2>${t(fromLandlord?'landlord.title':landlordView(p)?'spaces.titleLandlord':'spaces.titleOwn')}</h2>${fromLandlord?pill(t('landlord.badge')):''}</div>${fromLandlord?`<p>${t('landlord.body')}</p>`:''}${groups.filter(([,list])=>list.length).map(([key,list])=>`<h3>${t(key)}</h3><ul class="space-list">${list.map(entry).join('')}</ul>`).join('')}${isManager(p)?actionBtn(t('home.editInventory'),'edit-inventory'):''}</section>`;
+}
+function tenanciesCard(p){
+ const inv=x=>t('inventory.'+(x.inventory||'none'));
+ return `<section class="card"><h2>${t('tenancy.title')}</h2><p class="help">${t(p.mode==='rooms'?'tenancy.helpRooms':'tenancy.helpJoint')}</p><ul class="tenancy-list">${p.tenancies.map(x=>`<li><div><strong>${x.spaceIds.length===p.spaces.length?t('tenancy.wholeHome'):x.spaceIds.map(id=>esc(spaceName(spaceOf(p,id)))).join(', ')}</strong> · ${x.tenantIds.length?x.tenantIds.map(id=>esc(personName(id))).join(', '):`<em>${t('plan.vacant')}</em>`}<br><small>${x.start?t('tenancy.dates',{start:dateText(x.start),end:x.end?dateText(x.end):t('tenancy.open')})+' · ':''}${x.tenantIds.length?inv(x):t('tenancy.shareCode')}</small></div><div class="code-box"><code>${esc(x.code)}</code><button type="button" data-copy="${esc(x.code)}" aria-label="${t('tenancy.copyLabel',{code:esc(x.code)})}">${t('tenancy.copy')}</button></div></li>`).join('')}</ul></section>`;
+}
+const ticketRow=p=>x=>`<li><button type="button" data-ticket="${x.id}"><strong>${esc(x.location)}</strong>${priorityPill(x.priority)}<br><small>${statusLabel(x.status)} · ${esc(spaceName(spaceOf(p,x.spaceId)))}${x.reporterId&&x.reporterId!==db.session?' · '+t('repair.by',{name:esc(personName(x.reporterId))}):''}</small></button></li>`;
+function repairQueue(p){
+ const entries=visibleTickets(p).filter(x=>repairFilter==='All'||(repairFilter==='Open'?x.status<4:x.status===4)).slice().reverse();
+ return `<section class="card"><h2>${t('repairs.title')}</h2><div class="row">${['All','Open','Signed off'].map(f=>`<button type="button" class="filter" data-filter="${f}" aria-pressed="${repairFilter===f}">${t('filter.'+f)}</button>`).join('')}</div>${entries.length?`<ul class="repair-list">${entries.map(ticketRow(p)).join('')}</ul>`:`<p>${t('repairs.empty')}</p>`}</section>`;
+}
+function itemsCard(p){
+ const list=(p.items||[]).map((it,i)=>({it,n:i+1})).filter(({it})=>canSee(p,it.spaceId));
+ if(!list.length)return '';
+ return `<section class="card"><h2>${t('dash.items')}</h2><ol class="item-list">${list.map(({it,n})=>`<li><button type="button" data-item="${it.id}"><span class="item-number">${n}</span><span><strong>${esc(itemName(it))}</strong><br><small>${esc(spaceName(spaceOf(p,it.spaceId)))}</small></span><span class="arrow" aria-hidden="true">›</span></button></li>`).join('')}</ol></section>`;
+}
+function propertyView(p){
+ if(!canSee(p,spaceSel))spaceSel=null;
+ const lv=landlordView(p),tn=tenancyOf(p);
+ const eyebrow=lv?t(p.mode==='rooms'?'mode.rooms':'mode.joint'):p.selfManaged?t('dash.personal'):t(p.mode==='rooms'?'dash.roomTenant':'dash.jointTenant');
+ const meta=[p.address&&esc(p.address),p.selfManaged&&p.date&&t('home.moveInDate',{date:dateText(p.date)}),!lv&&!p.selfManaged&&tn?.start&&t('tenancy.dates',{start:dateText(tn.start),end:tn.end?dateText(tn.end):t('tenancy.open')}),lv&&occupancy(p)].filter(Boolean).join(' · ');
+ const uploaded=p.plan?.src?(p.plan.type.startsWith('image/')?`<details class="uploaded-plan"><summary>${t('home.viewUpload')}</summary><div class="property-plan">${media(p.plan)}</div></details>`:`<details class="uploaded-plan"><summary>${t('home.viewUpload')}</summary>${media(p.plan)}</details>`):'';
+ return `<div class="row spread dash-head"><div><div class="eyebrow">${t('dash.eyebrow')} · ${eyebrow}</div><h1>${esc(p.name)}</h1><p>${meta}</p></div>${lv?'':actionBtn(t('home.report'),'report',true)}</div><div class="grid"><div><section class="card"><h2>${t('dash.floorPlan')}</h2>${floorPlan(p)}${uploaded}${spacePanel(p)}</section>${itemsCard(p)}</div><div>${lv?tenanciesCard(p):''}${spacesCard(p)}${repairQueue(p)}</div></div>`;
+}
+
+// ── Pages: getting started (tenant) ─────────────────────────────────
+function moveIn(){return `<div class="panel"><h1>${t('moveIn.title')}</h1><div class="grid"><section class="card"><h2>${t('moveIn.linkTitle')}</h2><p>${t('moveIn.linkBody')}</p>${btn(t('moveIn.linkButton'),'link',true)}</section><section class="card"><h2>${t('moveIn.ownTitle')}</h2><p>${t('moveIn.ownBody')}</p>${actionBtn(t('moveIn.ownButton'),'add-property',true)}</section></div></div>`}
+function linkRoom(){return `<section class="panel card"><h1>${t('link.title')}</h1><p>${t('link.intro')}</p><form id="link-room"><label>${t('link.code')} <input name="code" required autocapitalize="characters" spellcheck="false" placeholder="${t('link.placeholder')}"></label><p>${t('link.hint')}</p><button class="primary">${t('link.submit')}</button></form></section>`}
+
+// ── Pages: adding a property (landlord, or tenant's own record) ─────
+function setup(){
+ const match=postcodeSearched&&postcodeKey(postcodeQuery)==='E18ER';
+ return `<section class="panel card"><div class="steps">${t('flow.step',{n:1,total:isLandlord()?5:4})}</div><h1>${t('setup.title')}</h1><form id="postcode-search"><label>${t('setup.postcode')} <input name="postcode" required maxlength="12" autocomplete="postal-code" placeholder="${t('setup.postcodePlaceholder')}" value="${esc(postcodeQuery)}"></label><p class="help">${t('setup.hint')}</p><div class="setup-actions"><button class="primary">${t('setup.find')}</button>${btn(t('setup.upload'),'upload')}</div></form>${postcodeSearched?(match?`<section class="postcode-result"><h2>${sampleProperty.name}</h2><p>${sampleProperty.address} · ${t('setup.sampleResult')}</p><img src="demo/floor-plan.png" alt="${t('setup.planAlt',{name:sampleProperty.name})}"><div class="setup-actions"><button type="button" class="primary" data-action="use-found-plan">${t('setup.usePlan')}</button></div></section>`:`<p>${t('setup.noMatch')}</p>`):''}</section>`;
+}
+function upload(){
+ draft??={};
+ return `<div class="panel"><section class="card"><div class="steps">${t('flow.step',{n:2,total:isLandlord()?5:4})}</div><h2>${t('upload.title')}</h2><form id="setup"><label>${t('upload.name')} <input name="name" required placeholder="${t('upload.namePlaceholder')}" value="${esc(foundProperty?.name||draft.name||'')}"></label><div class="grid"><label>${t('upload.address')} ${optional()}<input name="address" value="${esc(foundProperty?.address||draft.address||'')}"></label><label>${t(isLandlord()?'upload.availableDate':'upload.date')} ${optional()}<input type="date" name="date" value="${esc(draft.date||'')}"></label></div><div class="choices setup-actions">${[['upload','upload.methodPlan'],['video','upload.methodVideo']].map(([id,label])=>`<button type="button" data-method="${id}" aria-pressed="${method===id}">${t(label)}</button>`).join('')}</div><div id="material"></div><div class="setup-actions"><button class="primary">${t(isLandlord()?'upload.nextMode':'upload.nextSpaces')}</button></div></form></section></div>`;
+}
+function showMaterial(){
+ const box=document.querySelector('#material');if(!box)return;
+ const video=method==='video';
+ box.innerHTML=`<label>${t(video?'upload.videoLabel':'upload.planLabel')} ${optional(true)}${filePicker(`id="file" type="file" accept="${video?'video/*':'image/png,image/jpeg,image/webp,application/pdf'}" ${video?'capture="environment"':''}`)}</label><p>${t(video?'upload.videoHelp':'upload.planHelp')}</p><div id="material-preview">${media(material)}</div>`;
+}
+function modePage(){
+ if(!draft)return home();
+ return `<div class="panel"><div class="steps">${t('flow.step',{n:3,total:5})}</div><h1>${t('mode.title')}</h1><p>${t('mode.intro')}</p><div class="grid">${['joint','rooms'].map(m=>`<section class="card choice-card"><h2>${t('mode.'+m)}</h2><p>${t('mode.'+m+'Body')}</p><p class="help">${t('mode.'+m+'Example')}</p><button type="button" class="${draft.mode===m?'primary':''}" data-mode="${m}">${t('mode.choose'+(m==='joint'?'Joint':'Rooms'))}</button></section>`).join('')}</div></div>`;
+}
+function defaultSpaces(mode){
+ const s=(type,shared,n)=>({type,shared,name:t(n?'space.'+type+'N':'type.'+type,{n})});
+ return mode==='rooms'?[s('bedroom',false,1),s('bedroom',false,2),s('bedroom',false,3),s('kitchen',true),s('living',true),s('bathroom',true)]:[s('living',false),s('bedroom',false,1),s('kitchen',false),s('bathroom',false)];
+}
+function spacesPage(){
+ if(!draft)return home();
+ const mode=isLandlord()?draft.mode:'joint';
+ draft.spaces??=defaultSpaces(mode);
+ const rooms=mode==='rooms';
+ return `<div class="panel"><section class="card"><div class="steps">${t('flow.step',{n:isLandlord()?4:3,total:isLandlord()?5:4})}</div><h1>${t('spaces.editTitle')}</h1><p>${t(rooms?'spaces.editIntroRooms':'spaces.editIntro')}</p><form id="spaces"><ol class="space-editor">${draft.spaces.map((s,i)=>`<li><label>${t('spaces.name')} <input name="name-${i}" required maxlength="40" value="${esc(s.name)}"></label><label>${t('spaces.type')} <select name="type-${i}">${SPACE_TYPES.map(ty=>`<option value="${ty}" ${s.type===ty?'selected':''}>${t('type.'+ty)}</option>`).join('')}</select></label>${rooms?`<label class="check"><input type="checkbox" name="shared-${i}" ${s.shared?'checked':''}> ${t('spaces.sharedArea')}</label>`:''}<button type="button" class="remove" data-remove-space="${i}" aria-label="${t('spaces.removeLabel',{name:esc(s.name)})}">${t('spaces.remove')}</button></li>`).join('')}</ol><div class="row">${actionBtn(t('spaces.add'),'add-space')}</div><div class="setup-actions"><button class="primary">${t('spaces.next')}</button></div></form></section></div>`;
+}
+function readSpacesForm(){
+ const form=document.querySelector('#spaces');if(!form||!draft?.spaces)return;
+ const data=new FormData(form);
+ draft.spaces=draft.spaces.map((s,i)=>({type:String(data.get('type-'+i)||s.type),name:String(data.get('name-'+i)??s.name),shared:form.elements['shared-'+i]?form.elements['shared-'+i].checked:s.shared}));
+}
+function records(){
+ const p=prop(editId);if(!p||!isManager(p))return home();
+ if(!spaceOf(p,recordSpace))recordSpace=p.spaces[0]?.id;
+ const s=spaceOf(p,recordSpace),item=p.records[recordSpace]||{};
+ const count=p.spaces.filter(x=>p.records[x.id]).length;
+ return `<div class="panel"><section class="card">${p.ready?'':`<div class="steps">${t('flow.step',{n:isLandlord()?5:4,total:isLandlord()?5:4})}</div>`}<div class="row spread"><h2>${t('records.title')} · ${esc(p.name)}</h2>${pill(t('records.count',{count,total:p.spaces.length}))}</div><div class="row">${p.spaces.map(x=>`<button type="button" data-record-space="${x.id}" aria-pressed="${x.id===recordSpace}" class="${x.id===recordSpace?'primary':''}">${esc(spaceName(x))}${p.records[x.id]?' ✓':''}</button>`).join('')}</div><p><strong>${t('records.whatToRecord')}</strong> &nbsp; ${t('records.tip.'+(s?.type||'other'))}</p><form id="record"><label>${t('records.condition')} <textarea name="notes" required placeholder="${t('records.conditionPlaceholder')}">${esc(drafts[recordSpace]??item.notes)}</textarea></label><label>${t('records.photo')} ${optional()}${filePicker('type="file" name="photo" accept="image/png,image/jpeg,image/webp"')}</label>${media(item.photo)}<div class="row"><button class="primary">${t('records.save')}</button>${btn(t(p.ready?'records.done':'records.finish'),'finish')}</div></form></section><section class="card"><h3>${t('records.importTitle')}</h3><form id="import"><label>${t('records.importLabel')} <textarea name="existing" placeholder="${esc(t('records.importPlaceholder'))}" required>${esc(importText)}</textarea></label><button>${t('records.importButton')}</button></form></section></div>`;
+}
+function uniqueCode(base){
+ const all=new Set(db.properties.flatMap(p=>p.tenancies.map(x=>x.code)));
+ let code=base,i=2;while(all.has(code))code=base+'-'+i++;
+ return code;
+}
+function finishSetup(){
+ const p=prop(editId);if(!p)return go('home');
+ if(!p.ready){
+  p.ready=true;
+  if(p.selfManaged)p.tenancies=[{id:'self',spaceIds:p.spaces.map(s=>s.id),tenantIds:[db.session]}];
+  else{
+   const prefix=(p.name.toUpperCase().replace(/[^A-Z0-9 ]/g,'').trim().split(/\s+/).find(w=>/[A-Z]/.test(w))||'HOME').slice(0,6);
+   p.tenancies=p.mode==='rooms'
+    ?p.spaces.filter(s=>!s.shared).map((s,i)=>({id:'tn'+(db.seq++),spaceIds:[s.id],tenantIds:[],code:uniqueCode(prefix+'-R'+(i+1)),inventory:'none'}))
+    :[{id:'tn'+(db.seq++),spaceIds:p.spaces.map(s=>s.id),tenantIds:[],code:uniqueCode(prefix+'-HOME'),inventory:'none'}];
+  }
+  propId=p.id;spaceSel=null;floorSel=null;trail=p.selfManaged?['start']:['start','home'];
+  page='records';go(p.selfManaged?'home':'property',{replace:true});save(t(p.selfManaged?'msg.moveInSaved':'msg.propertyCreated'));
+ } else {propId=p.id;go('back');save(t('msg.moveInSaved'))}
+}
+
+// ── Pages: items, repairs ───────────────────────────────────────────
+function assetDetail(){
+ const p=prop(propId),it=p?.items?.find(x=>x.id===itemSel);
+ if(!it||!canSee(p,it.spaceId))return home();
+ const n=p.items.indexOf(it)+1,hk='item.'+it.id+'.history';
+ const history=p.tickets.filter(x=>x.itemId===it.id&&canSee(p,x.spaceId)).slice().reverse();
+ return `<div class="panel"><section class="card"><div class="eyebrow">${t('asset.eyebrow',{id:n,room:esc(spaceName(spaceOf(p,it.spaceId)))})}</div><h1>${esc(itemName(it))}</h1>${demoImg(it.photo,t('asset.photoAlt',{name:itemName(it)}),'asset-photo')}<small>${t('asset.illustrative')}</small><h2>${t('asset.condition')}</h2><p>${t('item.'+it.id+'.notes')}</p>${actionBtn(t('asset.report'),'report-item',true)}</section><section class="card"><h2>${t('asset.history')}</h2><ul class="history">${history.map(x=>`<li><button type="button" data-ticket="${x.id}">${esc(x.description)} · ${statusLabel(x.status)}</button></li>`).join('')}${has(hk)?`<li><strong>${t('asset.previous')}</strong><br>${t(hk)}</li>`:''}${!history.length&&!has(hk)?`<li>${t('asset.noHistory')}</li>`:''}</ul></section></div>`;
+}
+function report(){
+ const p=prop(propId);if(!p)return home();
+ const it=p.items?.find(x=>x.id===reportCtx.itemId);
+ const fixed=it?spaceOf(p,it.spaceId):null;
+ const choices=p.spaces.filter(s=>canSee(p,s.id));
+ const pre=reportCtx.spaceId||spaceSel;
+ return `<section class="panel card"><h2>${t(it?'report.titleItem':'report.title')}</h2>${it?`<p><strong>${esc(itemName(it))}</strong> · ${esc(spaceName(fixed))}</p>`:''}<p>${t('report.intro')}</p><form id="report">${it?'':`<label>${t('report.room')} <select name="space">${choices.map(s=>`<option value="${s.id}" ${s.id===pre?'selected':''}>${esc(spaceName(s))}${p.mode==='rooms'&&s.shared?' · '+t('kind.shared'):''}</option>`).join('')}</select></label>`}${p.mode==='rooms'&&!it?`<p class="help">${t('report.sharedHelp')}</p>`:''}<label>${t('report.location')} <input name="location" required value="${it?esc(itemName(it)):''}" placeholder="${t('report.locationPlaceholder')}"></label><label>${t('report.description')} <textarea name="description" required></textarea></label><label>${t('report.noticed')} ${optional()}<input type="date" name="noticed"></label><label>${t('report.priority')} <select name="priority">${['Routine','Urgent'].map(v=>`<option value="${v}">${priorityLabel(v)}</option>`).join('')}</select></label><label>${t('report.photo')} ${optional(true)}${filePicker('name="photo" type="file" accept="image/png,image/jpeg,image/webp" capture="environment"')}</label><label>${t('common.photoTakenOn')} ${optional()}<input type="date" name="photoDate"></label><button class="primary">${t('report.save')}</button></form></section>`;
+}
+function repair(){
+ const p=prop(propId),x=p?.tickets.find(k=>k.id===ticketSel);
+ if(!x||!canSee(p,x.spaceId))return home();
+ const s=spaceOf(p,x.spaceId),status=statusLabel(x.status),roomName=esc(spaceName(s));
+ const shared=p.mode==='rooms'&&s?.shared;
+ return `<section class="card"><div class="row spread"><h2>${roomName} · ${esc(x.location)}</h2>${pill(status)}</div><p>${priorityPill(x.priority)||esc(priorityLabel(x.priority))}${x.noticed?` · ${t('repair.firstNoticed',{date:dateText(x.noticed)})}`:''}${x.reporterId?` · ${x.reporterId===db.session?t('repair.reportedByYou',{date:dateText(x.created)}):t('repair.reportedBy',{name:esc(personName(x.reporterId)),date:dateText(x.created)})}`:''}${shared?' · '+pill(t('kind.shared')):''}</p><p class="notes">${esc(x.description)}</p><details class="repair-progress"><summary>${t('repair.progress')} · <strong>${status}</strong></summary><ol class="timeline">${[0,1,2,3,4].map(i=>`<li ${i===x.status?'aria-current="step"':''}>${i<x.status?'✓ ':''}${statusLabel(i)}</li>`).join('')}</ol></details><progress class="repair-meter" aria-label="${t('repair.progressAria',{status})}" value="${x.status+1}" max="5"></progress>${x.status<3?`<p>${t('repair.sharedInfo')}</p>${actionBtn(t('repair.advance.'+x.status),'advance',true)}`:''}</section><div class="grid evidence ${x.after?'comparison':''}"><section class="card"><h3>${t('repair.atMoveIn',{room:roomName})}</h3>${evidence(x.baseline,t('repair.noBaseline'))}</section><section class="card"><h3>${t('repair.before')}</h3>${evidence(x,'')}</section>${x.after?`<section class="card evidence"><h3>${t('repair.after')}</h3>${evidence(x.after,'')}</section>`:''}</div>${x.status===3?`<section class="card"><h3>${t('repair.reviewTitle')}</h3><p>${t('repair.reviewHint')}</p><form id="accept"><label>${t('repair.signOffNotes')} <textarea name="notes" required></textarea></label><label>${t('repair.afterPhoto')} ${optional()}${filePicker('name="photo" type="file" accept="image/png,image/jpeg,image/webp"')}</label><label>${t('common.photoTakenOn')} ${optional()}<input type="date" name="photoDate"></label><button class="primary">${t('repair.signOff')}</button></form>${actionBtn(t('repair.reopen'),'reopen',false,'style="margin-top:10px"')}</section>`:''}`;
+}
+
+// ── Rendering ───────────────────────────────────────────────────────
+const PAGES={start,signin:signIn,'move-in':moveIn,link:linkRoom,setup,upload,mode:modePage,spaces:spacesPage,records,home,property:propertyPage,asset:assetDetail,report,repair,profile};
+function render(){
+ lang=i18n[db.prefs.lang]?db.prefs.lang:'en';
+ document.documentElement.lang=t('locale');
+ document.title=t('app.title');
+ applyTheme();
+ document.querySelector('nav').setAttribute('aria-label',t('nav.label'));
+ document.querySelector('nav .logo').setAttribute('aria-label',t('nav.home'));
+ document.querySelector('nav [data-go="home"]').textContent=t(isLandlord()?'nav.properties':'nav.dashboard');
+ document.querySelector('#account-nav').textContent=me()?t('nav.account'):t('nav.signIn');
+ document.querySelector('#account-nav').dataset.go=me()?'profile':'signin';
+ const langSwitch=document.querySelector('#lang-switch'),languages=Object.keys(i18n);
+ langSwitch.hidden=languages.length<2;
+ langSwitch.setAttribute('aria-label',t('settings.language'));
+ langSwitch.innerHTML=languages.map(code=>`<option value="${code}" ${code===lang?'selected':''}>${esc(i18n[code]['lang.name']||code)}</option>`).join('');
+ const back=document.querySelector('[data-go="back"]');
+ back.textContent=t('nav.back');
+ back.hidden=page==='start'||!trail.length;
+ const navPage=page==='property'?'home':page==='signin'?'signin':page;
+ for(const control of document.querySelectorAll('nav [data-go]')){
+  if(control.dataset.go===navPage)control.setAttribute('aria-current','page');
+  else control.removeAttribute('aria-current');
+ }
+ app.innerHTML=(PAGES[page]||start)();
+ showMaterial();
+}
+
+// ── Files ───────────────────────────────────────────────────────────
+function fileData(file,types){
+ if(!file||!file.size)return Promise.resolve(null);
+ if(file.size>2*1024*1024)return Promise.reject(new Error(t('err.fileTooLarge')));
+ if(!types.some(x=>x.endsWith('/')?file.type.startsWith(x):file.type===x))return Promise.reject(new Error(t('err.fileType')));
+ return new Promise((resolve,reject)=>{const r=new FileReader();r.onload=()=>resolve({src:r.result,type:file.type,name:file.name});r.onerror=()=>reject(new Error(t('err.fileRead')));r.readAsDataURL(file)});
+}
+const images=['image/png','image/jpeg','image/webp'];
+document.addEventListener('error',e=>{
+ const img=e.target;
+ if(img.tagName!=='IMG'||!img.dataset.demo)return;
+ const rest=(img.dataset.next||'').split(',').filter(Boolean);
+ if(rest.length){img.dataset.next=rest.slice(1).join(',');img.src=`demo/${img.dataset.demo}.${rest[0]}`;return}
+ const ph=document.createElement('div');
+ ph.className='img-placeholder '+img.className;ph.setAttribute('role','img');ph.setAttribute('aria-label',img.alt||t('img.pending'));
+ ph.innerHTML=`<span aria-hidden="true">📷</span><small>${esc(t('img.pending'))}</small>`;
+ img.replaceWith(ph);
+},true);
+
+// ── Events ──────────────────────────────────────────────────────────
+function keepRecordDraft(){
+ const draftBox=document.querySelector('#record textarea'),p=prop(editId);
+ if(draftBox&&p&&draftBox.value!==(p.records[recordSpace]?.notes||''))drafts[recordSpace]=draftBox.value;
+}
+function login(id){
+ db.session=id;trail=[];page='start';propId=spaceSel=floorSel=editId=draft=null;repairFilter='All';
+ go('home');save(t('msg.signedIn',{name:db.accounts[id].name}));
+}
+function startAddProperty(){draft={};editId=null;foundProperty=null;material=null;materialPending=false;materialVersion++;postcodeQuery='';postcodeSearched=false;go('setup')}
+document.addEventListener('change',async e=>{
+ if(e.target.id==='lang-switch'){
+  if(!i18n[e.target.value])return;
+  keepRecordDraft();readSpacesForm();
+  db.prefs.lang=e.target.value;render();save();return;
+ }
+ if(e.target.type==='file'){
+  const status=e.target.parentElement.querySelector('.file-picker-status');
+  if(status)status.textContent=e.target.files[0]?.name||t('common.noFile');
+ }
+ if(e.target.id!=='file')return;
+ const version=++materialVersion;material=null;materialPending=true;notice.textContent='';
+ try{const loaded=await fileData(e.target.files[0],method==='video'?['video/']:[...images,'application/pdf']);if(version===materialVersion){material=loaded;document.querySelector('#material-preview')?.replaceChildren(document.createRange().createContextualFragment(media(material)))}}
+ catch(err){if(version===materialVersion){notice.textContent=err.message;document.querySelector('#material-preview')?.replaceChildren()}}
+ finally{if(version===materialVersion)materialPending=false}
+});
+// SVG rooms and pins act as buttons: support Enter and Space.
+document.addEventListener('keydown',e=>{
+ const g=e.target.closest?.('svg [role="button"]');
+ if(g&&(e.key==='Enter'||e.key===' ')){e.preventDefault();g.dispatchEvent(new MouseEvent('click',{bubbles:true}))}
+});
+document.addEventListener('click',e=>{
+ const b=e.target.closest('button,svg [data-space],svg [data-item]');if(!b)return;
+ const d=b.dataset;
+ if(d.action==='signout'){db.session=null;trail=[];page='start';render();save(t('msg.signedOut'));return}
+ if(d.action==='reset'){const prefs=db.prefs;db=seedDb();db.prefs=prefs;trail=[];page='start';drafts={};render();save(t('msg.reset'));return}
+ if(d.signinRole){signinRole=d.signinRole;render();return}
+ if(d.login){login(d.login);return}
+ if(d.filter){repairFilter=d.filter;render();return}
+ if(d.floor){floorSel=d.floor;render();return}
+ if(d.copy){const code=d.copy;Promise.resolve(navigator.clipboard?.writeText(code)).then(()=>{notice.textContent=t('msg.codeCopied',{code})},()=>{notice.textContent=code});return}
+ if(d.prop){propId=d.prop;spaceSel=floorSel=null;go('property');return}
+ if(d.continue){editId=d.continue;go('records');return}
+ if(d.space){spaceSel=d.space;floorSel=null;render();document.querySelector('.space-panel')?.scrollIntoView({block:'nearest'});return}
+ if(d.item){itemSel=d.item;go('asset');return}
+ if(d.ticket){ticketSel=d.ticket;go('repair');return}
+ if(d.mode){if(draft.mode!==d.mode)draft.spaces=null;draft.mode=d.mode;go('spaces');return}
+ if(d.recordSpace){keepRecordDraft();recordSpace=d.recordSpace;render();return}
+ if(d.removeSpace!==undefined){readSpacesForm();if(draft.spaces.length>1)draft.spaces.splice(Number(d.removeSpace),1);else notice.textContent=t('err.needSpace');render();return}
+ if(d.method){method=d.method;material=null;materialPending=false;materialVersion++;for(const x of document.querySelectorAll('[data-method]'))x.setAttribute('aria-pressed',x.dataset.method===method);showMaterial();return}
+ switch(d.action){
+  case 'add-property':startAddProperty();return;
+  case 'add-space':readSpacesForm();draft.spaces.push({type:'other',shared:false,name:''});render();document.querySelector(`[name="name-${draft.spaces.length-1}"]`)?.focus();return;
+  case 'edit-inventory':editId=propId;recordSpace=spaceSel;go('records');return;
+  case 'report':reportCtx={spaceId:spaceSel};go('report');return;
+  case 'report-space':reportCtx={spaceId:spaceSel};go('report');return;
+  case 'report-item':{const it=prop(propId)?.items.find(x=>x.id===itemSel);reportCtx={itemId:it?.id,spaceId:it?.spaceId};go('report');return}
+  case 'use-found-plan':
+   foundProperty=sampleProperty;method='upload';materialVersion++;materialPending=false;
+   material={src:'demo/floor-plan.png',type:'image/png',name:t('setup.planAlt',{name:sampleProperty.name})};
+   go('upload');return;
+  case 'advance':case 'reopen':{const x=prop(propId)?.tickets.find(k=>k.id===ticketSel);if(!x)return;x.status=d.action==='reopen'?2:x.status+1;render();save();return}
+ }
+ if(d.go==='upload'&&foundProperty){foundProperty=null;material=null;materialPending=false;materialVersion++}
+ if(d.go==='finish'){keepRecordDraft();finishSetup();return}
+ if(d.go)go(d.go);
+});
+// Match a pasted room name in English, the current language, or legacy Chinese.
+function findSpace(p,name){
+ const n=name.trim().toLowerCase();
+ const legacy={'客厅':'living','卧室':'bedroom','厨房':'kitchen','浴室':'bathroom'}[name.trim()];
+ return p.spaces.find(s=>spaceName(s).toLowerCase()===n)||p.spaces.find(s=>s.type===legacy||t('type.'+s.type).toLowerCase()===n||i18n.en['type.'+s.type].toLowerCase()===n);
+}
+document.addEventListener('submit',async e=>{
+ const form=e.target;e.preventDefault();if(form.dataset.busy)return;
+ const data=new FormData(form),v=k=>String(data.get(k)||'').trim(),photo=()=>fileData(data.get('photo'),images);
+ form.dataset.busy='yes';
+ try{
+  switch(form.id){
+   case 'signin':{
+    const a=Object.values(db.accounts).find(x=>x.email===v('email').toLowerCase());
+    if(!a||data.get('password')!==DEMO_PASSWORD)throw new Error(t('err.signIn'));
+    login(a.id);break;
+   }
+   case 'link-room':{
+    const code=v('code').toUpperCase();
+    if(tenantHome())throw new Error(t('err.alreadyHaveHome'));
+    let found=null;
+    for(const p of db.properties){const tn=p.tenancies.find(x=>x.code&&x.code===code);if(tn){found={p,tn};break}}
+    if(!found)throw new Error(t('err.roomCode'));
+    if(found.p.mode==='rooms'&&found.tn.tenantIds.length)throw new Error(t('err.roomTaken'));
+    found.tn.tenantIds.push(db.session);found.tn.start||=today();found.tn.inventory='pending';
+    propId=found.p.id;spaceSel=found.tn.spaceIds[0];trail=['start'];
+    go('home',{replace:true});save(t('msg.roomLinked',{name:found.p.name}));break;
+   }
+   case 'postcode-search':
+    postcodeQuery=v('postcode');
+    if(!postcodeQuery)throw new Error(t('err.postcodeRequired'));
+    postcodeSearched=true;render();notice.textContent=t(postcodeKey(postcodeQuery)==='E18ER'?'msg.planFound':'msg.noPlans');break;
+   case 'setup':
+    if(materialPending)throw new Error(t('err.fileLoading'));
+    if(!v('name'))throw new Error(t('err.nameRequired'));
+    draft={...draft,name:v('name'),address:v('address'),date:v('date'),plan:material||draft?.plan||null};foundProperty=null;
+    go(isLandlord()?'mode':'spaces');break;
+   case 'spaces':{
+    readSpacesForm();
+    const list=draft.spaces.map(s=>({...s,name:s.name.trim()}));
+    if(!list.length||list.some(s=>!s.name))throw new Error(t('err.spaceNames'));
+    const landlord=isLandlord(),mode=landlord?draft.mode:'joint';
+    if(mode==='rooms'&&!list.some(s=>!s.shared))throw new Error(t('err.needLettable'));
+    const p={id:'p'+(db.seq++),ownerId:db.session,selfManaged:!landlord,name:draft.name,address:draft.address,date:draft.date,mode,ready:false,plan:draft.plan,
+     spaces:list.map((s,i)=>({id:'s'+(i+1),type:s.type,name:s.name,shared:mode==='rooms'&&s.shared})),records:{},tickets:[],items:[],tenancies:[]};
+    db.properties.push(p);editId=p.id;recordSpace=p.spaces[0].id;draft=null;
+    go('records',{replace:true});save(t('msg.spacesSaved'));break;
+   }
+   case 'record':{
+    const p=prop(editId),sid=recordSpace,notes=v('notes');if(!p)break;
+    if(!notes)throw new Error(t('err.conditionRequired'));
+    p.records[sid]={notes,photo:await photo()||p.records[sid]?.photo||null,photoDate:p.records[sid]?.photoDate,by:db.session};delete drafts[sid];
+    const next=p.spaces.find(s=>!p.records[s.id]);if(next)recordSpace=next.id;
+    render();save(t('msg.roomSaved',{room:spaceName(spaceOf(p,sid))}));break;
+   }
+   case 'import':{
+    const p=prop(editId);if(!p)break;
+    importText=v('existing');const imported={};
+    for(const line of importText.split('\n')){
+     const m=line.trim().match(/^([^:：]+)[:：]\s*(.+)$/);
+     const s=m&&findSpace(p,m[1]);
+     if(s)imported[s.id]=[imported[s.id],m[2]].filter(Boolean).join('\n');
+    }
+    const entries=Object.entries(imported);
+    if(!entries.length)throw new Error(t('err.importFormat'));
+    for(const [id,notes] of entries){const prior=p.records[id];p.records[id]={...prior,notes:[prior?.notes,notes].filter(Boolean).join('\n'),by:db.session}}
+    importText='';render();save(t('msg.imported',{count:entries.length}));break;
+   }
+   case 'report':{
+    const p=prop(propId);if(!p)break;
+    if(!v('location')||!v('description'))throw new Error(t('err.reportRequired'));
+    const it=p.items?.find(x=>x.id===reportCtx.itemId);
+    const sid=it?.spaceId||v('space');
+    if(!canSee(p,sid))throw new Error(t('err.reportRequired'));
+    const baseline=it?{notes:t('item.'+it.id+'.notes'),photo:{demo:it.photo,name:itemName(it)}}:p.records[sid]||null;
+    const x={id:'k'+(db.seq++),spaceId:sid,itemId:it?.id,reporterId:db.session,created:today(),noticed:v('noticed'),location:v('location'),description:v('description'),priority:v('priority'),status:0,baseline,photo:await photo(),photoDate:v('photoDate')};
+    p.tickets.push(x);ticketSel=x.id;go('repair',{replace:true});save(t('msg.reportSaved'));break;
+   }
+   case 'accept':{
+    const x=prop(propId)?.tickets.find(k=>k.id===ticketSel);if(!x)break;
+    if(!v('notes'))throw new Error(t('err.signOffRequired'));
+    x.after={notes:v('notes'),photo:await photo(),photoDate:v('photoDate')};x.status=4;render();save(t('msg.signedOff'));break;
+   }
+   case 'profile':
+    if(!me()||!v('displayName'))throw new Error(t('err.displayName'));
+    me().name=v('displayName');render();save(t('msg.profileSaved'));break;
+   case 'settings':
+    db.prefs.theme=['light','dark'].includes(v('theme'))?v('theme'):'system';render();save(t('msg.settingsSaved'));break;
+  }
+ }catch(err){notice.textContent=err.message}finally{delete form.dataset.busy}
+});
+render();
+</script>
+</html>
