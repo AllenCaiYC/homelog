@@ -13,7 +13,7 @@
 - **维修前后照片要成对生成：** 先生成「维修前」，再把它作为参考图，用图生图 / 编辑功能生成「维修后」。这样两张的角度和构图才会一致。
 - **同一套房子的照片尽量在同一个对话里连续生成：** 把同一段「房屋设定」放在每条 prompt 里，地板、墙色、门窗风格才会统一。
 - **房屋名称和地址都是虚构的：** 新的演示房产用虚构名称和地址，避免和真实楼盘重名。
-- **数量：** 总共 33 张。时间紧的话，标「可选」的可以先跳过，代码里会复用其他图片。
+- **数量：** 总共 36 张（第 6 节的 3 张是第二期补充的）。时间紧的话，标「可选」的可以先跳过，代码里会复用其他图片。
 
 ---
 
@@ -109,7 +109,21 @@ Same photo, same camera angle, framing and lighting. The issue has been professi
 
 ---
 
-## 6. 备选：AI 生成户型图（不推荐，优先用我画的 SVG）
+## 6. 补充素材（3 张）
+
+第二期加的演示数据用到这 3 张。还没放进 `demo/` 之前，页面上显示"照片即将添加"的占位图。
+
+| 文件名 | 房屋 | 比例 | Prompt（接在「通用风格」之后） |
+|---|---|---|---|
+| `check-alder-b1-windowsill` | A | 1:1 | Close-up of a white painted wooden windowsill under a sash bay window, with a paint chip about 3 cm wide exposing the wood underneath, a coin placed next to the chip for scale. Taken by a tenant to show the damage is larger than recorded. |
+| `repair-tap-before` | B | 4:3 | Close-up of a chrome mixer tap on a white bathroom vanity basin, the tap visibly twisted at an angle because its base fitting has come loose, a small gap and water marks around the base. |
+| `repair-tap-after` | B | 4:3 | 用 `repair-tap-before` 作参考图，套用第 5 节「维修后的编辑 prompt」生成：水龙头已经扶正、底座拧紧、周围擦干净。 |
+
+`repair-tap-after` 不会自动显示，留着课堂演示时用：房东把这个报修标记为"已完成"时上传。
+
+---
+
+## 7. 备选：AI 生成户型图（不推荐，优先用我画的 SVG）
 
 AI 生成的户型图常常墙体对不上、文字是乱码，我也拿不到准确的房间坐标，所以没法点击单个房间、也没法按出租状态着色。下面这条仅作备用。
 
