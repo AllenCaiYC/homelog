@@ -16,7 +16,7 @@ const addDays=(date,n)=>new Date(Date.parse(date+'T00:00:00Z')+n*864e5).toISOStr
 // ── Demo data ────────────────────────────────────────────────────────
 // Everything lives in one browser "database" so several demo accounts can
 // work on the same properties (landlord, tenants in a shared house, …).
-const STORE='homelog-v2',LEGACY='zhujidemo-v1',DEMO_PASSWORD='test',SEED_REV=8;
+const STORE='homelog-v2',LEGACY='zhujidemo-v1',DEMO_PASSWORD='test',SEED_REV=11;
 const SPACE_TYPES=['bedroom','kitchen','living','bathroom','other'];
 // Room inventory. Each room has a few fixed condition checks (cleanliness,
 // walls, floor…) and a list of items. Key items, anything that would cost
@@ -49,7 +49,8 @@ function seedDb(){
   acc('ll-new','Alex Morgan','new.landlord@homelog.demo','landlord','demo.llNew'),
   acc('t-lucas','Lucas Silva','lucas@homelog.demo','tenant','demo.tLucas'),
   acc('t-mina','Mina Park','mina@homelog.demo','tenant'),
-  acc('t-sofia','Sofia Rossi','sofia@homelog.demo','tenant')
+  acc('t-sofia','Sofia Rossi','sofia@homelog.demo','tenant'),
+  acc('t-yuki','Yuki Tanaka','yuki@homelog.demo','tenant','demo.tYuki')
  ].map(a=>[a.id,a]));
  const sp=(id,type,shared,photo,n)=>({id,type,shared,photo,nameKey:n?'space.'+type+'N':'type.'+type,...(n?{n}:{})});
  // A room record: overview note and photo, plus the inventory, which starts
@@ -64,7 +65,7 @@ function seedDb(){
  };
  const alderRecords={
   b1:rec('bedroom','Front bedroom with bay window. Carpet clean. Small chip on the windowsill paint. Wardrobe, desk and chair in good condition.','alder-bedroom-1',{cond:{windows:['fair','Small chip in the windowsill paint.','item-alder-b1-window']}}),
-  b2:rec('bedroom','Carpet clean. Chest of drawers and desk in good condition. Window opens and locks.','alder-bedroom-2'),
+  b2:rec('bedroom','Carpet professionally cleaned after the last tenancy; a faint mark remains by the bed. Chest of drawers and desk in good condition. Window opens and locks.','alder-bedroom-2',{date:'2026-11-02',cond:{floor:['fair','Faint mark on the carpet by the bed after professional cleaning.']}}),
   b3:rec('bedroom','Small single room. Two light scratches on the desk. Carpet and wardrobe in good condition.','alder-bedroom-3',{skip:['drawers'],items:{desk:['fair','Two light scratches on the desk top.','item-alder-b3-desk','alder-b3-desk']}}),
   b4:rec('bedroom','Loft room with skylight. Skylight opens and closes. Carpet clean.','alder-bedroom-4',{skip:['drawers']}),
   b5:rec('bedroom','Loft room. Wardrobe door slightly stiff. Carpet clean.','alder-bedroom-5',{items:{wardrobe:['fair','Wardrobe door slightly stiff to open.','inv-alder-b5-wardrobe']}}),
@@ -141,12 +142,44 @@ function seedDb(){
   'item:wardrobe':{kind:'differs',at:'2026-09-04',note:'Small scuff on the wardrobe door, not in the inventory.'}}};
  // Aisha moved in a few days ago, so her 7-day inventory check is still open.
  const b3=alder.tenancies[2];b3.start=addDays(today(),-5);b3.due=addDays(b3.start,7);b3.checks={'t-aisha':{b3:{status:'ok',at:addDays(today(),-4)}}};b3.submitted={};
+ // Deposits as entered by the landlord (demo values). HomeLog only records
+ // them; the money sits with a government-approved scheme. Aisha's is not
+ // registered yet, so the 30-day reminder shows.
+ const dep=(tn,amount,receivedOn,scheme,ref,protectedOn)=>{tn.deposit={amount,receivedOn,...(scheme?{scheme,ref,protectedOn}:{})}};
+ dep(alder.tenancies[0],650,'2026-08-25','DPS','DPS-4821-0937','2026-09-10');
+ dep(b3,650,b3.start);
+ dep(alder.tenancies[3],700,'2026-08-20','DPS','DPS-4821-1180','2026-09-10');
+ dep(alder.tenancies[4],650,'2026-09-01','DPS','DPS-4821-1322','2026-09-12');
+ dep(riverside.tenancies[0],1800,'2026-09-10','TDS','TDS-7730-5521','2026-09-25');
  // Safety and compliance dates (demo values): one item due soon on each property.
- alder.compliance={deposit:{protectedOn:'2026-09-10'},gas:{expires:addDays(today(),20)},eicr:{expires:'2029-03-01'},epc:{expires:'2033-05-01'}};
- riverside.compliance={deposit:{protectedOn:'2026-09-25'},gas:{expires:'2027-08-14'},eicr:{expires:addDays(today(),45)},epc:{expires:'2031-02-01'}};
+ alder.compliance={gas:{expires:addDays(today(),20)},eicr:{expires:'2029-03-01'},epc:{expires:'2033-05-01'}};
+ riverside.compliance={gas:{expires:'2027-08-14'},eicr:{expires:addDays(today(),45)},epc:{expires:'2031-02-01'}};
  Object.assign(alder.tickets.find(x=>x.id==='k3'),{contractor:'Fix-It Handyman',cost:45});
  Object.assign(alder.tickets.find(x=>x.id==='k5'),{contractor:'CleanPro Carpets',cost:80});
  Object.assign(alder.tickets.find(x=>x.id==='k1'),{contractor:'Bow Plumbing'});
+ // Yuki rented Bedroom 2 last year. The tenancy has ended and the deposit
+ // dispute over a carpet stain (small at move-in, larger at move-out) has been
+ // decided by the deposit scheme. Past tenancies are kept read-only.
+ alder.pastTenancies=[{id:'alder-b2-2025',spaceIds:['b2'],tenantIds:['t-yuki'],start:'2025-09-01',end:'2026-08-31',
+  moveIn:{b2:rec('bedroom','Carpet has one small faint stain by the bed. Chest of drawers and desk in good condition. Window opens and locks.','alder-bedroom-2',{date:'2025-08-28',cond:{floor:['fair','Small faint stain on the carpet by the bed, about the size of a coin.','deposit-carpet-movein']}})},
+  checks:{'t-yuki':{b2:{status:'ok',at:'2025-09-03'}}},
+  moveOut:{b2:{at:'2026-09-01',by:'ll-main',changes:{'cond:floor':'poor'},note:'Stain by the bed is now about the size of a palm and darker.',photo:{demo:'deposit-carpet-moveout'}}},
+  deposit:{amount:900,scheme:'DPS',protectedOn:'2025-09-10',status:'closed',
+   deductions:[
+    {id:'clean',what:'Oven and hob not cleaned at move-out',claim:60,response:'agree',final:60},
+    {id:'carpet',space:'b2',ref:'cond:floor',what:'Carpet stain by the bed',claim:120,response:'dispute',offer:30,final:45,
+     landlordNote:'The stain by the bed is much larger and darker than at move-in. Professional cleaning and a patch repair were quoted at £120.',
+     tenantNote:'The stain was already there when I moved in and is in the inventory I confirmed. It did get bigger, so I offered £30 towards cleaning. The carpet was not new.',
+     outcomeReason:'The move-in inventory, confirmed by the tenant, records a coin-sized stain by the bed, so the landlord cannot charge as if the carpet was unmarked. The move-out photo shows the stain grew noticeably, which is more than fair wear and tear. The carpet was about six years old. £45 is awarded towards professional cleaning; the rest of the claim is returned to the tenant.'}],
+   // Done outside HomeLog: the tenant exported the evidence pack and raised
+   // the dispute with the scheme; the outcome was noted afterwards (optional).
+   exported:{at:'2026-09-15',by:'t-yuki'},
+   outcome:{at:'2026-10-30',by:'t-yuki',decidedAt:'2026-10-28',award:45,back:75},
+   returned:[{at:'2026-09-12',amount:720},{at:'2026-10-30',amount:75}],
+   // In HomeLog: records and structured replies. Outside: money and the
+   // dispute, noted by whoever recorded them.
+   timeline:[['2025-09-03','checked'],['2026-08-31','ended'],['2026-09-01','inspected'],['2026-09-03','proposed',{amount:180}],['2026-09-05','responded',{agreed:60,disputed:120}],['2026-09-15','exported']],
+   outside:[['2025-09-10','protected',{},'ll-main'],['2026-09-12','returned',{amount:720},'t-yuki'],['2026-09-15','raised',{},'t-yuki'],['2026-10-28','decided',{award:45,back:75},'t-yuki'],['2026-10-30','returned',{amount:75},'t-yuki']]}}];
  // Lucas moves out soon, so the move-out check can be demonstrated.
  const b4=alder.tenancies[3];b4.end=addDays(today(),5);
  const note=(to,at,key,vars,link,read=false)=>({to,at:at+'T09:00:00Z',key,vars,link,read});
@@ -158,7 +191,8 @@ function seedDb(){
   note('t-wei','2026-11-11','note.status',{name:'Priya Shah',what:'Under the kitchen sink',status:2},{prop:'alder',ticket:'k1'}),
   note('t-aisha',today(),'note.checkReminder',{date:b3.due},{prop:'alder',page:'check'}),
   note('t-tom','2026-11-13','note.status',{name:'Priya Shah',what:'Bathroom basin',status:1},{prop:'riverside',ticket:'k4'},true),
-  note('t-lucas',today(),'note.endingSoon',{date:b4.end},{prop:'alder'})
+  note('t-lucas',today(),'note.endingSoon',{date:b4.end},{prop:'alder'}),
+  note('ll-main','2026-10-30','note.outcomeRecorded',{name:'Yuki Tanaka'},{prop:'alder',page:'past',past:'alder-b2-2025'},true)
  ].map((n,i)=>({id:'seed-n'+i,...n}));
  return {version:2,rev:SEED_REV,seq:100,notifications,session:null,prefs:{theme:'system',lang:'en'},accounts,properties:[alder,riverside]};
 }
@@ -225,13 +259,23 @@ const daysLeft=due=>Math.max(0,Math.round((Date.parse(due)-Date.parse(today()))/
 // Landlord compliance: legal checks with renewal periods (England; demo dates).
 const COMPLIANCE=[['gas',1],['eicr',5],['epc',10]];
 const daysSince=date=>Math.round((Date.parse(today())-Date.parse(date))/864e5);
+// Deposit protection is recorded per tenancy: the landlord must protect it
+// within 30 days of receiving it (England). HomeLog only reminds.
+const DEPOSIT_SCHEMES={DPS:'https://www.depositprotection.com',TDS:'https://www.tenancydepositscheme.com',mydeposits:'https://www.mydeposits.co.uk'};
+function depositState(tn){
+ const d=tn?.deposit;if(!d)return {status:'none'};
+ if(d.protectedOn)return {status:'ok',date:d.protectedOn};
+ const due=addDays(d.receivedOn||tn.start||today(),30);
+ return {status:today()>due?'overdue':'due',date:due};
+}
 function complianceState(p,key){
  const c=p.compliance?.[key]||{};
  if(key==='deposit'){
-  const holds=p.tenancies.some(tn=>tn.tenantIds.length);
-  if(c.protectedOn)return {status:'ok',date:c.protectedOn};
-  const start=p.tenancies.filter(tn=>tn.tenantIds.length&&tn.start).map(tn=>tn.start).sort()[0];
-  return {status:!holds?'na':start&&daysSince(start)>30?'overdue':'due',date:start?addDays(start,30):''};
+  const held=p.tenancies.filter(tn=>tn.tenantIds.length);
+  if(!held.length)return {status:'na'};
+  const open=held.map(depositState).filter(st=>st.status!=='ok');
+  const n=held.length-open.length,first=open.map(st=>st.date).filter(Boolean).sort()[0];
+  return {status:!open.length?'ok':open.some(st=>st.status==='overdue')?'overdue':'due',date:first||'',n,total:held.length};
  }
  if(!c.expires)return {status:'missing'};
  const left=Math.round((Date.parse(c.expires)-Date.parse(today()))/864e5);
@@ -272,7 +316,7 @@ const personName=id=>id===db.session?t('people.you'):(db.accounts[id]?.name||t('
 // ── Navigation state ────────────────────────────────────────────────
 let page='start',trail=[];
 let propId=null,spaceSel=null,floorSel=null,itemSel=null,ticketSel=null,editId=null,recordSpace=null;
-let packTn=null,onDialogClose=null,signinRole='tenant',repairFilter='All',reportCtx={},draft=null,checkOpen=null,checkoutTn=null,demoOpen=false,tourStep=-1;
+let pastSel=null,packTn=null,onDialogClose=null,signinRole='tenant',repairFilter='All',reportCtx={},draft=null,checkOpen=null,checkoutTn=null,demoOpen=false,tourStep=-1;
 let method='upload',material=null,materialPending=false,materialVersion=0,importText='',drafts={};
 let postcodeQuery='',postcodeSearched=false,foundProperty=null;
 const sampleProperty={name:'Harbour Court · Flat 3',address:'Harbour Street, London E1 · Demo'};
@@ -286,7 +330,7 @@ function save(message=''){
  try{localStorage.setItem(STORE,JSON.stringify(db));notice.textContent=message}
  catch{notice.textContent=t('msg.storageFull')}
 }
-const SIGNED_IN=['move-in','link','setup','upload','mode','spaces','records','property','report','repair','asset','check','inbox','checkout','pack'];
+const SIGNED_IN=['past','move-in','link','setup','upload','mode','spaces','records','property','report','repair','asset','check','inbox','checkout','pack'];
 function go(next,{replace=false}={}){
  if(!me()&&SIGNED_IN.includes(next))next='signin';
  if(isLandlord()&&['move-in','link'].includes(next))next='home';
@@ -442,7 +486,7 @@ function home(){
  if(!a)return `<section class="panel card"><h1>${t('dash.eyebrow')}</h1><p>${t('home.signInPrompt')}</p>${btn(t('start.signIn'),'signin',true)}</section>`;
  if(a.role==='landlord')return portfolio();
  const p=tenantHome();
- if(!p)return `<section class="panel card"><h1>${t('dash.eyebrow')}</h1><p>${t('home.noProperty')}</p>${btn(t('home.startMoveIn'),'move-in',true)}</section>`;
+ if(!p)return `<div class="panel"><section class="card"><h1>${t('dash.eyebrow')}</h1><p>${t('home.noProperty')}</p>${btn(t('home.startMoveIn'),'move-in',true)}</section>${pastList(pastFor(a),true)}</div>`;
  propId=p.id;return propertyView(p);
 }
 function occupancy(p){
@@ -493,9 +537,9 @@ function spacesCard(p){
 function complianceCard(p){
  const row=(key,label,extra='')=>{const st=complianceState(p,key);if(st.status==='na')return '';
   const pillCls=st.status==='ok'?'':'urgent';
-  const date=key==='deposit'?(st.status==='ok'?t('compliance.protectedOn',{date:dateText(st.date)}):st.date?t('compliance.protectBy',{date:dateText(st.date)}):''):st.date?t('compliance.expires',{date:dateText(st.date)}):t('compliance.notRecorded');
-  const action=key==='deposit'?(st.status==='ok'?'':`<button type="button" data-renew="deposit">${t('compliance.markProtected')}</button>`):`<button type="button" data-renew="${key}">${t(st.date?'compliance.renew':'compliance.add')}</button>`;
-  return `<li><div><strong>${label}</strong> ${pill(t('compliance.status.'+st.status),pillCls)}<br><small>${date}${extra}</small></div>${action}</li>`};
+  const date=key==='deposit'?t('compliance.depositCount',{n:st.n,total:st.total})+(st.date?' · '+t('compliance.protectBy',{date:dateText(st.date)}):''):st.date?t('compliance.expires',{date:dateText(st.date)}):t('compliance.notRecorded');
+  const action=key==='deposit'?'':`<button type="button" data-renew="${key}">${t(st.date?'compliance.renew':'compliance.add')}</button>`;
+  return `<li><div><strong>${label}</strong> ${pill(key==='deposit'?t('dep.status.'+st.status):t('compliance.status.'+st.status),pillCls)}<br><small>${date}${extra}</small></div>${action}</li>`};
  return `<section class="card"><h2>${t('compliance.title')}</h2><ul class="compliance-list">${row('deposit',t('compliance.deposit'))}${COMPLIANCE.map(([k])=>row(k,t('compliance.'+k),' · '+t('compliance.every.'+k))).join('')}</ul><p class="help">${t('compliance.help')} <a href="https://www.gov.uk/private-renting/your-landlords-safety-responsibilities" target="_blank" rel="noopener noreferrer">GOV.UK</a></p></section>`;
 }
 function tenanciesCard(p){
@@ -505,7 +549,7 @@ function tenanciesCard(p){
   const base=x.inventory==='pending'?(tnLocked(x)?t('inventory.autoLocked'):t('inventory.pendingDue',{date:dateText(x.due)})):t('inventory.'+(x.inventory||'none'));
   return base+(issues?' · '+t('inventory.flagged',{n:issues}):'');
  };
- return `<section class="card"><h2>${t('tenancy.title')} ${term(p.mode==='rooms'?'hmo':'joint')}</h2><p class="help">${t(p.mode==='rooms'?'tenancy.helpRooms':'tenancy.helpJoint')}</p><ul class="tenancy-list">${p.tenancies.map(x=>`<li><div><strong>${x.spaceIds.length===p.spaces.length?t('tenancy.wholeHome'):x.spaceIds.map(id=>esc(spaceName(spaceOf(p,id)))).join(', ')}</strong> · ${x.tenantIds.length?x.tenantIds.map(id=>esc(personName(id))).join(', '):`<em>${t('plan.vacant')}</em>`}<br><small>${x.start?t('tenancy.dates',{start:dateText(x.start),end:x.end?dateText(x.end):t('tenancy.open')})+' · ':''}${x.tenantIds.length?inv(x)+ending(x):t('tenancy.shareCode')}</small></div><div class="code-box"><code>${esc(x.code)}</code><button type="button" data-copy="${esc(x.code)}" aria-label="${t('tenancy.copyLabel',{code:esc(x.code)})}">${t('tenancy.copy')}</button></div>${x.tenantIds.length?`<div class="tenancy-actions row"><button type="button" data-pack="${x.id}">${t('pack.button')}</button>${x.checkout?`<button type="button" data-checkout="${x.id}">${t('checkout.view')} · ${t('checkout.status.'+x.checkout.status)}</button>`:`<button type="button" data-start-checkout="${x.id}">${t('checkout.start')}</button>`}</div>`:''}</li>`).join('')}</ul></section>`;
+ return `<section class="card"><h2>${t('tenancy.title')} ${term(p.mode==='rooms'?'hmo':'joint')}</h2><p class="help">${t(p.mode==='rooms'?'tenancy.helpRooms':'tenancy.helpJoint')}</p><ul class="tenancy-list">${p.tenancies.map(x=>`<li><div><strong>${x.spaceIds.length===p.spaces.length?t('tenancy.wholeHome'):x.spaceIds.map(id=>esc(spaceName(spaceOf(p,id)))).join(', ')}</strong> · ${x.tenantIds.length?x.tenantIds.map(id=>esc(personName(id))).join(', '):`<em>${t('plan.vacant')}</em>`}<br><small>${x.start?t('tenancy.dates',{start:dateText(x.start),end:x.end?dateText(x.end):t('tenancy.open')})+' · ':''}${x.tenantIds.length?inv(x)+ending(x):t('tenancy.shareCode')}</small>${x.tenantIds.length?depositLine(x):''}</div><div class="code-box"><code>${esc(x.code)}</code><button type="button" data-copy="${esc(x.code)}" aria-label="${t('tenancy.copyLabel',{code:esc(x.code)})}">${t('tenancy.copy')}</button></div>${x.tenantIds.length?`<div class="tenancy-actions row"><button type="button" data-pack="${x.id}">${t('pack.button')}</button>${x.checkout?`<button type="button" data-checkout="${x.id}">${t('checkout.view')} · ${t('checkout.status.'+x.checkout.status)}</button>`:`<button type="button" data-start-checkout="${x.id}">${t('checkout.start')}</button>`}</div>`:''}</li>`).join('')}</ul>${pastList((p.pastTenancies||[]).map(x=>({p,x})),false)}</section>`;
 }
 const ticketRow=p=>x=>`<li><button type="button" data-ticket="${x.id}"><strong>${esc(x.location)}</strong>${priorityPill(x.priority)}${isOverdue(x)?' '+pill(t('sla.overdue'),'urgent'):''}<br><small>${statusLabel(x.status)} · ${esc(spaceName(spaceOf(p,x.spaceId)))}${x.affected?.length?' · '+t('affected.short',{n:x.affected.length+1}):''}${x.reporterId&&x.reporterId!==db.session?' · '+t('repair.by',{name:esc(personName(x.reporterId))}):''}</small></button></li>`;
 function repairQueue(p){
@@ -524,7 +568,7 @@ function propertyView(p){
  const eyebrow=lv?t(p.mode==='rooms'?'mode.rooms':'mode.joint'):p.selfManaged?t('dash.personal'):t(p.mode==='rooms'?'dash.roomTenant':'dash.jointTenant');
  const meta=[p.address&&esc(p.address),p.selfManaged&&p.date&&t('home.moveInDate',{date:dateText(p.date)}),!lv&&!p.selfManaged&&tn?.start&&t('tenancy.dates',{start:dateText(tn.start),end:tn.end?dateText(tn.end):t('tenancy.open')}),lv&&occupancy(p)].filter(Boolean).join(' · ');
  const uploaded=p.plan?.src&&!p.plan.sample?(p.plan.type.startsWith('image/')?`<details class="uploaded-plan"><summary>${t('home.viewUpload')}</summary><div class="property-plan">${media(p.plan)}</div></details>`:`<details class="uploaded-plan"><summary>${t('home.viewUpload')}</summary>${media(p.plan)}</details>`):'';
- return `<div class="row spread dash-head"><div><div class="eyebrow">${t('dash.eyebrow')} · ${eyebrow}</div><h1>${esc(p.name)}</h1><p>${meta}</p></div><div class="row">${lv?'':actionBtn(t('home.report'),'report',true)}${!lv&&tn?`<button type="button" data-pack="${tn.id}">${t('pack.button')}</button>`:''}</div></div>${inventoryBanner(p)}<div class="grid"><div><section class="card"><h2>${t('dash.floorPlan')}</h2>${floorPlan(p)}${uploaded}${spacePanel(p)}</section>${itemsCard(p)}</div><div>${lv?tenanciesCard(p):''}${lv?complianceCard(p):''}${spacesCard(p)}${repairQueue(p)}</div></div>`;
+ return `<div class="row spread dash-head"><div><div class="eyebrow">${t('dash.eyebrow')} · ${eyebrow}</div><h1>${esc(p.name)}</h1><p>${meta}</p></div><div class="row">${lv?'':actionBtn(t('home.report'),'report',true)}${!lv&&tn?`<button type="button" data-pack="${tn.id}">${t('pack.button')}</button>`:''}</div></div>${inventoryBanner(p)}<div class="grid"><div><section class="card"><h2>${t('dash.floorPlan')}</h2>${floorPlan(p)}${uploaded}${spacePanel(p)}</section>${itemsCard(p)}</div><div>${lv?tenanciesCard(p):''}${lv?complianceCard(p):''}${lv?'':depositCard(p)}${spacesCard(p)}${repairQueue(p)}</div></div>`;
 }
 
 // ── Room inventory ──────────────────────────────────────────────────
@@ -625,6 +669,7 @@ function openNote(link={}){
  if(link.ticket){ticketSel=link.ticket;go('repair')}
  else if(link.page==='check')go('check');
  else if(link.page==='checkout'){checkoutTn=link.tenancy;go('checkout')}
+ else if(link.page==='past'){pastSel=link.past;go('past')}
  else go(isLandlord()?'property':'home');
 }
 
@@ -675,7 +720,8 @@ function checkoutPage(){
  const total=`<p><strong>${t('checkout.total',{amount:money(totals.proposed)})}</strong></p>`;
  if(mode==='edit')return `<div class="panel">${head}${cards}<section class="card">${total}<p class="help">${t('checkout.sendHelp')}</p>${actionBtn(t('checkout.send'),'send-checkout',true,recorded?'':'aria-disabled="true"')}</section></div>`;
  if(mode==='reply')return `<div class="panel">${head}<form id="checkout-reply">${cards}<section class="card">${total}<button class="primary">${t('checkout.reply')}</button></section></form></div>`;
- const summary=`<section class="card summary"><h2>${t('checkout.summaryTitle')}</h2>${totals.proposed?`<ul class="totals"><li>${t('checkout.summaryProposed',{amount:money(totals.proposed)})}</li>${co.status==='responded'?`<li>${t('checkout.summaryAgreed',{amount:money(totals.agreed)})}</li><li><strong>${t('checkout.summaryDisputed',{amount:money(totals.disputed)})}</strong></li>`:''}</ul>`:`<p>${t('checkout.noDamage')}</p>`}${co.status==='sent'?`<p class="help">${t('checkout.waiting',{date:dateText(co.sentAt)})}</p>`:''}${myReply?`<p class="help">${t('checkout.youResponded',{date:dateText(co.respondedBy?.[db.session])})}</p>`:''}${co.status==='responded'&&totals.disputed?`<p class="help">${t('checkout.disputeHelp')} ${term('deposit')}</p>`:''}${actionBtn(t('checkout.print'),'print')}</section>`;
+ const dep=tn.deposit?.amount?`<div class="dep-maths"><span>${t('dep.mathsDeposit')} <strong>${money(tn.deposit.amount)}</strong></span><span>− ${t('dep.mathsProposed')} <strong>${money(totals.proposed)}</strong></span><span>= ${t('dep.mathsBack')} <strong>${money(Math.max(0,tn.deposit.amount-totals.proposed))}</strong></span></div>${co.status==='responded'?`<p class="help">${t('dep.after10',{agreed:money(Math.max(0,tn.deposit.amount-totals.proposed)),disputed:money(totals.disputed),scheme:esc(tn.deposit.scheme||t('dep.theScheme'))})} ${term('adr')}</p>`:''}`:'';
+ const summary=`<section class="card summary"><h2>${t('checkout.summaryTitle')}</h2>${dep}${totals.proposed?`<ul class="totals"><li>${t('checkout.summaryProposed',{amount:money(totals.proposed)})}</li>${co.status==='responded'?`<li>${t('checkout.summaryAgreed',{amount:money(totals.agreed)})}</li><li><strong>${t('checkout.summaryDisputed',{amount:money(totals.disputed)})}</strong></li>`:''}</ul>`:`<p>${t('checkout.noDamage')}</p>`}${co.status==='sent'?`<p class="help">${t('checkout.waiting',{date:dateText(co.sentAt)})}</p>`:''}${myReply?`<p class="help">${t('checkout.youResponded',{date:dateText(co.respondedBy?.[db.session])})}</p>`:''}${co.status==='responded'&&totals.disputed&&!tn.deposit?.amount?`<p class="help">${t('checkout.disputeHelp')} ${term('deposit')}</p>`:''}${actionBtn(t('checkout.print'),'print')}</section>`;
  return `<div class="panel">${head}${summary}${cards}</div>`;
 }
 
@@ -684,6 +730,16 @@ function checkoutPage(){
 // the original, which stays the reference. The demo ships translations for its
 // sample content; a real product would call a translation service.
 const CONTENT_TR={'zh-CN':{
+ 'Carpet professionally cleaned after the last tenancy; a faint mark remains by the bed. Chest of drawers and desk in good condition. Window opens and locks.':'上一段租约结束后地毯已专业清洗，床边还留有一点淡淡的印记。五斗柜和书桌状况良好。窗户能正常开关和上锁。',
+ 'Faint mark on the carpet by the bed after professional cleaning.':'专业清洗后，床边地毯上仍有一点淡淡的印记。',
+ 'Carpet has one small faint stain by the bed. Chest of drawers and desk in good condition. Window opens and locks.':'床边地毯上有一小块浅色污渍。五斗柜和书桌状况良好。窗户能正常开关和上锁。',
+ 'Small faint stain on the carpet by the bed, about the size of a coin.':'床边地毯上有一小块浅色污渍，大约硬币大小。',
+ 'Stain by the bed is now about the size of a palm and darker.':'床边的污渍现在大约有手掌大小，颜色也更深了。',
+ 'Oven and hob not cleaned at move-out':'退租时烤箱和灶台没有清洁',
+ 'Carpet stain by the bed':'床边地毯污渍',
+ 'The stain by the bed is much larger and darker than at move-in. Professional cleaning and a patch repair were quoted at £120.':'床边的污渍比入住时大得多，颜色也更深。专业清洗加局部修补报价 £120。',
+ 'The stain was already there when I moved in and is in the inventory I confirmed. It did get bigger, so I offered £30 towards cleaning. The carpet was not new.':'这块污渍在我入住时就有，并且写在我确认过的入住清单里。它确实变大了，所以我愿意承担 £30 清洗费。而且这块地毯本来就不是新的。',
+ 'The move-in inventory, confirmed by the tenant, records a coin-sized stain by the bed, so the landlord cannot charge as if the carpet was unmarked. The move-out photo shows the stain grew noticeably, which is more than fair wear and tear. The carpet was about six years old. £45 is awarded towards professional cleaning; the rest of the claim is returned to the tenant.':'租客确认过的入住清单记录了床边有一块硬币大小的污渍，因此房东不能按地毯原本完好来索赔。退租照片显示污渍明显变大，超出了正常损耗。这块地毯大约已使用六年。裁定 £45 用于专业清洗，其余索赔金额退还租客。',
  'Front bedroom with bay window. Carpet clean. Small chip on the windowsill paint. Wardrobe, desk and chair in good condition.':'前卧室带飘窗。地毯干净。窗台油漆有一处小缺口。衣柜、书桌和椅子状况良好。',
  'Carpet clean. Chest of drawers and desk in good condition. Window opens and locks.':'地毯干净。五斗柜和书桌状况良好。窗户可以正常开关和上锁。',
  'Small single room. Two light scratches on the desk. Carpet and wardrobe in good condition.':'小单人间。书桌上有两道轻微划痕。地毯和衣柜状况良好。',
@@ -732,7 +788,7 @@ function userText(text){
 }
 
 // ── Glossary of UK renting terms ────────────────────────────────────
-const TERMS={inventory:'https://www.gov.uk/government/publications/how-to-rent',deposit:'https://www.gov.uk/tenancy-deposit-protection',wearTear:'https://www.gov.uk/tenancy-deposit-protection',joint:'https://www.gov.uk/government/publications/how-to-rent',hmo:'https://www.gov.uk/house-in-multiple-occupation-licence',checkout:'https://www.gov.uk/tenancy-deposit-protection'};
+const TERMS={adr:'https://www.gov.uk/deposit-protection-schemes-and-landlords/disputes-and-problems',inventory:'https://www.gov.uk/government/publications/how-to-rent',deposit:'https://www.gov.uk/tenancy-deposit-protection',wearTear:'https://www.gov.uk/tenancy-deposit-protection',joint:'https://www.gov.uk/government/publications/how-to-rent',hmo:'https://www.gov.uk/house-in-multiple-occupation-licence',checkout:'https://www.gov.uk/tenancy-deposit-protection'};
 const term=k=>`<button type="button" class="term" data-term="${k}" aria-label="${t('term.label',{term:t('term.'+k+'.title')})}">?</button>`;
 function showDialog(html){
  const dlg=document.querySelector('#info-dialog');
@@ -769,6 +825,68 @@ function fingerprint(value){
  return (a.toString(16).padStart(8,'0')+b.toString(16).padStart(8,'0')).replace(/(.{4})(?=.)/g,'$1 ');
 }
 const fpLine=v=>`<small class="fingerprint">${t('pack.fingerprint')}: <code>${fingerprint(v)}</code></small>`;
+// ── Deposit (recorded, not held) ────────────────────────────────────
+function depositCard(p){
+ const tn=tenancyOf(p);if(!tn||landlordView(p))return '';
+ const d=tn.deposit,st=depositState(tn),self=p.selfManaged;
+ const others=tn.tenantIds.filter(id=>id!==db.session).map(id=>esc(personName(id)));
+ const by=`<p class="help">${t(self?'dep.bySelf':'dep.byLandlord',{name:esc(personName(p.ownerId))})}</p>`;
+ if(!d)return `<section class="card deposit-card"><h2>${t('deposit.title')} ${term('deposit')}</h2><p>${t(self?'dep.noneSelf':'dep.none')}</p>${self?'':`<p class="help">${t('dep.rule')}</p>`}</section>`;
+ const joint=others.length?`<p>${t('dep.joint',{names:others.join(', ')})}</p>`:'';
+ const body=st.status==='ok'||(self&&d.scheme)
+  ?`<dl class="dep-facts"><div><dt>${t('dep.scheme')}</dt><dd>${esc(d.scheme)}</dd></div><div><dt>${t('dep.ref')}</dt><dd><code>${esc(d.ref||'—')}</code></dd></div>${d.protectedOn?`<div><dt>${t('dep.protectedOn')}</dt><dd>${dateText(d.protectedOn)}</dd></div>`:''}</dl>${DEPOSIT_SCHEMES[d.scheme]?`<p><a href="${DEPOSIT_SCHEMES[d.scheme]}" target="_blank" rel="noopener noreferrer">${t('dep.verify',{scheme:esc(d.scheme)})} ↗</a></p>`:''}`
+  :`<p class="dep-warn">${t(st.status==='overdue'?'dep.overdue':'dep.pending',{date:dateText(st.date),n:daysLeft(st.date)})}</p><p class="help">${t('dep.rule')}</p>`;
+ return `<section class="card deposit-card"><div class="row spread"><h2>${t('deposit.title')} ${term('deposit')}</h2>${self?'':pill(t('dep.status.'+st.status),'dep-'+st.status)}</div><p class="dep-amount">${money(d.amount)}${d.receivedOn?` <small>${t('dep.received',{date:dateText(d.receivedOn)})}</small>`:''}</p>${joint}${self&&!d.scheme?'':body}${by}</section>`;
+}
+// One line per tenancy on the landlord's card, with a form to record protection.
+function depositLine(tn){
+ const d=tn.deposit,st=depositState(tn);
+ const text=!d?t('dep.lineNone'):st.status==='ok'?t('dep.lineOk',{amount:money(d.amount),scheme:esc(d.scheme),ref:esc(d.ref||'')}):t('dep.linePending',{amount:money(d.amount),date:dateText(st.date)});
+ const form=st.status==='ok'?'':`<details class="protect"><summary>${t('dep.record')}</summary><form data-form="protect" data-target="${tn.id}"><div class="grid"><label>${t('dep.amount')} <input name="amount" type="number" min="0" step="1" inputmode="numeric" required value="${d?.amount||''}"></label><label>${t('dep.scheme')} <select name="scheme">${Object.keys(DEPOSIT_SCHEMES).map(k=>`<option>${k}</option>`).join('')}</select></label><label>${t('dep.ref')} <input name="ref" required maxlength="30"></label><label>${t('dep.protectedOn')} <input name="date" type="date" required value="${today()}"></label></div><p class="help">${t('dep.recordHelp')}</p><button class="primary">${t('dep.save')}</button></form></details>`;
+ return `<div class="dep-line">${pill(t('dep.status.'+st.status),'dep-'+st.status)} <small>${text}</small>${form}</div>`;
+}
+
+// ── Past tenancies: deposit outcome and the evidence behind it ─────
+// An ended tenancy keeps its own move-in record, move-out notes and deposit
+// history, read-only, so either side can still look back at the evidence.
+const pastFor=a=>db.properties.flatMap(p=>(p.pastTenancies||[]).filter(x=>x.tenantIds.includes(a.id)).map(x=>({p,x})));
+const depositBack=d=>d.returned.reduce((n,r)=>n+r.amount,0);
+// A name used mid-sentence ("noted by you", not "noted by You").
+const nameMid=id=>id===db.session?t('people.you').toLowerCase():personName(id);
+function pastList(list,own){
+ if(!list.length)return '';
+ const rows=list.map(({p,x})=>{const d=x.deposit,back=depositBack(d);
+  return `<li><button type="button" data-past="${p.id}|${x.id}"><span><strong>${own?esc(p.name)+' · ':''}${tenancyLabel(p,x)}</strong>${own?'':' · '+x.tenantIds.map(id=>esc(personName(id))).join(', ')} ${pill(t('deposit.status.'+d.status),'deposit-'+d.status)}<br><small>${t('tenancy.dates',{start:dateText(x.start),end:dateText(x.end)})} · ${t('past.depositLine',{back:money(back),amount:money(d.amount)})}</small></span><span class="arrow" aria-hidden="true">›</span></button></li>`}).join('');
+ const body=`<ul class="account-list past-list">${rows}</ul>`;
+ return own?`<section class="card"><h2>${t('past.title')}</h2><p class="help">${t('past.help')}</p>${body}</section>`:`<h3 class="past-head">${t('past.title')}</h3>${body}`;
+}
+function pastPage(){
+ const p=prop(propId),x=p?.pastTenancies?.find(y=>y.id===pastSel);
+ if(!x||!(isManager(p)||x.tenantIds.includes(db.session)))return home();
+ const d=x.deposit,back=depositBack(d),kept=d.amount-back,o=d.outcome;
+ // The ended tenancy's own records stand in for the room's current ones.
+ const pv={...p,records:{...p.records,...x.moveIn},tenancies:[x]};
+ const people=x.tenantIds.map(id=>esc(personName(id))).join(', ');
+ const head=`<section class="card"><div class="eyebrow">${t('past.eyebrow')} · ${esc(p.name)}</div><div class="row spread"><h1>${tenancyLabel(p,x)}</h1>${pill(t('past.ended'),'ended-pill')}</div><p>${people} · ${t('tenancy.dates',{start:dateText(x.start),end:dateText(x.end)})} · ${t('past.landlord',{name:esc(personName(p.ownerId))})}</p><p class="help">${t('past.readOnly')}</p><p class="boundary">ⓘ ${t('past.notHolder')}</p><div class="row">${actionBtn(t('past.export'),'print',true)}</div><p class="help">${t('past.exportHelp')}</p></section>`;
+ const tile=(label,value,cls='')=>`<div class="stat ${cls}"><small>${label}</small><strong>${value}</strong></div>`;
+ const summary=`<section class="card"><div class="row spread"><h2>${t('deposit.title')} ${term('deposit')}</h2>${pill(t('deposit.status.'+d.status),'deposit-'+d.status)}</div><div class="stat-row">${tile(t('deposit.held'),money(d.amount))}${tile(t('deposit.returnedTotal'),money(back),'good')}${tile(t('deposit.kept'),money(kept))}</div><p class="help">${t('deposit.protected',{scheme:esc(d.scheme),date:dateText(d.protectedOn)})} ${t('deposit.sources',{landlord:esc(nameMid(p.ownerId)),tenant:x.tenantIds.map(id=>esc(nameMid(id))).join(', ')})}</p></section>`;
+ const lineOf=(sid,ref)=>{const s=spaceOf(p,sid);return invLines(s.type,x.moveIn[sid]).find(l=>l[0]===ref)};
+ const ded=c=>{
+  const top=`<div class="row spread"><h3>${userText(c.what)}</h3><span class="claim">${t('deposit.claimed',{amount:money(c.claim)})}</span></div>`;
+  if(c.response==='agree')return `<li class="deduction">${top}<p>✓ ${t('deposit.agreed',{name:people,amount:money(c.final)})}</p></li>`;
+  const l=lineOf(c.space,c.ref),mo=x.moveOut[c.space],chk=x.checks&&Object.entries(x.checks).find(([,v])=>v[c.space]?.status==='ok');
+  const compare=l?`<div class="compare evidence-compare"><figure><figcaption><strong>${t('checkout.moveIn')}</strong> · ${dateText(x.moveIn[c.space].photoDate)} ${ratingPill(l[2].r)}</figcaption>${media(l[2].photo)}<p class="inv-note">${userText(l[2].note)}</p>${chk?`<p class="confirmed">✓ ${t('deposit.confirmedAtMoveIn',{name:esc(personName(chk[0])),date:dateText(chk[1][c.space].at)})}</p>`:''}</figure><figure><figcaption><strong>${t('checkout.moveOut')}</strong> · ${dateText(mo.at)} ${ratingPill(mo.changes[c.ref])}</figcaption>${media(mo.photo)}<p class="inv-note">${userText(mo.note)}</p></figure></div>`:'';
+  return `<li class="deduction disputed">${top}<p class="help">${esc(spaceName(spaceOf(p,c.space)))} · ${l?l[1]:''}</p>${compare}<div class="positions"><blockquote><small>${t('deposit.landlordSays',{name:esc(personName(p.ownerId))})}</small>${userText(c.landlordNote)}</blockquote><blockquote><small>${t('deposit.tenantSays',{name:people,amount:money(c.offer)})}</small>${userText(c.tenantNote)}</blockquote></div><p class="disputed-note">⚠ ${t('deposit.unresolved',{amount:money(c.claim)})}</p></li>`;
+ };
+ const deductions=`<section class="card"><h2>${t('deposit.deductions')} ${term('wearTear')}</h2><p class="help">${t('deposit.deductionsHelp')}</p><ul class="deductions">${d.deductions.map(ded).join('')}</ul></section>`;
+ const ex=d.exported,reason=d.deductions.find(c=>c.outcomeReason)?.outcomeReason;
+ const after=`<section class="card"><h2>${t('deposit.afterTitle')}</h2>${ex?`<div class="step-card"><strong>📤 ${t('deposit.exportedTitle')}</strong><p>${t('deposit.exportedBody',{name:esc(personName(ex.by)),date:dateText(ex.at),scheme:esc(d.scheme)})} ${term('adr')}</p></div>`:''}${o?`<div class="step-card outcome"><div class="row spread"><strong>${t('deposit.outcomeTitle')}</strong><small>${t('deposit.outcomeBy',{name:esc(nameMid(o.by)),scheme:esc(d.scheme),date:dateText(o.at)})}</small></div><p>${t('deposit.outcomeLine',{scheme:esc(d.scheme),date:dateText(o.decidedAt),award:money(o.award),back:money(o.back)})}</p>${reason?`<details><summary>${t('deposit.reasonToggle')}</summary><p>${userText(reason)}</p></details>`:''}</div>`:''}</section>`;
+ const tlRow=([at,k,v={},by])=>{const vars={scheme:esc(d.scheme),name:people};for(const [kk,vv] of Object.entries(v))vars[kk]=money(vv);return `<li class="tl-${k}"><span class="tl-date">${dateText(at)}</span><span>${t('deposit.tl.'+k,vars)}${by?` <small class="muted">· ${t('deposit.recordedBy',{name:esc(nameMid(by))})}</small>`:''}</span></li>`};
+ const tl=`<section class="card"><h2>${t('deposit.timeline')}</h2><h3 class="tl-head">${t('deposit.inApp')}</h3><ol class="timeline">${d.timeline.map(tlRow).join('')}</ol>${d.outside?.length?`<h3 class="tl-head">${t('deposit.outside')}</h3><ol class="timeline outside">${d.outside.map(tlRow).join('')}</ol>`:''}</section>`;
+ const records=x.spaceIds.map(sid=>{const s=spaceOf(p,sid);return `<section class="card"><h2>${t('past.moveInRecord')} · ${esc(spaceName(s))}</h2>${evidence(x.moveIn[sid],'')}${invView(pv,s,{who:x.tenantIds})}${fpLine(x.moveIn[sid])}</section>`}).join('');
+ return `<div class="panel past">${head}${summary}${deductions}${after}${tl}${records}<p class="help">${t('past.disclaimer')}</p></div>`;
+}
+
 function packPage(){
  const p=prop(propId),tn=findTenancy(p,packTn);
  if(!tn||!(isManager(p)||tn.tenantIds.includes(db.session)))return home();
@@ -854,7 +972,7 @@ function setup(){
 }
 function upload(){
  draft??={};
- return `<div class="panel"><section class="card"><div class="steps">${t('flow.step',{n:2,total:isLandlord()?5:4})}</div><h2>${t('upload.title')}</h2><form id="setup"><label>${t('upload.name')} <input name="name" required placeholder="${t('upload.namePlaceholder')}" value="${esc(foundProperty?.name||draft.name||'')}"></label><div class="grid"><label>${t('upload.address')} ${optional()}<input name="address" value="${esc(foundProperty?.address||draft.address||'')}"></label><label>${t(isLandlord()?'upload.availableDate':'upload.date')} ${optional()}<input type="date" name="date" value="${esc(draft.date||'')}"></label></div><div class="choices setup-actions">${[['upload','upload.methodPlan'],['video','upload.methodVideo']].map(([id,label])=>`<button type="button" data-method="${id}" aria-pressed="${method===id}">${t(label)}</button>`).join('')}</div><div id="material"></div><div class="setup-actions"><button class="primary">${t(isLandlord()?'upload.nextMode':'upload.nextSpaces')}</button></div></form></section></div>`;
+ return `<div class="panel"><section class="card"><div class="steps">${t('flow.step',{n:2,total:isLandlord()?5:4})}</div><h2>${t('upload.title')}</h2><form id="setup"><label>${t('upload.name')} <input name="name" required placeholder="${t('upload.namePlaceholder')}" value="${esc(foundProperty?.name||draft.name||'')}"></label><div class="grid"><label>${t('upload.address')} ${optional()}<input name="address" value="${esc(foundProperty?.address||draft.address||'')}"></label><label>${t(isLandlord()?'upload.availableDate':'upload.date')} ${optional()}<input type="date" name="date" value="${esc(draft.date||'')}"></label></div>${isLandlord()?'':`<details class="own-deposit"${draft.deposit?' open':''}><summary>${t('dep.ownTitle')} ${optional()}</summary><p class="help">${t('dep.ownHelp')}</p><div class="grid"><label>${t('dep.amount')} <input name="dep-amount" type="number" min="0" step="1" inputmode="numeric" value="${draft.deposit?.amount||''}"></label><label>${t('dep.scheme')} <select name="dep-scheme"><option value="">${t('dep.unsure')}</option>${Object.keys(DEPOSIT_SCHEMES).map(k=>`<option ${draft.deposit?.scheme===k?'selected':''}>${k}</option>`).join('')}</select></label><label>${t('dep.ref')} <input name="dep-ref" maxlength="30" value="${esc(draft.deposit?.ref||'')}"></label></div></details>`}<div class="choices setup-actions">${[['upload','upload.methodPlan'],['video','upload.methodVideo']].map(([id,label])=>`<button type="button" data-method="${id}" aria-pressed="${method===id}">${t(label)}</button>`).join('')}</div><div id="material"></div><div class="setup-actions"><button class="primary">${t(isLandlord()?'upload.nextMode':'upload.nextSpaces')}</button></div></form></section></div>`;
 }
 function showMaterial(){
  const box=document.querySelector('#material');if(!box)return;
@@ -933,7 +1051,7 @@ function finishSetup(){
  const p=prop(editId);if(!p)return go('home');
  if(!p.ready){
   p.ready=true;
-  if(p.selfManaged)p.tenancies=[{id:'self',spaceIds:p.spaces.map(s=>s.id),tenantIds:[db.session]}];
+  if(p.selfManaged)p.tenancies=[{id:'self',spaceIds:p.spaces.map(s=>s.id),tenantIds:[db.session],...(p.selfDeposit?{deposit:p.selfDeposit}:{})}];
   else{
    const prefix=(p.name.toUpperCase().replace(/[^A-Z0-9 ]/g,'').trim().split(/\s+/).find(w=>/[A-Z]/.test(w))||'HOME').slice(0,6);
    p.tenancies=p.mode==='rooms'
@@ -981,7 +1099,7 @@ function repair(){
 }
 
 // ── Rendering ───────────────────────────────────────────────────────
-const PAGES={start,signin:signIn,'move-in':moveIn,link:linkRoom,setup,upload,mode:modePage,spaces:spacesPage,records,home,property:propertyPage,asset:assetDetail,report,repair,profile,check:checkPage,inbox,checkout:checkoutPage,pack:packPage,about:aboutPage};
+const PAGES={past:pastPage,start,signin:signIn,'move-in':moveIn,link:linkRoom,setup,upload,mode:modePage,spaces:spacesPage,records,home,property:propertyPage,asset:assetDetail,report,repair,profile,check:checkPage,inbox,checkout:checkoutPage,pack:packPage,about:aboutPage};
 // Languages shown in the menu as "coming soon" (not translated yet). Chosen for
 // the largest groups of international students in the UK. Once a block for one
 // of these codes is added to i18n.js it moves into the working list on its own.
@@ -1130,6 +1248,7 @@ document.addEventListener('click',e=>{
  if(d.note){const n=(db.notifications||[]).find(x=>x.id===d.note);if(!n)return;n.read=true;save();openNote(n.link);return}
  if(d.checkout){checkoutTn=d.checkout;go('checkout');return}
  if(d.pack){packTn=d.pack;go('pack');return}
+ if(d.past){const [pid,id]=d.past.split('|');propId=pid;pastSel=id;go('past');return}
  if(d.renew){const p=prop(propId);if(!p||!landlordView(p))return;const c=p.compliance||={};
   if(d.renew==='deposit')c.deposit={protectedOn:today()};
   else{const years=COMPLIANCE.find(x=>x[0]===d.renew)?.[1]||1;c[d.renew]={expires:addDays(today(),Math.round(365.25*years))}}
@@ -1250,7 +1369,8 @@ document.addEventListener('submit',async e=>{
     if(materialPending)throw new Error(t('err.fileLoading'));
     if(!v('name'))throw new Error(t('err.nameRequired'));
     {const plan=material||draft?.plan||null;if(plan!==draft?.plan){delete draft?.recognised;delete draft?.spaces}
-    draft={...draft,name:v('name'),address:v('address'),date:v('date'),plan};foundProperty=null;}
+    const da=Math.round(Number(v('dep-amount'))||0),deposit=da?{amount:da,...(DEPOSIT_SCHEMES[v('dep-scheme')]?{scheme:v('dep-scheme')}:{}),...(v('dep-ref')?{ref:v('dep-ref')}:{}),receivedOn:v('date')||undefined}:null;
+    draft={...draft,name:v('name'),address:v('address'),date:v('date'),plan,deposit};foundProperty=null;}
     go(isLandlord()?'mode':'spaces');break;
    case 'spaces':{
     readSpacesForm();
@@ -1259,7 +1379,7 @@ document.addEventListener('submit',async e=>{
     const landlord=isLandlord(),mode=landlord?draft.mode:'joint';
     if(mode==='rooms'&&!list.some(s=>!s.shared))throw new Error(t('err.needLettable'));
     const plan=draft.recognised?{...draft.plan,svg:draft.recognised}:draft.plan;
-    const p={id:'p'+(db.seq++),ownerId:db.session,selfManaged:!landlord,name:draft.name,address:draft.address,date:draft.date,mode,ready:false,plan,
+    const p={id:'p'+(db.seq++),ownerId:db.session,selfManaged:!landlord,name:draft.name,address:draft.address,date:draft.date,mode,ready:false,plan,...(draft.deposit&&!landlord?{selfDeposit:draft.deposit}:{}),
      spaces:list.map((s,i)=>({id:s.zone||'s'+(i+1),type:s.type,name:s.name,shared:mode==='rooms'&&s.shared})),records:{},tickets:[],items:[],tenancies:[]};
     db.properties.push(p);editId=p.id;recordSpace=p.spaces[0].id;draft=null;
     go('records',{replace:true});save(t('msg.spacesSaved'));break;
@@ -1348,6 +1468,14 @@ document.addEventListener('submit',async e=>{
     if(!v('note'))throw new Error(t('err.noteRequired'));
     const r=p.records[sid]||={notes:''};
     (r.addenda||=[]).push({by:db.session,at:today(),note:v('note')});render();save(t('msg.addendumSaved'));break;
+   }
+   case 'protect':{
+    const p=prop(propId),tn=findTenancy(p,form.dataset.target);if(!tn||!landlordView(p))break;
+    const amount=Math.round(Number(v('amount'))||0);
+    if(!amount||!v('ref'))throw new Error(t('err.depositFields'));
+    tn.deposit={...tn.deposit,amount,scheme:DEPOSIT_SCHEMES[v('scheme')]?v('scheme'):'DPS',ref:v('ref'),protectedOn:v('date')||today(),receivedOn:tn.deposit?.receivedOn||tn.start||today()};
+    notify(tn.tenantIds,'note.depositRecorded',{name:me().name,scheme:tn.deposit.scheme},{prop:p.id});
+    render();save(t('msg.depositSaved'));break;
    }
    case 'checkout-item':{
     const p=prop(propId),tn=findTenancy(p,checkoutTn),co=tn?.checkout,sid=form.dataset.target;

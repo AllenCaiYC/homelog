@@ -152,3 +152,76 @@ button.link{border:0;background:none;color:var(--accent);padding:4px 0;text-deco
 .space-editor li.off-plan{opacity:.9}
 .zone-badge{display:inline-grid;place-items:center;width:20px;height:20px;margin-right:6px;border-radius:50%;background:var(--wall);color:#fff;font-size:12px;font-weight:700;vertical-align:1px}
 .floorplan.preview{max-width:360px!important}
+
+/* Past tenancies and deposit outcome */
+.past-head{margin:20px 0 8px;font-size:16px}
+.past-list button{gap:10px}
+.past-list .pill{white-space:nowrap;margin-left:4px;font-size:12px;padding:2px 8px}
+.pill.ended-pill{background:var(--surface);color:var(--muted);border:1px solid var(--border)}
+.pill.deposit-closed{background:#dff6dd;color:#0e700e}
+:root[data-theme=dark] .pill.deposit-closed{background:#1f3a1e;color:#9fd89f}
+.pill.deposit-dispute{background:#fff4ce;color:#5c4400}
+.stat-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin:12px 0}
+.stat{background:var(--surface);border-radius:8px;padding:12px 14px}
+.stat small{display:block;color:var(--muted);margin-bottom:4px}
+.stat strong{font-size:22px}
+.stat.good strong{color:#0e700e}
+:root[data-theme=dark] .stat.good strong{color:#9fd89f}
+.timeline{list-style:none;padding:0;margin:0;border-left:2px solid var(--border);margin-left:6px}
+.timeline li{position:relative;display:grid;grid-template-columns:110px 1fr;gap:10px;padding:6px 0 6px 18px}
+.timeline li::before{content:"";position:absolute;left:-7px;top:12px;width:12px;height:12px;border-radius:50%;background:var(--card);border:2px solid var(--wall)}
+.timeline li.tl-exported::before{background:var(--wall)}
+.timeline .tl-date{color:var(--muted);font-size:14px}
+@media(max-width:480px){.timeline li{grid-template-columns:1fr;gap:0}}
+.deductions{list-style:none;padding:0;margin:0}
+.deduction{padding:14px 0;border-top:1px solid var(--border)}
+.deduction:first-child{border-top:0;padding-top:0}
+.deduction h3{margin:0}
+.deduction .claim{font-weight:600;white-space:nowrap}
+.evidence-compare{margin:12px 0}
+.evidence-compare figure{margin:0;padding:12px;border-radius:8px;background:var(--surface)}
+.evidence-compare figcaption{margin-bottom:8px}
+.evidence-compare figcaption .pill{margin-left:4px}
+.evidence-compare img{border-radius:6px;aspect-ratio:4/3;max-height:none}
+.evidence-compare .inv-note{margin:8px 0 0}
+.evidence-compare .confirmed{margin:6px 0 0;font-size:14px;color:#0e700e}
+:root[data-theme=dark] .evidence-compare .confirmed{color:#9fd89f}
+.positions{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:12px 0}
+.positions blockquote{margin:0;padding:10px 12px;border-left:3px solid var(--border);background:var(--surface);border-radius:0 6px 6px 0}
+.positions blockquote small{display:block;color:var(--muted);margin-bottom:4px}
+@media(max-width:640px){.positions{grid-template-columns:1fr}}
+.decision{border:2px solid var(--wall);border-radius:8px;padding:12px 14px;margin-top:12px}
+.decision p{margin:0}
+.decision .stat-row{margin:10px 0}
+.boundary{margin:8px 0 12px;padding:10px 12px;border-radius:6px;background:var(--surface);font-size:14px}
+.disputed-note{margin:6px 0 0;font-size:14px;color:var(--muted)}
+.step-card{padding:12px 14px;border-radius:8px;background:var(--surface);margin-top:10px}
+.step-card p{margin:6px 0 0}
+.step-card details{margin-top:8px}
+.step-card details p{font-size:14px}
+.tl-head{margin:14px 0 6px;font-size:15px;color:var(--muted)}
+.timeline.outside{border-left-style:dashed}
+.timeline.outside li::before{border-style:dashed;border-color:var(--muted)}
+.timeline.outside li{color:var(--muted)}
+
+/* Deposit (recorded, not held) */
+.deposit-card .dep-amount{font-size:26px;font-weight:700;margin:6px 0}
+.deposit-card .dep-amount small{font-size:14px;font-weight:400;color:var(--muted)}
+.dep-facts{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:8px;margin:10px 0}
+.dep-facts div{background:var(--surface);border-radius:6px;padding:8px 10px}
+.dep-facts dt{font-size:13px;color:var(--muted)}
+.dep-facts dd{margin:2px 0 0;font-weight:600;overflow-wrap:anywhere}
+.dep-warn{padding:10px 12px;border-radius:6px;background:#fff4ce;color:#5c4400;font-weight:600}
+:root[data-theme=dark] .dep-warn{background:#433519;color:#ffe08a}
+.pill.dep-ok{background:#dff6dd;color:#0e700e}
+:root[data-theme=dark] .pill.dep-ok{background:#1f3a1e;color:#9fd89f}
+.pill.dep-due,.pill.dep-none{background:#fff4ce;color:#5c4400}
+:root[data-theme=dark] .pill.dep-due,:root[data-theme=dark] .pill.dep-none{background:#433519;color:#ffe08a}
+.pill.dep-overdue{background:#fde7e9;color:#a4262c}
+:root[data-theme=dark] .pill.dep-overdue{background:#442726;color:#ffb4b4}
+.dep-line{margin-top:6px}
+.dep-line .pill{margin-left:0;font-size:12px;padding:2px 8px}
+.protect{margin-top:6px}
+.protect form{margin-top:8px}
+.dep-maths{display:flex;flex-wrap:wrap;gap:6px 14px;padding:12px 14px;border-radius:8px;background:var(--surface);margin:8px 0 12px}
+.own-deposit{margin:8px 0}

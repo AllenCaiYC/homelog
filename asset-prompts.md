@@ -171,3 +171,21 @@ Clean 2D architectural floor plan, top-down orthographic view, flat vector style
 ## 9. Inventory close-ups
 
 Close-ups for three inventory lines rated "Fair" (Bedroom 5 wardrobe, living-room floor, Bathroom 2 grout). All three are generated and used in the demo data.
+
+---
+
+## 10. 押金纠纷：地毯污渍（2 张，同一角度）
+
+✅ 已生成并用于演示数据。
+
+用于「已退租」演示账户 Yuki Tanaka（12 Alder Road 卧室 2，2025 年 9 月 – 2026 年 8 月）。入住时地毯上已有一小块污渍，退租时变大了。两张图会在页面上**左右并排**对比，所以**角度、构图、光线必须一致**，只有污渍不同。
+
+**生成要点：**
+- 先生成第 1 张；第 2 张在同一个对话里上传第 1 张作参考，并加一句：「Same room, same camera position, same angle and same lighting as the attached photo. Only the stain is different.」
+- 横版 4:3（约 1200×900）。
+- 两张都接在「通用风格」后面。第 2 张把通用风格里的 "check-in inspection" 改成 "check-out inspection"。
+
+| 文件名 | Prompt |
+|---|---|
+| `deposit-carpet-movein.jpg` | Close-up phone photo looking down at a light grey short-pile carpet in a UK student bedroom, next to the wooden leg of a single bed at the left edge of the frame and a white skirting board along the top edge. On the carpet, about 20 cm from the bed leg, one small faint light-brown stain about the size of a 2-pence coin, slightly blurred edges. The rest of the carpet is clean with normal light wear. Shot from standing height, angled about 45 degrees down. |
+| `deposit-carpet-moveout.jpg` | Same room, same camera position, same angle and same lighting as the attached photo. The stain in the same place next to the bed leg is now clearly larger, about the size of a palm, darker brown in the middle with an irregular, slightly faded edge, as if a drink was spilled on it and not fully cleaned. The rest of the carpet looks the same, with a little more everyday wear. |

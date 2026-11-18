@@ -24,6 +24,7 @@ Use the **Demo** button (bottom right) to switch accounts or start the 9-step gu
 | Aisha Khan | Tenant | Just moved in; inventory check still open |
 | Tom Becker | Tenant | Joint tenancy (Riverside Flat 4B) |
 | Lucas Silva | Tenant | Moving out soon; move-out check |
+| Yuki Tanaka | Tenant | Moved out; deposit dispute over a carpet stain, decided by the deposit scheme |
 | Test User | Tenant | No home yet; join with `ALDER-B2` or `RIVER-4B` |
 | Priya Shah | Landlord | Two properties |
 | Alex Morgan | Landlord | New landlord with no properties |
