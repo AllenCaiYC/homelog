@@ -4,7 +4,7 @@
 // Values may contain simple HTML; keep {placeholders} unchanged.
 const i18n={
  en:{
-  'lang.name':'English','locale':'en-GB',
+  'lang.name':'English','locale':'en-GB','lang.comingSoon':'Coming soon',
   'app.title':'HomeLog · Property Records',
   'nav.label':'Main navigation','nav.home':'HomeLog home','nav.dashboard':'Dashboard','nav.properties':'Properties','nav.account':'Account','nav.signIn':'Sign in','nav.back':'← Back',
 
@@ -13,7 +13,7 @@ const i18n={
   'img.pending':'Photo coming soon',
 
   'type.bedroom':'Bedroom','type.kitchen':'Kitchen','type.living':'Living room','type.bathroom':'Bathroom','type.other':'Other space',
-  'space.bedroomN':'Bedroom {n}','space.bathroomN':'Bathroom {n}','space.kitchenN':'Kitchen {n}','space.livingN':'Living room {n}','space.otherN':'Space {n}','space.kitchenLiving':'Kitchen & living',
+  'space.bedroomN':'Bedroom {n}','space.bathroomN':'Bathroom {n}','space.kitchenN':'Kitchen {n}','space.livingN':'Living room {n}','space.otherN':'Space {n}','space.kitchenLiving':'Kitchen & living','space.showerRoom':'Shower room','setup.recognised':'{n} rooms recognised. You can name them in the next steps.','recog.title':'Rooms found on your floor plan','recog.intro':'We found {n} rooms and redrew the plan in HomeLog style. Check the names and types below.','recog.editIntro':'Rename, remove or add rooms. The numbers match the plan.','recog.original':'View the original plan','recog.demo':'Demo: recognition always returns this sample flat.','recog.notOnPlan':'not on the plan',
   'space.openRepairs':'Open repairs here: {n}','space.report':'Report an issue here',
   'priority.Routine':'Routine','priority.Urgent':'Urgent',
   'role.tenant':'Tenant','role.landlord':'Landlord / manager',
@@ -26,7 +26,7 @@ const i18n={
 
   'signin.title':'Sign in','signin.intro':'Choose a demo account. Everything runs in this browser, so you can switch between landlord and tenants to see both sides.',
   'signin.roleLabel':'I am a','signin.as.tenant':'I’m a tenant','signin.as.landlord':'I’m a landlord or manager','signin.demoAccounts':'Demo accounts',
-  'signin.withEmail':'Sign in with email instead','signin.email':'Email','signin.password':'Password','signin.hint':'All demo accounts use the password <strong>test</strong>.','signin.submit':'Sign in',
+  'signin.withEmail':'Sign in with email instead','signin.email':'Email','signin.password':'Password','signin.hint':'All demo accounts use the password <strong>test</strong>.','signin.submit':'Sign in','signin.or':'or','signin.google':'Continue with Google','signin.apple':'Continue with Apple','signin.microsoft':'Continue with Microsoft','signin.socialSoon':'Google, Apple and Microsoft sign-in are not available in the demo yet.',
 
   'profile.title':'Account','profile.testAccount':'Demo account','profile.displayName':'Display name','profile.save':'Save profile',
   'settings.title':'Settings','settings.appearance':'Appearance','settings.system':'Match device','settings.light':'Light','settings.dark':'Dark','settings.language':'Language 语言','settings.save':'Save settings',
@@ -219,7 +219,7 @@ const i18n={
   'pack.generated':'Generated on {date} by {name} from HomeLog.','pack.help':'Everything recorded for this tenancy in one place. Print it or save it as a PDF to share with the deposit scheme or an adviser. A record whose fingerprint has changed has been edited since it was shared.'
  },
  'zh-CN':{
-  'lang.name':'简体中文','locale':'zh-CN',
+  'lang.name':'简体中文','locale':'zh-CN','lang.comingSoon':'即将推出',
   'app.title':'HomeLog · 房屋记录',
   'nav.label':'主导航','nav.home':'HomeLog 首页','nav.dashboard':'我的房屋','nav.properties':'房产','nav.account':'账户','nav.signIn':'登录','nav.back':'← 返回',
 
@@ -228,7 +228,7 @@ const i18n={
   'img.pending':'照片即将添加',
 
   'type.bedroom':'卧室','type.kitchen':'厨房','type.living':'客厅','type.bathroom':'卫生间','type.other':'其他空间',
-  'space.bedroomN':'卧室 {n}','space.bathroomN':'卫生间 {n}','space.kitchenN':'厨房 {n}','space.livingN':'客厅 {n}','space.otherN':'空间 {n}','space.kitchenLiving':'厨房和客厅',
+  'space.bedroomN':'卧室 {n}','space.bathroomN':'卫生间 {n}','space.kitchenN':'厨房 {n}','space.livingN':'客厅 {n}','space.otherN':'空间 {n}','space.kitchenLiving':'厨房和客厅','space.showerRoom':'淋浴间','setup.recognised':'已识别出 {n} 个房间，下一步可以给它们命名。','recog.title':'已从户型图识别出房间','recog.intro':'我们识别出 {n} 个房间，并把户型图转换成了 HomeLog 的样式。请在下面核对名称和类型。','recog.editIntro':'可以改名、删除或添加房间。编号和图上一一对应。','recog.original':'查看原始户型图','recog.demo':'演示版：识别结果固定为这套示例户型。','recog.notOnPlan':'不在图上',
   'space.openRepairs':'这里进行中的报修：{n}','space.report':'报告这个房间的问题',
   'priority.Routine':'一般','priority.Urgent':'紧急',
   'role.tenant':'租客','role.landlord':'房东 / 管理方',
@@ -241,7 +241,7 @@ const i18n={
 
   'signin.title':'登录','signin.intro':'选择一个演示账户。所有数据都在当前浏览器里，你可以在房东和租客之间切换，看到双方的视角。',
   'signin.roleLabel':'我是','signin.as.tenant':'我是租客','signin.as.landlord':'我是房东或管理方','signin.demoAccounts':'演示账户',
-  'signin.withEmail':'改用邮箱登录','signin.email':'邮箱','signin.password':'密码','signin.hint':'所有演示账户的密码都是 <strong>test</strong>。','signin.submit':'登录',
+  'signin.withEmail':'改用邮箱登录','signin.email':'邮箱','signin.password':'密码','signin.hint':'所有演示账户的密码都是 <strong>test</strong>。','signin.submit':'登录','signin.or':'或','signin.google':'使用 Google 账号继续','signin.apple':'使用 Apple 账号继续','signin.microsoft':'使用 Microsoft 账号继续','signin.socialSoon':'演示版暂不支持 Google、Apple、Microsoft 登录。',
 
   'profile.title':'账户','profile.testAccount':'演示账户','profile.displayName':'显示名称','profile.save':'保存资料',
   'settings.title':'设置','settings.appearance':'外观','settings.system':'跟随设备','settings.light':'浅色','settings.dark':'深色','settings.language':'语言 Language','settings.save':'保存设置',

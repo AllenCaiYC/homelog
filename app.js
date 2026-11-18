@@ -16,7 +16,7 @@ const addDays=(date,n)=>new Date(Date.parse(date+'T00:00:00Z')+n*864e5).toISOStr
 // ── Demo data ────────────────────────────────────────────────────────
 // Everything lives in one browser "database" so several demo accounts can
 // work on the same properties (landlord, tenants in a shared house, …).
-const STORE='homelog-v2',LEGACY='zhujidemo-v1',DEMO_PASSWORD='test',SEED_REV=7;
+const STORE='homelog-v2',LEGACY='zhujidemo-v1',DEMO_PASSWORD='test',SEED_REV=8;
 const SPACE_TYPES=['bedroom','kitchen','living','bathroom','other'];
 // Room inventory. Each room has a few fixed condition checks (cleanliness,
 // walls, floor…) and a list of items. Key items, anything that would cost
@@ -67,11 +67,11 @@ function seedDb(){
   b2:rec('bedroom','Carpet clean. Chest of drawers and desk in good condition. Window opens and locks.','alder-bedroom-2'),
   b3:rec('bedroom','Small single room. Two light scratches on the desk. Carpet and wardrobe in good condition.','alder-bedroom-3',{skip:['drawers'],items:{desk:['fair','Two light scratches on the desk top.','item-alder-b3-desk','alder-b3-desk']}}),
   b4:rec('bedroom','Loft room with skylight. Skylight opens and closes. Carpet clean.','alder-bedroom-4',{skip:['drawers']}),
-  b5:rec('bedroom','Loft room. Wardrobe door slightly stiff. Carpet clean.','alder-bedroom-5',{items:{wardrobe:['fair','Wardrobe door slightly stiff to open.']}}),
+  b5:rec('bedroom','Loft room. Wardrobe door slightly stiff. Carpet clean.','alder-bedroom-5',{items:{wardrobe:['fair','Wardrobe door slightly stiff to open.','inv-alder-b5-wardrobe']}}),
   kitchen:rec('kitchen','Hob, oven and fridge-freezer working. Small crack on one fridge door shelf. Worktops have light wear.','alder-kitchen',{skip:['washer','microwave'],extra:[['boiler','key','alder-boiler']],items:{fridge:['fair','Small crack on one fridge door shelf.','item-alder-fridge','alder-fridge'],hob:['good',null,null,'alder-hob']}}),
-  living:rec('living','Sofa and coffee table in good condition. Laminate has light scratches by the door.','alder-living',{skip:['tv'],cond:{floor:['fair','Light scratches on the laminate by the door.']}}),
+  living:rec('living','Sofa and coffee table in good condition. Laminate has light scratches by the door.','alder-living',{skip:['tv'],cond:{floor:['fair','Light scratches on the laminate by the door.','inv-alder-living-floor']}}),
   bath1:rec('bathroom','Bath, shower and basin working. Silicone along the bath in good condition.','alder-bathroom-1',{items:{shower:['good',null,null,'alder-shower']}}),
-  bath2:rec('bathroom','Shower cubicle working. Grout slightly discoloured in one corner.','alder-bathroom-2',{skip:['bath'],cond:{grout:['fair','Grout slightly discoloured in one corner.']}})
+  bath2:rec('bathroom','Shower cubicle working. Grout slightly discoloured in one corner.','alder-bathroom-2',{skip:['bath'],cond:{grout:['fair','Grout slightly discoloured in one corner.','inv-alder-bath2-grout']}})
  };
  const alder={id:'alder',ownerId:'ll-main',name:'12 Alder Road',address:'Alder Road, London E3 · Demo',mode:'rooms',ready:true,plan:{svg:'alder'},cover:'alder-road-exterior',
   spaces:[sp('b1','bedroom',false,'alder-bedroom-1',1),sp('b2','bedroom',false,'alder-bedroom-2',2),sp('b3','bedroom',false,'alder-bedroom-3',3),sp('b4','bedroom',false,'alder-bedroom-4',4),sp('b5','bedroom',false,'alder-bedroom-5',5),
@@ -340,8 +340,31 @@ const PLANS={
    ['b4',BAY(640,945),[400,830]],['landing2',[[655,145],[830,145],[830,1080],[575,1080],[575,962],[655,962]],[740,300],'plan.landing'],['b5',R(195,962,365,503),[370,1095]],['bath2',R(575,1085,255,380),[702,1240]]]}
  ]},
  riverside:{floors:[{id:'f',nameKey:'floor.flat',img:'plan-riverside',w:1536,h:1024,unit:4.6,rooms:[
-  ['rkl',R(128,42,730,601),[715,570]],['rb1',R(878,42,594,558),[1180,430]],['rb2',[[1005,612],[1472,612],[1472,985],[842,985],[842,728],[1005,728]],[1110,770]],['rbath',R(130,665,450,320),[370,800]],['hall',R(600,665,222,320),[711,850],'plan.hall']]}]}
+  ['rkl',R(128,42,730,601),[715,570]],['rb1',R(878,42,594,558),[1180,430]],['rb2',[[1005,612],[1472,612],[1472,985],[842,985],[842,728],[1005,728]],[1110,770]],['rbath',R(130,665,450,320),[370,800]],['hall',R(600,665,222,320),[711,850],'plan.hall']]}]},
+ // Sample flat returned by "recognising" a found or uploaded floor plan.
+ harbour:{floors:[{id:'f',nameKey:'floor.flat',img:'plan-harbour',w:1024,h:1024,unit:2.6,rooms:[
+  ['hkl',R(222,130,688,450),[565,525]],['hbed',R(222,590,398,345),[420,650]],['hbath',R(635,590,275,125),[815,668]],['hhall',R(110,130,105,805),[162,780],'plan.hall']]}]}
 };
+// What floor-plan recognition finds on the sample flat (demo: every image plan
+// is "recognised" as this one). zone is the room's id on the drawn plan.
+const RECOGNISED={harbour:[{zone:'hkl',type:'kitchen',nameKey:'space.kitchenLiving',shared:true},{zone:'hbed',type:'bedroom',nameKey:'type.bedroom',shared:false},{zone:'hbath',type:'bathroom',nameKey:'space.showerRoom',shared:true}]};
+const recognisable=plan=>!!plan&&/^(image\/|application\/pdf)/.test(plan.type||'');
+function recognisedSpaces(key,mode){return RECOGNISED[key].map(r=>({zone:r.zone,type:r.type,name:t(r.nameKey),shared:mode==='rooms'&&r.shared}))}
+// The plan drawn in HomeLog style while rooms are still being named: each
+// recognised room shows its number in the list and its current name.
+function planPreview(key,spaces,mode){
+ const f=PLANS[key].floors[0],u=f.unit;
+ const pts=list=>list.map(([x,y])=>x+','+y).join(' ');
+ const text=(x,y,content,cls='',attr='')=>`<text class="${cls}" x="${x}" y="${y}" font-size="${(cls?10:12)*u}" stroke-width="${4*u}" ${attr}>${content}</text>`;
+ const rooms=f.rooms.map(([id,shape,[lx,ly],labelKey])=>{
+  if(labelKey!==undefined)return `<g class="circ">${text(lx,ly,t(labelKey),'circ-label')}</g>`;
+  const i=spaces.findIndex(s=>s.zone===id);if(i<0)return '';
+  const s=spaces[i],xs=shape.map(q=>q[0]),ys=shape.map(q=>q[1]),bx=Math.min(...xs)+18*u,by=Math.min(...ys)+18*u;
+  const cap=mode==='rooms'?t(s.shared?'plan.shared':'plan.private'):'';
+  return `<g class="room ${s.shared&&mode==='rooms'?'shared':'mine'}"><polygon class="shape" points="${pts(shape)}"/>${text(lx,cap?ly-7*u:ly,esc(s.name),'',`data-zone-label="${i}"`)}${cap?text(lx,ly+9*u,cap,'cap'):''}<g class="zone-no"><circle cx="${bx}" cy="${by}" r="${11*u}" stroke-width="${2*u}"/><text x="${bx}" y="${by+u}" font-size="${11*u}">${i+1}</text></g></g>`;
+ }).join('');
+ return `<svg class="floorplan imgplan preview" style="max-width:420px" viewBox="0 0 ${f.w} ${f.h}" role="img" aria-label="${t('plan.label',{floor:t(f.nameKey)})}"><image href="demo/${f.img}.png" x="0" y="0" width="${f.w}" height="${f.h}"/>${rooms}</svg>`;
+}
 // Properties without a drawn plan get a simple tile layout of their spaces.
 function schematic(p){
  const n=p.spaces.length,rows=Math.ceil(n/2);
@@ -384,7 +407,7 @@ function floorPlan(p){
  const pad=f.img?0:6,maxWidth=f.img?(f.h>f.w?380:560):400;
  const tabs=floors.length>1?`<div class="row floor-tabs" role="group" aria-label="${t('plan.floors')}">${floors.map(x=>`<button type="button" class="filter" data-floor="${x.id}" aria-pressed="${x.id===f.id}">${t(x.nameKey)}</button>`).join('')}</div>`:'';
  const legendKinds=['mine','let','vacant','shared','locked'].filter(k=>kinds.has(k)&&!(k==='mine'&&kinds.size===1));
- const legend=legendKinds.length||repairs?`<div class="legend">${legendKinds.map(k=>`<span><i class="swatch s-${k}"></i>${t('legend.'+k)}</span>`).join('')}${repairs?`<span><i class="swatch s-repair"></i>${t('legend.repair')}</span>`:''}</div>`:'';
+ const legend=legendKinds.length||repairs?`<div class="legend${f.img?' img':''}">${legendKinds.map(k=>`<span><i class="swatch s-${k}"></i>${t('legend.'+k)}</span>`).join('')}${repairs?`<span><i class="swatch s-repair"></i>${t('legend.repair')}</span>`:''}</div>`:'';
  return `${tabs}<svg class="floorplan${f.img?' imgplan':''}" style="max-width:${maxWidth}px" viewBox="${-pad} ${-pad} ${f.w+2*pad} ${f.h+2*pad}" role="group" aria-label="${t('plan.label',{floor:t(f.nameKey)})}">${f.img?`<image href="demo/${f.img}.png" x="0" y="0" width="${f.w}" height="${f.h}"/>`:''}${rooms}${f.img?'':`<rect class="outer" x="0" y="0" width="${f.w}" height="${f.h}"/>`}${pins}</svg>${legend}`;
 }
 
@@ -395,9 +418,16 @@ function start(){
  return `<section class="hero"><div><h1>${t('start.title')}</h1><p>${t('start.intro')}</p><div class="row">${btn(t(label),to,true)}</div></div><img class="welcome-cover" src="demo/welcome-cover.png" alt=""></section><div class="grid three"><section class="card"><h3>${t('start.inventoryTitle')}</h3><p>${t('start.inventoryBody')}</p></section><section class="card"><h3>${t('start.repairsTitle')}</h3><p>${t('start.repairsBody')}</p></section><section class="card"><h3>${t('start.landlordTitle')}</h3><p>${t('start.landlordBody')}</p>${btn(t('about.open'),'about')}</section></div>`;
 }
 const avatar=(name,cls='')=>`<span class="avatar ${cls}" aria-hidden="true">${esc((name||'?').slice(0,1).toUpperCase())}</span>`;
+// Third-party sign-in buttons are placeholders in the demo.
+const SOCIAL_ICONS={
+ google:'<path fill="#4285F4" d="M21.6 12.2c0-.7-.1-1.4-.2-2H12v3.8h5.4a4.6 4.6 0 0 1-2 3v2.5h3.2c1.9-1.7 3-4.3 3-7.3z"/><path fill="#34A853" d="M12 22c2.7 0 5-.9 6.6-2.4l-3.2-2.5c-.9.6-2 1-3.4 1-2.6 0-4.8-1.8-5.6-4.1H3.1v2.6A10 10 0 0 0 12 22z"/><path fill="#FBBC05" d="M6.4 14c-.2-.6-.3-1.3-.3-2s.1-1.4.3-2V7.4H3.1a10 10 0 0 0 0 9.2L6.4 14z"/><path fill="#EA4335" d="M12 6c1.5 0 2.8.5 3.8 1.5l2.9-2.9A10 10 0 0 0 3.1 7.4L6.4 10C7.2 7.7 9.4 6 12 6z"/>',
+ apple:'<path fill="currentColor" d="M16.4 12.6c0-2.4 2-3.6 2.1-3.7-1.1-1.7-2.9-1.9-3.5-1.9-1.5-.2-2.9.9-3.7.9-.8 0-1.9-.9-3.2-.8-1.6 0-3.1 1-4 2.4-1.7 3-.4 7.4 1.2 9.8.8 1.2 1.8 2.5 3 2.4 1.2 0 1.7-.8 3.1-.8 1.5 0 1.9.8 3.2.8 1.3 0 2.1-1.2 2.9-2.4.9-1.3 1.3-2.6 1.3-2.7-.1 0-2.4-.9-2.4-4zM14 5.4c.7-.8 1.1-1.9 1-3-1 0-2.1.7-2.8 1.5-.6.7-1.2 1.8-1 2.9 1.1.1 2.1-.6 2.8-1.4z"/>',
+ microsoft:'<path fill="#F25022" d="M3 3h8.5v8.5H3z"/><path fill="#7FBA00" d="M12.5 3H21v8.5h-8.5z"/><path fill="#00A4EF" d="M3 12.5h8.5V21H3z"/><path fill="#FFB900" d="M12.5 12.5H21V21h-8.5z"/>'
+};
 function signIn(){
  const list=Object.values(db.accounts).filter(a=>a.demo&&a.role===signinRole);
- return `<div class="panel"><section class="card"><h1>${t('signin.title')}</h1><p>${t('signin.intro')}</p><div class="segmented" role="group" aria-label="${t('signin.roleLabel')}">${['tenant','landlord'].map(r=>`<button type="button" data-signin-role="${r}" aria-pressed="${signinRole===r}">${t('signin.as.'+r)}</button>`).join('')}</div><h2>${t('signin.demoAccounts')}</h2><ul class="account-list">${list.map(a=>`<li><button type="button" data-login="${a.id}">${avatar(a.name,'small')}<span><strong>${esc(a.name)}</strong><br><small>${t(a.demo)}</small></span><span class="arrow" aria-hidden="true">›</span></button></li>`).join('')}</ul><details class="email-signin"><summary>${t('signin.withEmail')}</summary><form id="signin"><label>${t('signin.email')} <input name="email" type="email" required autocomplete="username" placeholder="${list[0]?.email||''}"></label><label>${t('signin.password')} <input name="password" type="password" required autocomplete="current-password"></label><p class="help">${t('signin.hint')}</p><button class="primary">${t('signin.submit')}</button></form></details></section></div>`;
+ const social=Object.entries(SOCIAL_ICONS).map(([k,icon])=>`<button type="button" class="social-btn" data-social="${k}"><svg class="social-icon" viewBox="0 0 24 24" aria-hidden="true">${icon}</svg>${t('signin.'+k)}</button>`).join('');
+ return `<div class="panel"><section class="card"><h1>${t('signin.title')}</h1><form id="signin"><label>${t('signin.email')} <input name="email" type="email" required autocomplete="username" placeholder="wei@homelog.demo"></label><label>${t('signin.password')} <input name="password" type="password" required autocomplete="current-password"></label><p class="help">${t('signin.hint')}</p><button class="primary">${t('signin.submit')}</button></form><div class="or-divider"><span>${t('signin.or')}</span></div><div class="social-list">${social}</div><p class="help social-note">${t('signin.socialSoon')}</p></section><section class="card"><h2>${t('signin.demoAccounts')}</h2><p>${t('signin.intro')}</p><div class="segmented" role="group" aria-label="${t('signin.roleLabel')}">${['tenant','landlord'].map(r=>`<button type="button" data-signin-role="${r}" aria-pressed="${signinRole===r}">${t('signin.as.'+r)}</button>`).join('')}</div><ul class="account-list">${list.map(a=>`<li><button type="button" data-login="${a.id}">${avatar(a.name,'small')}<span><strong>${esc(a.name)}</strong><br><small>${t(a.demo)}</small></span><span class="arrow" aria-hidden="true">›</span></button></li>`).join('')}</ul></section></div>`;
 }
 function profile(){
  const a=me();if(!a)return signIn();
@@ -493,7 +523,7 @@ function propertyView(p){
  const lv=landlordView(p),tn=tenancyOf(p);
  const eyebrow=lv?t(p.mode==='rooms'?'mode.rooms':'mode.joint'):p.selfManaged?t('dash.personal'):t(p.mode==='rooms'?'dash.roomTenant':'dash.jointTenant');
  const meta=[p.address&&esc(p.address),p.selfManaged&&p.date&&t('home.moveInDate',{date:dateText(p.date)}),!lv&&!p.selfManaged&&tn?.start&&t('tenancy.dates',{start:dateText(tn.start),end:tn.end?dateText(tn.end):t('tenancy.open')}),lv&&occupancy(p)].filter(Boolean).join(' · ');
- const uploaded=p.plan?.src?(p.plan.type.startsWith('image/')?`<details class="uploaded-plan"><summary>${t('home.viewUpload')}</summary><div class="property-plan">${media(p.plan)}</div></details>`:`<details class="uploaded-plan"><summary>${t('home.viewUpload')}</summary>${media(p.plan)}</details>`):'';
+ const uploaded=p.plan?.src&&!p.plan.sample?(p.plan.type.startsWith('image/')?`<details class="uploaded-plan"><summary>${t('home.viewUpload')}</summary><div class="property-plan">${media(p.plan)}</div></details>`:`<details class="uploaded-plan"><summary>${t('home.viewUpload')}</summary>${media(p.plan)}</details>`):'';
  return `<div class="row spread dash-head"><div><div class="eyebrow">${t('dash.eyebrow')} · ${eyebrow}</div><h1>${esc(p.name)}</h1><p>${meta}</p></div><div class="row">${lv?'':actionBtn(t('home.report'),'report',true)}${!lv&&tn?`<button type="button" data-pack="${tn.id}">${t('pack.button')}</button>`:''}</div></div>${inventoryBanner(p)}<div class="grid"><div><section class="card"><h2>${t('dash.floorPlan')}</h2>${floorPlan(p)}${uploaded}${spacePanel(p)}</section>${itemsCard(p)}</div><div>${lv?tenanciesCard(p):''}${lv?complianceCard(p):''}${spacesCard(p)}${repairQueue(p)}</div></div>`;
 }
 
@@ -820,7 +850,7 @@ function linkRoom(){return `<section class="panel card"><h1>${t('link.title')}</
 // ── Pages: adding a property (landlord, or tenant's own record) ─────
 function setup(){
  const match=postcodeSearched&&postcodeKey(postcodeQuery)==='E18ER';
- return `<section class="panel card"><div class="steps">${t('flow.step',{n:1,total:isLandlord()?5:4})}</div><h1>${t('setup.title')}</h1><form id="postcode-search"><label>${t('setup.postcode')} <input name="postcode" required maxlength="12" autocomplete="postal-code" placeholder="${t('setup.postcodePlaceholder')}" value="${esc(postcodeQuery)}"></label><p class="help">${t('setup.hint')}</p><div class="setup-actions"><button class="primary">${t('setup.find')}</button>${btn(t('setup.upload'),'upload')}</div></form>${postcodeSearched?(match?`<section class="postcode-result"><h2>${sampleProperty.name}</h2><p>${sampleProperty.address} · ${t('setup.sampleResult')}</p><img src="demo/floor-plan.png" alt="${t('setup.planAlt',{name:sampleProperty.name})}"><div class="setup-actions"><button type="button" class="primary" data-action="use-found-plan">${t('setup.usePlan')}</button></div></section>`:`<p>${t('setup.noMatch')}</p>`):''}</section>`;
+ return `<section class="panel card"><div class="steps">${t('flow.step',{n:1,total:isLandlord()?5:4})}</div><h1>${t('setup.title')}</h1><form id="postcode-search"><label>${t('setup.postcode')} <input name="postcode" required maxlength="12" autocomplete="postal-code" placeholder="${t('setup.postcodePlaceholder')}" value="${esc(postcodeQuery)}"></label><p class="help">${t('setup.hint')}</p><div class="setup-actions"><button class="primary">${t('setup.find')}</button>${btn(t('setup.upload'),'upload')}</div></form>${postcodeSearched?(match?`<section class="postcode-result"><h2>${sampleProperty.name}</h2><p>${sampleProperty.address} · ${t('setup.sampleResult')}</p>${planPreview('harbour',recognisedSpaces('harbour','joint'),'joint')}<p class="help recog-count">✓ ${t('setup.recognised',{n:RECOGNISED.harbour.length})}</p><div class="setup-actions"><button type="button" class="primary" data-action="use-found-plan">${t('setup.usePlan')}</button></div></section>`:`<p>${t('setup.noMatch')}</p>`):''}</section>`;
 }
 function upload(){
  draft??={};
@@ -842,14 +872,18 @@ function defaultSpaces(mode){
 function spacesPage(){
  if(!draft)return home();
  const mode=isLandlord()?draft.mode:'joint';
- draft.spaces??=defaultSpaces(mode);
+ draft.recognised??=recognisable(draft.plan)?'harbour':null;
+ const key=draft.recognised;
+ draft.spaces??=key?recognisedSpaces(key,mode):defaultSpaces(mode);
  const rooms=mode==='rooms';
- return `<div class="panel"><section class="card"><div class="steps">${t('flow.step',{n:isLandlord()?4:3,total:isLandlord()?5:4})}</div><h1>${t('spaces.editTitle')}</h1><p>${t(rooms?'spaces.editIntroRooms':'spaces.editIntro')}</p><form id="spaces"><ol class="space-editor">${draft.spaces.map((s,i)=>`<li><label>${t('spaces.name')} <input name="name-${i}" required maxlength="40" value="${esc(s.name)}"></label><label>${t('spaces.type')} <select name="type-${i}">${SPACE_TYPES.map(ty=>`<option value="${ty}" ${s.type===ty?'selected':''}>${t('type.'+ty)}</option>`).join('')}</select></label>${rooms?`<label class="check"><input type="checkbox" name="shared-${i}" ${s.shared?'checked':''}> ${t('spaces.sharedArea')}</label>`:''}<button type="button" class="remove" data-remove-space="${i}" aria-label="${t('spaces.removeLabel',{name:esc(s.name)})}">${t('spaces.remove')}</button></li>`).join('')}</ol><div class="row">${actionBtn(t('spaces.add'),'add-space')}</div><div class="setup-actions"><button class="primary">${t('spaces.next')}</button></div></form></section></div>`;
+ const found=key?draft.spaces.filter(s=>s.zone).length:0;
+ const recog=key?`<div class="recog"><div class="recog-head"><span class="recog-mark" aria-hidden="true">✓</span><div><h2>${t('recog.title')}</h2><p>${t('recog.intro',{n:found})}</p></div></div>${planPreview(key,draft.spaces,mode)}${draft.plan.sample?'':`<details class="uploaded-plan"><summary>${t('recog.original')}</summary><div class="property-plan">${media(draft.plan)}</div></details>`}<p class="help">${t('recog.demo')}</p></div>`:'';
+ return `<div class="panel"><section class="card"><div class="steps">${t('flow.step',{n:isLandlord()?4:3,total:isLandlord()?5:4})}</div><h1>${t('spaces.editTitle')}</h1>${recog}<p>${t(rooms?'spaces.editIntroRooms':key?'recog.editIntro':'spaces.editIntro')}</p><form id="spaces"><ol class="space-editor">${draft.spaces.map((s,i)=>`<li${key&&!s.zone?' class="off-plan"':''}><label>${key&&s.zone?`<span class="zone-badge" aria-hidden="true">${i+1}</span>`:''}${t('spaces.name')}${key&&!s.zone?` <small class="muted">· ${t('recog.notOnPlan')}</small>`:''} <input name="name-${i}" required maxlength="40" value="${esc(s.name)}"></label><label>${t('spaces.type')} <select name="type-${i}">${SPACE_TYPES.map(ty=>`<option value="${ty}" ${s.type===ty?'selected':''}>${t('type.'+ty)}</option>`).join('')}</select></label>${rooms?`<label class="check"><input type="checkbox" name="shared-${i}" ${s.shared?'checked':''}> ${t('spaces.sharedArea')}</label>`:''}<button type="button" class="remove" data-remove-space="${i}" aria-label="${t('spaces.removeLabel',{name:esc(s.name)})}">${t('spaces.remove')}</button></li>`).join('')}</ol><div class="row">${actionBtn(t('spaces.add'),'add-space')}</div><div class="setup-actions"><button class="primary">${t('spaces.next')}</button></div></form></section></div>`;
 }
 function readSpacesForm(){
  const form=document.querySelector('#spaces');if(!form||!draft?.spaces)return;
  const data=new FormData(form);
- draft.spaces=draft.spaces.map((s,i)=>({type:String(data.get('type-'+i)||s.type),name:String(data.get('name-'+i)??s.name),shared:form.elements['shared-'+i]?form.elements['shared-'+i].checked:s.shared}));
+ draft.spaces=draft.spaces.map((s,i)=>({...s,type:String(data.get('type-'+i)||s.type),name:String(data.get('name-'+i)??s.name),shared:form.elements['shared-'+i]?form.elements['shared-'+i].checked:s.shared}));
 }
 // Working copy of one room while the landlord edits it, kept across
 // re-renders (adding or removing a row) until the room is saved.
@@ -948,6 +982,11 @@ function repair(){
 
 // ── Rendering ───────────────────────────────────────────────────────
 const PAGES={start,signin:signIn,'move-in':moveIn,link:linkRoom,setup,upload,mode:modePage,spaces:spacesPage,records,home,property:propertyPage,asset:assetDetail,report,repair,profile,check:checkPage,inbox,checkout:checkoutPage,pack:packPage,about:aboutPage};
+// Languages shown in the menu as "coming soon" (not translated yet). Chosen for
+// the largest groups of international students in the UK. Once a block for one
+// of these codes is added to i18n.js it moves into the working list on its own.
+const PLANNED_LANGS=[['zh-TW','繁體中文'],['hi','हिन्दी'],['ur','اردو'],['bn','বাংলা'],['ar','العربية'],['ms','Bahasa Melayu'],['id','Bahasa Indonesia'],['vi','Tiếng Việt'],['th','ไทย'],['ko','한국어'],['ja','日本語'],['tr','Türkçe'],['es','Español'],['pt','Português'],['fr','Français']];
+
 function render(){
  lang=i18n[db.prefs.lang]?db.prefs.lang:'en';
  document.documentElement.lang=t('locale');
@@ -965,7 +1004,8 @@ function render(){
  const langSwitch=document.querySelector('#lang-switch'),languages=Object.keys(i18n);
  langSwitch.hidden=languages.length<2;
  langSwitch.setAttribute('aria-label',t('settings.language'));
- langSwitch.innerHTML=languages.map(code=>`<option value="${code}" ${code===lang?'selected':''}>${esc(i18n[code]['lang.name']||code)}</option>`).join('');
+ langSwitch.innerHTML=languages.map(code=>`<option value="${code}" ${code===lang?'selected':''}>${esc(i18n[code]['lang.name']||code)}</option>`).join('')
+  +`<optgroup label="${esc(t('lang.comingSoon'))}">${PLANNED_LANGS.filter(([code])=>!i18n[code]).map(([code,name])=>`<option value="${code}" lang="${code}" disabled>${esc(name)}</option>`).join('')}</optgroup>`;
  const back=document.querySelector('[data-go="back"]');
  back.textContent=t('nav.back');
  back.hidden=page==='start'||!trail.length;
@@ -1041,6 +1081,7 @@ document.addEventListener('change',async e=>{
  if(/^(cr|ir)-/.test(nm)){const x=e.target.closest('.inv-edit')?.querySelector('.inv-extra');if(x&&e.target.value!=='good')x.hidden=false;return}
  if(/^it-/.test(nm)){const q=e.target.closest('.inv-edit')?.querySelector('.qty');if(q)q.hidden=e.target.value!=='group';return}
  if(e.target.name==='space'&&e.target.closest('#report')){const box=document.querySelector('#dup-hint');if(box)box.innerHTML=dupHint(prop(propId),e.target.value);return}
+ if(/^(type|shared)-/.test(nm)&&e.target.closest('#spaces')&&draft?.recognised){readSpacesForm();render();return}
  if(e.target.id==='lang-switch'){
   if(!i18n[e.target.value])return;
   keepRecordDraft();readSpacesForm();
@@ -1061,12 +1102,18 @@ document.addEventListener('keydown',e=>{
  const g=e.target.closest?.('svg [role="button"]');
  if(g&&(e.key==='Enter'||e.key===' ')){e.preventDefault();g.dispatchEvent(new MouseEvent('click',{bubbles:true}))}
 });
+// Renaming a recognised room updates its label on the plan as you type.
+document.addEventListener('input',e=>{
+ const m=/^name-(\d+)$/.exec(e.target.name||'');if(!m||!e.target.closest('#spaces'))return;
+ const label=document.querySelector(`[data-zone-label="${m[1]}"]`);if(label)label.textContent=e.target.value;
+});
 document.addEventListener('click',e=>{
  const b=e.target.closest('button,svg [data-space],svg [data-item]');if(!b)return;
  const d=b.dataset;
  if(d.action==='signout'){db.session=null;trail=[];page='start';render();save(t('msg.signedOut'));return}
  if(d.action==='reset'){const prefs=db.prefs,feedback=db.feedback;db=seedDb();db.prefs=prefs;db.feedback=feedback;trail=[];page='start';drafts={};tourStep=-1;render();save(t('msg.reset'));return}
  if(d.signinRole){signinRole=d.signinRole;render();return}
+ if(d.social){notice.textContent=t('signin.socialSoon');return}
  if(d.login){login(d.login);return}
  if(d.tr){shownTr.has(d.tr)?shownTr.delete(d.tr):shownTr.add(d.tr);render();document.querySelector(`[data-tr="${d.tr}"]`)?.focus();return}
  if(d.term){showTerm(d.term);return}
@@ -1125,7 +1172,7 @@ document.addEventListener('click',e=>{
   case 'report-item':{const it=prop(propId)?.items.find(x=>x.id===itemSel);reportCtx={itemId:it?.id,spaceId:it?.spaceId};go('report');return}
   case 'use-found-plan':
    foundProperty=sampleProperty;method='upload';materialVersion++;materialPending=false;
-   material={src:'demo/floor-plan.png',type:'image/png',name:t('setup.planAlt',{name:sampleProperty.name})};
+   material={src:'demo/plan-harbour.png',type:'image/png',sample:true,name:t('setup.planAlt',{name:sampleProperty.name})};
    go('upload');return;
   case 'reopen':{const x=prop(propId)?.tickets.find(k=>k.id===ticketSel);if(!x||x.status!==3)return;x.status=2;(x.updates||=[]).push({by:db.session,at:today(),status:2,note:t('update.reopened')});notify([prop(propId).ownerId],'note.reopened',{name:me().name,what:x.location},{prop:propId,ticket:x.id});render();save(t('msg.reopened'));return}
   case 'check-cancel':checkOpen=null;render();return;
@@ -1202,7 +1249,8 @@ document.addEventListener('submit',async e=>{
    case 'setup':
     if(materialPending)throw new Error(t('err.fileLoading'));
     if(!v('name'))throw new Error(t('err.nameRequired'));
-    draft={...draft,name:v('name'),address:v('address'),date:v('date'),plan:material||draft?.plan||null};foundProperty=null;
+    {const plan=material||draft?.plan||null;if(plan!==draft?.plan){delete draft?.recognised;delete draft?.spaces}
+    draft={...draft,name:v('name'),address:v('address'),date:v('date'),plan};foundProperty=null;}
     go(isLandlord()?'mode':'spaces');break;
    case 'spaces':{
     readSpacesForm();
@@ -1210,8 +1258,9 @@ document.addEventListener('submit',async e=>{
     if(!list.length||list.some(s=>!s.name))throw new Error(t('err.spaceNames'));
     const landlord=isLandlord(),mode=landlord?draft.mode:'joint';
     if(mode==='rooms'&&!list.some(s=>!s.shared))throw new Error(t('err.needLettable'));
-    const p={id:'p'+(db.seq++),ownerId:db.session,selfManaged:!landlord,name:draft.name,address:draft.address,date:draft.date,mode,ready:false,plan:draft.plan,
-     spaces:list.map((s,i)=>({id:'s'+(i+1),type:s.type,name:s.name,shared:mode==='rooms'&&s.shared})),records:{},tickets:[],items:[],tenancies:[]};
+    const plan=draft.recognised?{...draft.plan,svg:draft.recognised}:draft.plan;
+    const p={id:'p'+(db.seq++),ownerId:db.session,selfManaged:!landlord,name:draft.name,address:draft.address,date:draft.date,mode,ready:false,plan,
+     spaces:list.map((s,i)=>({id:s.zone||'s'+(i+1),type:s.type,name:s.name,shared:mode==='rooms'&&s.shared})),records:{},tickets:[],items:[],tenancies:[]};
     db.properties.push(p);editId=p.id;recordSpace=p.spaces[0].id;draft=null;
     go('records',{replace:true});save(t('msg.spacesSaved'));break;
    }

@@ -123,7 +123,7 @@ Same photo, same camera angle, framing and lighting. The issue has been professi
 
 ---
 
-## 7. 写实户型图（4 张）
+## 7. 写实户型图（5 张）
 
 用来替换现在示意性的 SVG 户型图。做法是**图片作底图 + 透明可点击层**：
 
@@ -151,6 +151,7 @@ Professional UK estate agent floor plan, top-down orthographic 2D view, clean ve
 | `plan-alder-first` | 竖版 2:3 | First floor of the same Victorian terraced house: identical outer footprint, staircase in the same position along the right-hand wall arriving at a landing. TOP-LEFT (about 60% of the width, top 37%): a front bedroom with a double bed, chest of drawers, desk and one sash window on the front wall. RIGHT SIDE (top two thirds): landing and staircase. MIDDLE-LEFT: a bathroom with a bath and shower screen along the left wall, a pedestal basin and a toilet. BOTTOM (full width, last third of the depth): a small rear bedroom with a single bed on the left, a wardrobe, and a desk under the rear window on the right side. |
 | `plan-alder-second` | 竖版 2:3 | Loft (second) floor of the same Victorian terraced house: identical outer footprint, staircase in the same position along the right-hand wall arriving at a small landing. Show sloping ceilings with thin dashed lines parallel to the front and back walls. TOP-LEFT (about 60% of the width, top 42%): a loft bedroom with a double bed and a skylight drawn as a small rectangle with diagonal hatching, desk under the skylight. RIGHT SIDE (top 57%): landing and staircase. BOTTOM-LEFT (about 60% of the width): a small loft bedroom with a single bed, wardrobe and desk, small rear window. BOTTOM-RIGHT (about 40% of the width): a compact shower room with a square shower tray, wall-hung basin and toilet. |
 | `plan-riverside` | 横版 3:2 | A 2-bedroom flat in a modern apartment block, roughly 9 m wide and 6.5 m deep, entrance at the bottom. TOP-LEFT (about 55% of the width, top 60%): an open-plan kitchen and living room: straight kitchen run along the top wall at the left with an integrated washing machine at the far left and an induction hob next to it, a breakfast bar, a two-seater sofa, a small dining table, and a balcony door with a narrow balcony on the left wall. TOP-RIGHT (about 45% of the width, top half): main bedroom with a double bed, built-in sliding wardrobe and a large window on the right wall near the top. BOTTOM-RIGHT (about 45% of the width, bottom half): second bedroom with a single bed, desk and wardrobe. BOTTOM-LEFT (about 30% of the width, bottom 40%): bathroom with a bath along the left wall, vanity basin at the bottom-left corner, toilet and heated towel rail. BOTTOM-MIDDLE: a small entrance hall with the front door in the bottom wall, connecting to all rooms. |
+| `plan-harbour` | 方形 1:1 | A 1-bedroom flat in a converted Victorian brick warehouse by the docks, roughly 8 m by 8 m, entrance on the LEFT wall. The outline is NOT a plain rectangle: the bottom-right corner is cut away (an L-shaped flat). Thick external brick walls, two tall arched warehouse windows on the TOP wall and one on the RIGHT wall, and a round structural column standing in the middle of the living area. LEFT EDGE (narrow strip, about 20% of the width, full height): an entrance hallway with the front door in the left wall halfway down and a built-in storage cupboard. TOP (about 80% of the width, top half): a large open-plan living room and kitchen: a galley kitchen run along the top wall at the right with a sink under one arched window, a hob and an integrated fridge-freezer, a kitchen island with two stools, a three-seater sofa facing a TV unit, a rug and the round column between them. BOTTOM-MIDDLE (about 45% of the width, bottom half): a bedroom with a double bed against the bottom wall, two bedside tables and a fitted wardrobe along the left wall of the room. BOTTOM-RIGHT corner: cut away (outside the flat, leave empty white). Between the bedroom and the cut-away corner, a narrow shower room with a walk-in shower, basin and toilet, entered from the living area. |
 
 **尺寸：** 竖版约 1024×1536，横版约 1536×1024，PNG 最好（线条更清晰）。
 
@@ -167,12 +168,6 @@ AI 生成的户型图常常墙体对不上、文字是乱码，我也拿不到�
 Clean 2D architectural floor plan, top-down orthographic view, flat vector style, white background, walls in solid royal blue (#0f6cbd), room floors filled with very pale blue (#e8f2ff), door swings and windows drawn as thin blue lines, simple furniture symbols (beds, sofa, kitchen counter, bath, toilet, basin). NO text, NO labels, NO numbers, NO dimensions, NO compass. Layout: [在这里描述户型，例如 "ground floor: living room at the back, kitchen beside it, hallway with stairs at the front; first floor: two bedrooms and a bathroom"]. Portrait 3:4.
 ```
 
-## 9. Inventory close-ups (optional)
+## 9. Inventory close-ups
 
-Three inventory lines are rated "Fair" without a close-up photo, so the landlord currently sees "Add a close-up photo" on them, which is part of the demo. Generate these only if you want those lines to carry photos too. Same style as the other item photos: a phone photo taken by a landlord, natural light, no people, no text, 4:3, saved as JPG in `demo/`.
-
-| File | Prompt |
-|---|---|
-| `inv-alder-b5-wardrobe.jpg` | Close-up phone photo of a white flat-pack wardrobe door in a UK loft bedroom, the door slightly ajar and a little misaligned with the frame at the top hinge, sloped ceiling visible at the edge, soft daylight. |
-| `inv-alder-living-floor.jpg` | Close-up phone photo of light oak laminate flooring just inside a living-room door in a UK shared house, a few fine light scratches across the boards near the door threshold, door edge and skirting board visible, daylight. |
-| `inv-alder-bath2-grout.jpg` | Close-up phone photo of white square wall tiles in the corner of a UK shower cubicle, the grout lines in the bottom corner slightly yellow-grey and discoloured, chrome shower tray edge visible, bright bathroom light. |
+Close-ups for three inventory lines rated "Fair" (Bedroom 5 wardrobe, living-room floor, Bathroom 2 grout). All three are generated and used in the demo data.

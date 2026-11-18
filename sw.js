@@ -2,8 +2,8 @@
 // Pages, scripts and styles are fetched fresh when online (so updates show up
 // straight away) and served from the cache when offline. Photos and floor
 // plans are cached the first time they load.
-const CACHE = 'homelog-v1';
-const CORE = ['./', 'index.html', 'styles.css', 'i18n.js', 'app.js', 'manifest.webmanifest', 'icon.svg', 'demo/welcome-cover.png'];
+const CACHE = 'homelog-v2';
+const CORE = ['./', 'index.html', 'styles.css', 'i18n.js', 'app.js', 'manifest.webmanifest', 'icon.svg', 'icon-192.png', 'icon-512.png', 'demo/welcome-cover.png'];
 
 self.addEventListener('install', event => {
   event.waitUntil(caches.open(CACHE).then(cache => cache.addAll(CORE)).then(() => self.skipWaiting()));
