@@ -16,8 +16,28 @@ const addDays=(date,n)=>new Date(Date.parse(date+'T00:00:00Z')+n*864e5).toISOStr
 // ── Demo data ────────────────────────────────────────────────────────
 // Everything lives in one browser "database" so several demo accounts can
 // work on the same properties (landlord, tenants in a shared house, …).
-const STORE='homelog-v2',LEGACY='zhujidemo-v1',DEMO_PASSWORD='test',SEED_REV=6;
+const STORE='homelog-v2',LEGACY='zhujidemo-v1',DEMO_PASSWORD='test',SEED_REV=7;
 const SPACE_TYPES=['bedroom','kitchen','living','bathroom','other'];
+// Room inventory. Each room has a few fixed condition checks (cleanliness,
+// walls, floor…) and a list of items. Key items, anything that would cost
+// money if damaged, get their own rating; small things are grouped with a
+// count. Ratings are good, fair or poor; fair and poor need a note and
+// ideally a close-up photo. Tenants then only flag what doesn't match.
+const RATINGS=['good','fair','poor'];
+const CONDITIONS={bedroom:['clean','walls','floor','damp','smell','windows'],kitchen:['clean','walls','floor','damp','windows','sink'],bathroom:['clean','walls','floor','damp','grout','fan']};
+const condKeys=type=>CONDITIONS[type]||CONDITIONS.bedroom;
+const ROOM_TPL={
+ bedroom:[['bed','key'],['mattress','key'],['wardrobe','key'],['desk','key'],['chair','key'],['drawers','key'],['curtains','group',1],['lights','group',2],['hangers','group',8]],
+ living:[['sofa','key'],['coffeeTable','key'],['tv','key'],['curtains','group',1],['lights','group',2],['cushions','group',4]],
+ kitchen:[['fridge','key'],['oven','key'],['hob','key'],['washer','key'],['microwave','key'],['kettle','group',1],['crockery','group',16],['cutlery','group',24],['pans','group',4]],
+ bathroom:[['bath','key'],['shower','key'],['basin','key'],['toilet','key'],['mirror','key'],['towelRail','group',1],['bathMat','group',1]],
+ other:[['lights','group',1]]
+};
+const EXTRA_ITEMS=[['boiler','key'],['blind','group',1],['smokeAlarm','key'],['rug','key'],['bookshelf','key'],['bin','group',1]];
+const ALL_ITEMS=[...new Map([...Object.values(ROOM_TPL).flat(),...EXTRA_ITEMS].map(x=>[x[0],x])).values()];
+function blankInventory(type,skip=[]){
+ return {cond:Object.fromEntries(condKeys(type).map(c=>[c,{r:'good'}])),items:(ROOM_TPL[type]||ROOM_TPL.other).filter(([k])=>!skip.includes(k)).map(([k,tier,qty])=>({id:k,k,tier,r:'good',...(qty?{qty}:{})}))};
+}
 function seedDb(){
  const acc=(id,name,email,role,demo)=>({id,name,email,role,...(demo?{demo}:{})});
  const accounts=Object.fromEntries([
@@ -32,17 +52,26 @@ function seedDb(){
   acc('t-sofia','Sofia Rossi','sofia@homelog.demo','tenant')
  ].map(a=>[a.id,a]));
  const sp=(id,type,shared,photo,n)=>({id,type,shared,photo,nameKey:n?'space.'+type+'N':'type.'+type,...(n?{n}:{})});
- const rec=(notes,photo,date='2026-08-28')=>({notes,photo:photo?{demo:photo}:null,photoDate:date,by:'ll-main'});
+ // A room record: overview note and photo, plus the inventory, which starts
+ // from the template with only the differences filled in.
+ const rec=(type,notes,photo,{date='2026-08-28',cond={},items={},skip=[],extra=[]}={})=>{
+  const inv=blankInventory(type,skip);
+  inv.items.push(...extra.map(([k,tier,pin])=>({id:k,k,tier,r:'good',...(pin?{pin}:{})})));
+  const set=(e,[r,note,shot,pin])=>Object.assign(e,{r},note?{note}:{},shot?{photo:{demo:shot}}:{},pin?{pin}:{});
+  for(const [c,v] of Object.entries(cond))set(inv.cond[c],v);
+  for(const [k,v] of Object.entries(items)){const it=inv.items.find(x=>x.k===k);if(it)set(it,v)}
+  return {notes,photo:photo?{demo:photo}:null,photoDate:date,by:'ll-main',...inv};
+ };
  const alderRecords={
-  b1:rec('Front bedroom with bay window. Carpet clean. Small chip on the windowsill paint. Wardrobe, desk and chair in good condition.','alder-bedroom-1'),
-  b2:rec('Carpet clean. Chest of drawers and desk in good condition. Window opens and locks.','alder-bedroom-2'),
-  b3:rec('Small single room. Two light scratches on the desk. Carpet and wardrobe in good condition.','alder-bedroom-3'),
-  b4:rec('Loft room with skylight. Skylight opens and closes. Carpet clean.','alder-bedroom-4'),
-  b5:rec('Loft room. Wardrobe door slightly stiff. Carpet clean.','alder-bedroom-5'),
-  kitchen:rec('Hob, oven and fridge-freezer working. Small crack on one fridge door shelf. Worktops have light wear.','alder-kitchen'),
-  living:rec('Sofa and coffee table in good condition. Laminate has light scratches by the door.','alder-living'),
-  bath1:rec('Bath, shower and basin working. Silicone along the bath in good condition.','alder-bathroom-1'),
-  bath2:rec('Shower cubicle working. Grout slightly discoloured in one corner.','alder-bathroom-2')
+  b1:rec('bedroom','Front bedroom with bay window. Carpet clean. Small chip on the windowsill paint. Wardrobe, desk and chair in good condition.','alder-bedroom-1',{cond:{windows:['fair','Small chip in the windowsill paint.','item-alder-b1-window']}}),
+  b2:rec('bedroom','Carpet clean. Chest of drawers and desk in good condition. Window opens and locks.','alder-bedroom-2'),
+  b3:rec('bedroom','Small single room. Two light scratches on the desk. Carpet and wardrobe in good condition.','alder-bedroom-3',{skip:['drawers'],items:{desk:['fair','Two light scratches on the desk top.','item-alder-b3-desk','alder-b3-desk']}}),
+  b4:rec('bedroom','Loft room with skylight. Skylight opens and closes. Carpet clean.','alder-bedroom-4',{skip:['drawers']}),
+  b5:rec('bedroom','Loft room. Wardrobe door slightly stiff. Carpet clean.','alder-bedroom-5',{items:{wardrobe:['fair','Wardrobe door slightly stiff to open.']}}),
+  kitchen:rec('kitchen','Hob, oven and fridge-freezer working. Small crack on one fridge door shelf. Worktops have light wear.','alder-kitchen',{skip:['washer','microwave'],extra:[['boiler','key','alder-boiler']],items:{fridge:['fair','Small crack on one fridge door shelf.','item-alder-fridge','alder-fridge'],hob:['good',null,null,'alder-hob']}}),
+  living:rec('living','Sofa and coffee table in good condition. Laminate has light scratches by the door.','alder-living',{skip:['tv'],cond:{floor:['fair','Light scratches on the laminate by the door.']}}),
+  bath1:rec('bathroom','Bath, shower and basin working. Silicone along the bath in good condition.','alder-bathroom-1',{items:{shower:['good',null,null,'alder-shower']}}),
+  bath2:rec('bathroom','Shower cubicle working. Grout slightly discoloured in one corner.','alder-bathroom-2',{skip:['bath'],cond:{grout:['fair','Grout slightly discoloured in one corner.']}})
  };
  const alder={id:'alder',ownerId:'ll-main',name:'12 Alder Road',address:'Alder Road, London E3 · Demo',mode:'rooms',ready:true,plan:{svg:'alder'},cover:'alder-road-exterior',
   spaces:[sp('b1','bedroom',false,'alder-bedroom-1',1),sp('b2','bedroom',false,'alder-bedroom-2',2),sp('b3','bedroom',false,'alder-bedroom-3',3),sp('b4','bedroom',false,'alder-bedroom-4',4),sp('b5','bedroom',false,'alder-bedroom-5',5),
@@ -70,11 +99,12 @@ function seedDb(){
    {id:'k3',spaceId:'b1',reporterId:'t-wei',created:'2026-10-02',location:'Wardrobe door',description:'The wardrobe door hangs crooked because the top hinge is broken.',priority:'Routine',status:4,photo:{demo:'repair-wardrobe-before'},photoDate:'2026-10-02',baseline:alderRecords.b1,after:{notes:'Hinge replaced. Door closes properly now.',photo:{demo:'repair-wardrobe-after'},photoDate:'2026-10-06'}}
   ]
  };
+ const rd='2026-09-10';
  const riverRecords={
-  rkl:rec('Kitchen units, oven and induction hob working. Washing machine tested. Laminate in good condition.','riverside-kitchen-living','2026-09-10'),
-  rb1:rec('Mirrored wardrobe slides smoothly. Minor scuff on the window frame.','riverside-bedroom-1','2026-09-10'),
-  rb2:rec('Desk, chair and wardrobe in good condition. Blind works.','riverside-bedroom-2','2026-09-10'),
-  rbath:rec('Bath and shower working. Small hairline crack near the basin overflow.','riverside-bathroom','2026-09-10')
+  rkl:rec('kitchen','Kitchen units, oven and induction hob working. Washing machine tested. Laminate in good condition.','riverside-kitchen-living',{date:rd,skip:['microwave'],extra:[['sofa','key'],['coffeeTable','key']],items:{washer:['good',null,null,'river-washer'],hob:['good',null,null,'river-hob']}}),
+  rb1:rec('bedroom','Mirrored wardrobe slides smoothly. Minor scuff on the window frame.','riverside-bedroom-1',{date:rd,skip:['drawers'],cond:{windows:['fair','Minor scuff on the window frame.','item-riverside-window']}}),
+  rb2:rec('bedroom','Desk, chair and wardrobe in good condition. Blind works.','riverside-bedroom-2',{date:rd,skip:['curtains'],extra:[['blind','group']]}),
+  rbath:rec('bathroom','Bath and shower working. Small hairline crack near the basin overflow.','riverside-bathroom',{date:rd,items:{basin:['fair','Small hairline crack near the overflow.','item-riverside-basin','river-basin']}})
  };
  const riverside={id:'riverside',ownerId:'ll-main',name:'Riverside Flat 4B',address:'Riverside Walk, London SE16 · Demo',mode:'joint',ready:true,plan:{svg:'riverside'},cover:'riverside-flat-exterior',
   spaces:[{id:'rkl',type:'kitchen',nameKey:'space.kitchenLiving',shared:false,photo:'riverside-kitchen-living'},sp('rb1','bedroom',false,'riverside-bedroom-1',1),sp('rb2','bedroom',false,'riverside-bedroom-2',2),sp('rbath','bathroom',false,'riverside-bathroom')],
@@ -106,7 +136,9 @@ function seedDb(){
   tn.due=addDays(tn.start,7);tn.lockedAt=at;tn.checks={};tn.submitted={};
   for(const who of tn.tenantIds){tn.checks[who]=Object.fromEntries(ids.map(id=>[id,{status:'ok',at}]));tn.submitted[who]=at}
  }
- alder.tenancies[0].checks['t-wei'].b1={status:'issue',at:'2026-09-04',note:'The chip on the windowsill is about 3 cm wide, larger than described. There is also a small scuff on the wardrobe door.',photo:{demo:'check-alder-b1-windowsill'}};
+ alder.tenancies[0].checks['t-wei'].b1={status:'issue',at:'2026-09-04',flags:{
+  'cond:windows':{kind:'differs',at:'2026-09-04',note:'The chip is about 3 cm wide, larger than described.',photo:{demo:'check-alder-b1-windowsill'}},
+  'item:wardrobe':{kind:'differs',at:'2026-09-04',note:'Small scuff on the wardrobe door, not in the inventory.'}}};
  // Aisha moved in a few days ago, so her 7-day inventory check is still open.
  const b3=alder.tenancies[2];b3.start=addDays(today(),-5);b3.due=addDays(b3.start,7);b3.checks={'t-aisha':{b3:{status:'ok',at:addDays(today(),-4)}}};b3.submitted={};
  // Safety and compliance dates (demo values): one item due soon on each property.
@@ -121,7 +153,7 @@ function seedDb(){
  const notifications=[
   note('ll-main','2026-11-14','note.reported',{name:'Aisha Khan',what:'Silicone along the bath'},{prop:'alder',ticket:'k2'}),
   note('ll-main','2026-11-12','note.reported',{name:'Tom Becker',what:'Bathroom basin'},{prop:'riverside',ticket:'k4'},true),
-  note('ll-main','2026-09-04','note.checkDone',{name:'Wei Zhang',issues:1},{prop:'alder'},true),
+  note('ll-main','2026-09-04','note.checkDone',{name:'Wei Zhang',issues:2},{prop:'alder'},true),
   note('t-wei','2026-11-14','note.reported',{name:'Aisha Khan',what:'Silicone along the bath'},{prop:'alder',ticket:'k2'}),
   note('t-wei','2026-11-11','note.status',{name:'Priya Shah',what:'Under the kitchen sink',status:2},{prop:'alder',ticket:'k1'}),
   note('t-aisha',today(),'note.checkReminder',{date:b3.due},{prop:'alder',page:'check'}),
@@ -412,7 +444,7 @@ function spacePanel(p){
  const items=(p.items||[]).map((it,i)=>({it,n:i+1})).filter(({it})=>it.spaceId===s.id);
  const tickets=visibleTickets(p).filter(x=>x.spaceId===s.id&&x.status<4);
  const kind=spaceKindLabel(p,s);
- return `<section class="space-panel" aria-live="polite"><div class="row spread"><h3>${esc(spaceName(s))}</h3>${kind?pill(kind):''}</div>${evidence(p.records[s.id],t('home.noRecord'))}${items.length?`<ol class="item-list compact">${items.map(({it,n})=>`<li><button type="button" data-item="${it.id}"><span class="item-number">${n}</span><span>${esc(itemName(it))}</span><span class="arrow" aria-hidden="true">›</span></button></li>`).join('')}</ol>`:''}${tickets.length?`<p><strong>${t('space.openRepairs',{n:tickets.length})}</strong></p><ul class="repair-list">${tickets.map(ticketRow(p)).join('')}</ul>`:''}${checksHtml(p,s)}${spaceLocked(p,s.id)?lockedNote(s.id):''}${landlordView(p)?'':actionBtn(t('space.report'),'report-space')}</section>`;
+ return `<section class="space-panel" aria-live="polite"><div class="row spread"><h3>${esc(spaceName(s))}</h3>${kind?pill(kind):''}</div>${evidence(p.records[s.id],t('home.noRecord'))}${invView(p,s)}${items.length?`<ol class="item-list compact">${items.map(({it,n})=>`<li><button type="button" data-item="${it.id}"><span class="item-number">${n}</span><span>${esc(itemName(it))}</span><span class="arrow" aria-hidden="true">›</span></button></li>`).join('')}</ol>`:''}${tickets.length?`<p><strong>${t('space.openRepairs',{n:tickets.length})}</strong></p><ul class="repair-list">${tickets.map(ticketRow(p)).join('')}</ul>`:''}${checksHtml(p,s)}${spaceLocked(p,s.id)?lockedNote(s.id):''}${landlordView(p)?'':actionBtn(t('space.report'),'report-space')}</section>`;
 }
 function spacesCard(p){
  const vis=visibleSpaceIds(p),tn=tenancyOf(p);
@@ -439,7 +471,7 @@ function complianceCard(p){
 function tenanciesCard(p){
  const ending=x=>endingSoon(x)||(x.tenantIds.length&&x.end&&x.end>=today()&&daysLeft(x.end)<=14)?' · '+t('tenancy.endingSoon',{n:daysLeft(x.end)}):'';
  const inv=x=>{
-  const issues=Object.values(x.checks||{}).flatMap(c=>Object.values(c)).filter(c=>c.status==='issue').length;
+  const issues=Object.values(x.checks||{}).flatMap(c=>Object.values(c)).reduce((n,c)=>n+(c.status==='issue'?Math.max(1,flagCount(c)):0),0);
   const base=x.inventory==='pending'?(tnLocked(x)?t('inventory.autoLocked'):t('inventory.pendingDue',{date:dateText(x.due)})):t('inventory.'+(x.inventory||'none'));
   return base+(issues?' · '+t('inventory.flagged',{n:issues}):'');
  };
@@ -465,6 +497,36 @@ function propertyView(p){
  return `<div class="row spread dash-head"><div><div class="eyebrow">${t('dash.eyebrow')} · ${eyebrow}</div><h1>${esc(p.name)}</h1><p>${meta}</p></div><div class="row">${lv?'':actionBtn(t('home.report'),'report',true)}${!lv&&tn?`<button type="button" data-pack="${tn.id}">${t('pack.button')}</button>`:''}</div></div>${inventoryBanner(p)}<div class="grid"><div><section class="card"><h2>${t('dash.floorPlan')}</h2>${floorPlan(p)}${uploaded}${spacePanel(p)}</section>${itemsCard(p)}</div><div>${lv?tenanciesCard(p):''}${lv?complianceCard(p):''}${spacesCard(p)}${repairQueue(p)}</div></div>`;
 }
 
+// ── Room inventory ──────────────────────────────────────────────────
+const invLabel=i=>i.k?t('inv.'+i.k):(i.name||'');
+// Outside English, names also show the English word used on UK inventories.
+const enTerm=key=>lang!=='en'&&i18n.en[key]?` <small class="en-term" lang="en">${esc(i18n.en[key])}</small>`:'';
+const invName=i=>i.k?esc(t('inv.'+i.k))+enTerm('inv.'+i.k):esc(i.name||'');
+const condName=c=>esc(t('cond.'+c))+enTerm('cond.'+c);
+const ratingPill=r=>pill(t('rating.'+r),'rating-'+r);
+const ratingSelect=(name,r)=>`<select name="${name}" class="rating-select" aria-label="${t('inv.rating')}">${RATINGS.map(x=>`<option value="${x}" ${r===x?'selected':''}>${t('rating.'+x)}</option>`).join('')}</select>`;
+// Every line of a room's inventory: [ref, label html, entry, group].
+function invLines(type,r){
+ if(!r||(!r.cond&&!r.items))return [];
+ return [...condKeys(type).filter(c=>r.cond?.[c]).map(c=>['cond:'+c,condName(c),r.cond[c],'cond']),...(r.items||[]).map(i=>['item:'+i.id,invName(i),i,i.tier==='group'?'group':'key'])];
+}
+const flagCount=c=>Object.keys(c?.flags||{}).length;
+function flagsFor(p,sid,who){return checksFor(p,sid).filter(c=>!who||who.includes(c.who)).flatMap(c=>Object.entries(c.flags||{}).map(([ref,f])=>({who:c.who,ref,...f})))}
+const flagHtml=f=>`<div class="inv-flag"><small>⚠ ${t('inv.flaggedBy',{name:esc(personName(f.who)),kind:t('check.kind.'+f.kind)})}</small><br>${userText(f.note)}${f.photo?`<div class="inv-photo">${media(f.photo)}</div>`:''}</div>`;
+function invRow(p,[ref,label,e],flags=[]){
+ const needsPhoto=e.r!=='good'&&!e.photo&&isManager(p);
+ return `<li class="inv-row${e.r!=='good'?' noted':''}${flags.length?' flagged':''}"><div class="inv-main"><span class="inv-name">${label}${e.qty?` <small>×${e.qty}</small>`:''}</span>${ratingPill(e.r)}</div>${e.note?`<p class="inv-note">${userText(e.note)}</p>`:''}${e.photo?`<div class="inv-photo">${media(e.photo)}</div>`:''}${needsPhoto?`<small class="warn-text">${t('inv.needsPhoto')}</small>`:''}${e.pin&&canSee(p,p.items?.find(x=>x.id===e.pin)?.spaceId)?`<button type="button" class="link" data-item="${e.pin}">${t('inv.openItem')} ›</button>`:''}${flags.map(flagHtml).join('')}</li>`;
+}
+// Read-only inventory: what was noted or flagged first, the full list folded.
+function invView(p,s,{open=false,who=null}={}){
+ const lines=invLines(s.type,p.records[s.id]);if(!lines.length)return '';
+ const flags=flagsFor(p,s.id,who),on=ref=>flags.filter(f=>f.ref===ref);
+ const noted=lines.filter(l=>l[2].r!=='good'||on(l[0]).length),extras=flags.filter(f=>f.ref.startsWith('extra:'));
+ const sec=(title,list)=>list.length?`<h4>${title}</h4><ul class="inv-list">${list.map(l=>invRow(p,l,on(l[0]))).join('')}</ul>`:'';
+ const extraRows=extras.map(f=>`<li class="inv-row flagged"><div class="inv-main"><span class="inv-name">${t('check.unlisted')}</span></div>${flagHtml(f)}</li>`).join('');
+ return `<div class="inv">${noted.length||extras.length?`<h4>${t('inv.notedTitle',{n:noted.length+extras.length})}</h4><ul class="inv-list">${noted.map(l=>invRow(p,l,on(l[0]))).join('')}${extraRows}</ul>`:`<p class="help">${t('inv.allGood')}</p>`}<details class="inv-all"${open?' open':''}><summary>${t('inv.fullTitle',{n:lines.length})}</summary>${sec(t('inv.conditionTitle'),lines.filter(l=>l[3]==='cond'))}${sec(t('tier.key'),lines.filter(l=>l[3]==='key'))}${sec(t('tier.group'),lines.filter(l=>l[3]==='group'))}</details></div>`;
+}
+
 // ── Inventory checks and locking ────────────────────────────────────
 function inventoryBanner(p){
  const own=tenancyOf(p),co=own?.checkout;
@@ -474,7 +536,7 @@ function inventoryBanner(p){
  }
  const due=myCheckDue(p);
  if(due){
-  const done=Object.keys(due.checks?.[db.session]||{}).length,total=checkSpaceIds(p,due).length;
+  const done=Object.values(due.checks?.[db.session]||{}).filter(c=>c.at).length,total=checkSpaceIds(p,due).length;
   return `<section class="card banner"><div><h2>${t('check.bannerTitle')}</h2><p>${t('check.bannerBody',{days:daysLeft(due.due),date:dateText(due.due)})}</p><small>${t('check.progress',{done,total})}</small></div>${btn(t(done?'check.continue':'check.start'),'check',true)}</section>`;
  }
  const tn=tenancyOf(p);
@@ -484,9 +546,10 @@ function inventoryBanner(p){
 const addendumForm=id=>`<details class="addendum-form"><summary>${t('addendum.add')}</summary><form id="addendum"><input type="hidden" name="space" value="${id}"><label>${t('addendum.note')} <textarea name="note" required></textarea></label><button class="primary">${t('addendum.save')}</button></form></details>`;
 const lockedNote=id=>`<p class="help lock-note">🔒 ${t('lock.spaceLocked')}</p>${addendumForm(id)}`;
 function checksHtml(p,s){
- const list=checksFor(p,s.id);if(!list.length)return '';
- return `<h4>${t('check.resultsTitle')}</h4><ul class="check-results">${list.map(c=>`<li class="${c.status}"><span class="mark" aria-hidden="true">${c.status==='ok'?'✓':'⚠'}</span> <strong>${esc(personName(c.who))}</strong> · ${t('check.'+c.status)} <small>${dateText(c.at)}</small>${c.note?`<br>${userText(c.note)}`:''}${c.photo?media(c.photo):''}</li>`).join('')}</ul>`;
+ const list=checksFor(p,s.id);if(!list.some(c=>c.at))return '';
+ return `<h4>${t('check.resultsTitle')}</h4><ul class="check-results">${list.filter(c=>c.at).map(checkLine).join('')}</ul>`;
 }
+const checkLine=c=>`<li class="${c.status}"><span class="mark" aria-hidden="true">${c.status==='ok'?'✓':'⚠'}</span> <strong>${esc(personName(c.who))}</strong> · ${c.status==='ok'?t('check.ok'):flagCount(c)?t('check.flagCount',{n:flagCount(c)}):t('check.issue')} <small>${dateText(c.at)}</small>${c.note?`<br>${userText(c.note)}`:''}${c.photo?media(c.photo):''}</li>`;
 const affectBtn=x=>{if(!x.reporterId||x.reporterId===db.session)return '';const on=(x.affected||[]).includes(db.session);return `<button type="button" data-affect="${x.id}" aria-pressed="${on}">${t(on?'affected.undo':'affected.add')}</button>`};
 // Before reporting in a shared area, show what housemates already reported there.
 function dupHint(p,id){
@@ -494,16 +557,30 @@ function dupHint(p,id){
  const open=p.tickets.filter(x=>x.spaceId===id&&x.status<4);if(!open.length)return '';
  return `<div class="dup-hint"><strong>${t('report.alreadyTitle',{room:esc(spaceName(s))})}</strong><ul class="repair-list">${open.map(x=>`<li class="dup-row"><span><strong>${esc(x.location)}</strong><br><small>${statusLabel(x.status)} · ${t('repair.by',{name:esc(personName(x.reporterId))})}</small></span><span class="row"><button type="button" data-ticket="${x.id}">${t('report.view')}</button>${affectBtn(x)}</span></li>`).join('')}</ul><p class="help">${t('report.alreadyHelp')}</p></div>`;
 }
+// The tenant goes through the landlord's list and only flags what is
+// different or missing; everything not flagged counts as matching. A room
+// is done when they confirm it.
 function checkPage(){
  const p=prop(propId),tn=p&&myCheckDue(p);if(!tn)return home();
- const mine=tn.checks?.[db.session]||{},ids=checkSpaceIds(p,tn),done=ids.filter(id=>mine[id]).length;
+ const mine=tn.checks?.[db.session]||{},ids=checkSpaceIds(p,tn),done=ids.filter(id=>mine[id]?.at).length;
+ const open=checkOpen?checkOpen.split('|'):[];
+ const flagForm=(id,ref,f)=>{
+  const kinds=ref.startsWith('item:')?['differs','missing']:ref.startsWith('extra:')?['unlisted']:['differs'];
+  return `<form id="check-flag" class="flag-form"><input type="hidden" name="space" value="${id}"><input type="hidden" name="ref" value="${esc(ref)}">${kinds.length>1?`<fieldset class="kinds"><legend>${t('check.kindLabel')}</legend>${kinds.map(k=>`<label class="check"><input type="radio" name="kind" value="${k}" ${(f?.kind||kinds[0])===k?'checked':''}> ${t('check.kind.'+k)}</label>`).join('')}</fieldset>`:`<input type="hidden" name="kind" value="${kinds[0]}">`}<label>${t(ref.startsWith('extra:')?'check.unlistedNote':'check.flagNote')} <textarea name="note" required>${esc(f?.note||'')}</textarea></label><label>${t('check.issuePhoto')} ${optional(true)}${photoPicker('photo')}</label>${f?.photo?`<div class="inv-photo">${media(f.photo)}</div>`:''}<div class="row"><button class="primary">${t('check.saveIssue')}</button>${actionBtn(t('check.cancel'),'check-cancel')}${f?`<button type="button" data-unflag="${id}|${esc(ref)}">${t('check.unflag')}</button>`:''}</div></form>`;
+ };
  const card=id=>{
-  const s=spaceOf(p,id),c=mine[id];
-  const status=c?pill(c.status==='ok'?'✓ '+t('check.ok'):'⚠ '+t('check.issue'),c.status==='issue'?'urgent':''):pill(t('check.notChecked'));
-  const body=checkOpen===id
-   ?`<form id="check-issue"><input type="hidden" name="space" value="${id}"><label>${t('check.issueNote')} <textarea name="note" required>${esc(c?.status==='issue'?c.note:'')}</textarea></label><label>${t('check.issuePhoto')} ${optional(true)}${filePicker('name="photo" type="file" accept="image/png,image/jpeg,image/webp" capture="environment"')}</label><div class="row"><button class="primary">${t('check.saveIssue')}</button>${actionBtn(t('check.cancel'),'check-cancel')}</div></form>`
-   :`${c?.note?`<p class="notes issue-note">${esc(c.note)}</p>`:''}<div class="row"><button type="button" data-check-ok="${id}" aria-pressed="${c?.status==='ok'}">✓ ${t('check.ok')}</button><button type="button" data-check-issue="${id}" aria-pressed="${c?.status==='issue'}">⚠ ${t('check.issue')}</button></div>`;
-  return `<section class="card check-card"><div class="row spread"><h2>${esc(spaceName(s))}</h2>${status}</div>${evidence(p.records[id],t('home.noRecord'))}${body}</section>`;
+  const s=spaceOf(p,id),c=mine[id]||{},flags=c.flags||{},n=flagCount(c),lines=invLines(s.type,p.records[id]);
+  const status=c.at?pill(n||c.status==='issue'?'⚠ '+t('check.flagCount',{n:n||1}):'✓ '+t('check.ok'),n||c.status==='issue'?'urgent':''):n?pill(t('check.flagCount',{n})):pill(t('check.notChecked'));
+  const openRef=open[0]===id?open[1]:null;
+  const row=([ref,label,e])=>{const f=flags[ref];
+   return `<li class="inv-row${e.r!=='good'?' noted':''}${f?' flagged':''}"><div class="inv-main"><span class="inv-name">${label}${e.qty?` <small>×${e.qty}</small>`:''}</span>${ratingPill(e.r)}<button type="button" class="flag-btn" data-flag="${id}|${ref}" aria-pressed="${!!f}">${f?'⚠ '+t('check.flagged'):t('check.issue')}</button></div>${e.note?`<p class="inv-note">${userText(e.note)}</p>`:''}${e.photo?`<div class="inv-photo">${media(e.photo)}</div>`:''}${f&&openRef!==ref?`<p class="notes issue-note"><small>${t('check.kind.'+f.kind)}</small><br>${esc(f.note)}</p>`:''}${openRef===ref?flagForm(id,ref,f):''}</li>`};
+  let body;
+  if(lines.length){
+   const extras=Object.entries(flags).filter(([ref])=>ref.startsWith('extra:'));
+   const newExtra=openRef?.startsWith('extra:')&&!flags[openRef];
+   body=`<h3>${t('inv.conditionTitle')}</h3><ul class="inv-list">${lines.filter(l=>l[3]==='cond').map(row).join('')}</ul><h3>${t('inv.itemsTitle')}</h3><ul class="inv-list">${lines.filter(l=>l[3]!=='cond').map(row).join('')}${extras.map(([ref,f])=>`<li class="inv-row flagged"><div class="inv-main"><span class="inv-name">${t('check.unlisted')}</span><button type="button" class="flag-btn" data-flag="${id}|${ref}" aria-pressed="true">⚠ ${t('check.flagged')}</button></div>${openRef===ref?flagForm(id,ref,f):`<p class="notes issue-note">${esc(f.note)}</p>`}</li>`).join('')}${newExtra?`<li class="inv-row flagged">${flagForm(id,openRef,null)}</li>`:''}</ul>${newExtra?'':`<button type="button" class="link" data-flag="${id}|extra:x${db.seq}">+ ${t('check.addUnlisted')}</button>`}`;
+  } else body=openRef==='room'?flagForm(id,'room',flags.room):`${flags.room?`<p class="notes issue-note">${esc(flags.room.note)}</p>`:''}<button type="button" class="flag-btn" data-flag="${id}|room" aria-pressed="${!!flags.room}">⚠ ${t('check.issue')}</button>`;
+  return `<section class="card check-card" id="check-${id}"><div class="row spread"><h2>${esc(spaceName(s))}</h2>${status}</div>${evidence(p.records[id],t('home.noRecord'))}${body}<div class="confirm-room"><button type="button" class="${c.at?'':'primary'}" data-check-ok="${id}" aria-pressed="${!!c.at}">${c.at?'✓ '+t('check.confirmed'):t(n?'check.confirmWithFlags':'check.confirmRoom',{n})}</button><small>${t('check.confirmHelp')}</small></div></section>`;
  };
  return `<div class="panel"><section class="card"><h1>${t('check.title')} ${term('inventory')}</h1><p>${t('check.intro')}</p><p><strong>${t('check.due',{date:dateText(tn.due),days:daysLeft(tn.due)})}</strong> · ${pill(t('check.progress',{done,total:ids.length}))}</p></section>${ids.map(card).join('')}<section class="card"><p class="help">${done<ids.length?t('check.remaining',{n:ids.length-done}):t('check.submitHelp')}</p>${actionBtn(t('check.submit'),'submit-check',true,done<ids.length?'aria-disabled="true"':'')}</section></div>`;
 }
@@ -539,11 +616,16 @@ function checkoutTotals(tn){
 const outcomePill=i=>pill(t('checkout.outcome.'+i.outcome),i.outcome==='damage'?'urgent':'');
 function checkoutCard(p,tn,id,mode){
  const s=spaceOf(p,id),co=tn.checkout,item=co.items?.[id];
- const flagged=checksFor(p,id).filter(c=>tn.tenantIds.includes(c.who)&&c.status==='issue');
- const moveIn=`<div><h3>${t('checkout.moveIn')}</h3>${evidence(p.records[id],t('home.noRecord'))}${flagged.map(c=>`<p class="notes issue-note"><small>${t('check.resultsTitle')} · ${esc(personName(c.who))}</small><br>${esc(c.note)}</p>`).join('')}</div>`;
+ const flagged=checksFor(p,id).filter(c=>tn.tenantIds.includes(c.who)&&c.status==='issue'&&c.note);
+ const lines=invLines(s.type,p.records[id]),flags=flagsFor(p,id,tn.tenantIds),changes=item?.changes||{};
+ const atMoveIn=ref=>flags.some(f=>f.ref===ref)?' '+pill(t('checkout.flaggedAtMoveIn'),'flag-pill'):'';
+ const moveIn=`<div><h3>${t('checkout.moveIn')}</h3>${evidence(p.records[id],t('home.noRecord'))}${invView(p,s,{who:tn.tenantIds})}${flagged.map(c=>`<p class="notes issue-note"><small>${t('check.resultsTitle')} · ${esc(personName(c.who))}</small><br>${esc(c.note)}</p>`).join('')}</div>`;
+ const compareEdit=lines.length?`<details class="line-compare"${Object.keys(changes).length?' open':''}><summary>${t('checkout.compareLines')}</summary><p class="help">${t('checkout.compareHelp')}</p><ul class="inv-list">${lines.map(([ref,label,e])=>`<li class="inv-row${changes[ref]?' noted':''}"><div class="inv-main"><span class="inv-name">${label}${atMoveIn(ref)}</span><small>${t('checkout.moveIn')}: ${t('rating.'+e.r)}</small>${ratingSelect('line-'+ref,changes[ref]||e.r)}</div></li>`).join('')}</ul></details>`:'';
+ const changeList=Object.entries(changes).map(([ref,r])=>{const l=lines.find(x=>x[0]===ref);return l?`<li class="inv-row noted"><div class="inv-main"><span class="inv-name">${l[1]}${atMoveIn(ref)}</span><span class="change">${ratingPill(l[2].r)} → ${ratingPill(r)}</span></div></li>`:''}).join('');
+ const changesView=changeList?`<h4>${t('checkout.changedTitle')}</h4><ul class="inv-list">${changeList}</ul>`:'';
  const moveOut=mode==='edit'
-  ?`<form data-form="checkout-item" data-target="${id}"><h3>${t('checkout.moveOut')}</h3><label>${t('checkout.outcome')} <select name="outcome">${['same','wear','damage'].map(o=>`<option value="${o}" ${(item?.outcome||'same')===o?'selected':''}>${t('checkout.outcome.'+o)}</option>`).join('')}</select></label><label>${t('checkout.notes')} <textarea name="notes" required>${esc(item?.notes||'')}</textarea></label><label>${t('checkout.amount')} <small>${t('checkout.amountHelp')}</small><input type="number" name="amount" min="0" step="1" inputmode="numeric" value="${item?.amount||''}"></label><label>${t('checkout.photo')} ${optional(true)}${filePicker('name="photo" type="file" accept="image/png,image/jpeg,image/webp" capture="environment"')}</label>${item?.photo?media(item.photo):''}<div class="row"><button class="primary">${t('checkout.save')}</button>${item?pill('✓ '+t('checkout.saved')):''}</div></form>`
-  :`<div><h3>${t('checkout.moveOut')}</h3>${item?`${outcomePill(item)}${evidence(item,'')}${item.outcome==='damage'?`<p><strong>${t('checkout.proposed')}: ${money(item.amount)}</strong></p>`:''}`:`<p>${t('checkout.notRecorded')}</p>`}</div>`;
+  ?`<form data-form="checkout-item" data-target="${id}"><h3>${t('checkout.moveOut')}</h3><label>${t('checkout.outcome')} <select name="outcome">${['same','wear','damage'].map(o=>`<option value="${o}" ${(item?.outcome||'same')===o?'selected':''}>${t('checkout.outcome.'+o)}</option>`).join('')}</select></label>${compareEdit}<label>${t('checkout.notes')} <textarea name="notes" required>${esc(item?.notes||'')}</textarea></label><label>${t('checkout.amount')} <small>${t('checkout.amountHelp')}</small><input type="number" name="amount" min="0" step="1" inputmode="numeric" value="${item?.amount||''}"></label><label>${t('checkout.photo')} ${optional(true)}${filePicker('name="photo" type="file" accept="image/png,image/jpeg,image/webp" capture="environment"')}</label>${item?.photo?media(item.photo):''}<div class="row"><button class="primary">${t('checkout.save')}</button>${item?pill('✓ '+t('checkout.saved')):''}</div></form>`
+  :`<div><h3>${t('checkout.moveOut')}</h3>${item?`${outcomePill(item)}${changesView}${evidence(item,'')}${item.outcome==='damage'?`<p><strong>${t('checkout.proposed')}: ${money(item.amount)}</strong></p>`:''}`:`<p>${t('checkout.notRecorded')}</p>`}</div>`;
  const reps=p.tickets.filter(x=>x.spaceId===id&&(!tn.start||x.created>=tn.start)&&(!tn.end||x.created<=tn.end));
  const repairs=reps.length?`<h4>${t('checkout.repairsDuring')}</h4><ul class="repair-list">${reps.map(ticketRow(p)).join('')}</ul>`:'';
  const responses=Object.entries(co.responses||{}).map(([who,r])=>r[id]?`<p class="${r[id].agree?'':'issue-note'}"><strong>${t(r[id].agree?'checkout.responseAgree':'checkout.responseDispute',{name:esc(personName(who))})}</strong>${r[id].comment?` · <span class="notes">${esc(r[id].comment)}</span>`:''}</p>`:'').join('');
@@ -598,7 +680,17 @@ const CONTENT_TR={'zh-CN':{
  'I will fix the tap at the weekend.':'我周末来修水龙头。',
  'Carpet professionally cleaned.':'地毯已经专业清洗。',
  'Carpet professionally cleaned. Stain removed.':'地毯已经专业清洗，污渍已去除。',
- 'The chip on the windowsill is about 3 cm wide, larger than described. There is also a small scuff on the wardrobe door.':'窗台上的缺口大约 3 厘米宽，比记录的大。衣柜门上还有一小块擦痕。'
+ 'The chip on the windowsill is about 3 cm wide, larger than described. There is also a small scuff on the wardrobe door.':'窗台上的缺口大约 3 厘米宽，比记录的大。衣柜门上还有一小块擦痕。',
+ 'Small chip in the windowsill paint.':'窗台油漆有一处小缺口。',
+ 'Two light scratches on the desk top.':'书桌桌面有两道轻微划痕。',
+ 'Wardrobe door slightly stiff to open.':'衣柜门开起来有点紧。',
+ 'Small crack on one fridge door shelf.':'冰箱门上有一层隔板有小裂纹。',
+ 'Light scratches on the laminate by the door.':'门边的复合地板有轻微划痕。',
+ 'Grout slightly discoloured in one corner.':'一个角落的瓷砖缝有轻微变色。',
+ 'Minor scuff on the window frame.':'窗框有轻微擦痕。',
+ 'Small hairline crack near the overflow.':'溢水口附近有一道细裂纹。',
+ 'The chip is about 3 cm wide, larger than described.':'缺口大约 3 厘米宽，比记录的大。',
+ 'Small scuff on the wardrobe door, not in the inventory.':'衣柜门上有一小块擦痕，清单里没有写。'
 }};
 const shownTr=new Set();
 const hashText=s=>{let h=0x811c9dc5;for(const c of s){h^=c.codePointAt(0);h=Math.imul(h,16777619)>>>0}return h.toString(36)};
@@ -656,10 +748,10 @@ function packPage(){
  const section=id=>{
   const s=spaceOf(p,id),r=p.records[id],checks=checksFor(p,id).filter(c=>tn.tenantIds.includes(c.who));
   const tickets=p.tickets.filter(x=>x.spaceId===id&&inTenancy(x)&&canSee(p,x.spaceId));
-  return `<section class="card pack-space"><h2>${esc(spaceName(s))}${p.mode==='rooms'&&s.shared?' · '+t('kind.shared'):''}</h2><h3>${t('pack.moveIn')}</h3>${evidence(r,t('home.noRecord'))}${r?fpLine(r):''}${checks.length?`<h3>${t('check.resultsTitle')}</h3><ul class="check-results">${checks.map(c=>`<li class="${c.status}"><span class="mark" aria-hidden="true">${c.status==='ok'?'✓':'⚠'}</span> <strong>${esc(personName(c.who))}</strong> · ${t('check.'+c.status)} <small>${dateText(c.at)}</small>${c.note?`<br>${userText(c.note)}`:''}${c.photo?media(c.photo):''}</li>`).join('')}</ul>`:''}${tickets.length?`<h3>${t('pack.repairs')}</h3>${tickets.map(x=>`<div class="pack-ticket"><p><strong>${esc(x.location)}</strong> · ${statusLabel(x.status)} · ${t('repair.reportedBy',{name:esc(personName(x.reporterId)),date:dateText(x.created)})}</p><p>${userText(x.description)}</p>${media(x.photo)}<ol class="update-log">${(x.updates||[]).map(u=>`<li><strong>${esc(personName(u.by))}</strong> · ${u.status!=null?statusLabel(u.status):t('update.comment')} <small>${dateText(u.at)}</small>${u.note?`<br>${userText(u.note)}`:''}</li>`).join('')}</ol>${x.after?evidence(x.after,''):''}${fpLine(x)}</div>`).join('')}`:''}</section>`;
+  return `<section class="card pack-space"><h2>${esc(spaceName(s))}${p.mode==='rooms'&&s.shared?' · '+t('kind.shared'):''}</h2><h3>${t('pack.moveIn')}</h3>${evidence(r,t('home.noRecord'))}${invView(p,s,{open:true,who:tn.tenantIds})}${r?fpLine(r):''}${checks.some(c=>c.at)?`<h3>${t('check.resultsTitle')}</h3><ul class="check-results">${checks.filter(c=>c.at).map(checkLine).join('')}</ul>`:''}${tickets.length?`<h3>${t('pack.repairs')}</h3>${tickets.map(x=>`<div class="pack-ticket"><p><strong>${esc(x.location)}</strong> · ${statusLabel(x.status)} · ${t('repair.reportedBy',{name:esc(personName(x.reporterId)),date:dateText(x.created)})}</p><p>${userText(x.description)}</p>${media(x.photo)}<ol class="update-log">${(x.updates||[]).map(u=>`<li><strong>${esc(personName(u.by))}</strong> · ${u.status!=null?statusLabel(u.status):t('update.comment')} <small>${dateText(u.at)}</small>${u.note?`<br>${userText(u.note)}`:''}</li>`).join('')}</ol>${x.after?evidence(x.after,''):''}${fpLine(x)}</div>`).join('')}`:''}</section>`;
  };
  const co=tn.checkout,tot=co?checkoutTotals(tn):null;
- const checkout=co&&co.status!=='draft'?`<section class="card"><h2>${t('checkout.title')}</h2><p>${t('checkout.status.'+co.status)} · ${t('checkout.summaryProposed',{amount:money(tot.proposed)})}${co.status==='responded'?` · ${t('checkout.summaryAgreed',{amount:money(tot.agreed)})} · ${t('checkout.summaryDisputed',{amount:money(tot.disputed)})}`:''}</p>${tn.spaceIds.map(id=>{const i=co.items?.[id];return i?`<p><strong>${esc(spaceName(spaceOf(p,id)))}</strong> · ${t('checkout.outcome.'+i.outcome)}${i.outcome==='damage'?' · '+money(i.amount):''}<br>${userText(i.notes)}</p>`:''}).join('')}${fpLine(co)}</section>`:'';
+ const checkout=co&&co.status!=='draft'?`<section class="card"><h2>${t('checkout.title')}</h2><p>${t('checkout.status.'+co.status)} · ${t('checkout.summaryProposed',{amount:money(tot.proposed)})}${co.status==='responded'?` · ${t('checkout.summaryAgreed',{amount:money(tot.agreed)})} · ${t('checkout.summaryDisputed',{amount:money(tot.disputed)})}`:''}</p>${tn.spaceIds.map(id=>{const i=co.items?.[id],sp=spaceOf(p,id),ls=invLines(sp.type,p.records[id]);return i?`<p><strong>${esc(spaceName(sp))}</strong> · ${t('checkout.outcome.'+i.outcome)}${i.outcome==='damage'?' · '+money(i.amount):''}${Object.entries(i.changes||{}).map(([ref,r])=>{const l=ls.find(x=>x[0]===ref);return l?`<br><small>${l[1]}: ${t('rating.'+l[2].r)} → ${t('rating.'+r)}</small>`:''}).join('')}<br>${userText(i.notes)}</p>`:''}).join('')}${fpLine(co)}</section>`:'';
  const whole={property:p.id,tenancy:tn,records:ids.map(id=>p.records[id]||null),tickets:p.tickets.filter(x=>ids.includes(x.spaceId)&&inTenancy(x))};
  return `<div class="panel pack"><section class="card"><div class="eyebrow">${t('pack.eyebrow')}</div><div class="row spread"><h1>${esc(p.name)}</h1>${actionBtn(t('checkout.print'),'print',true)}</div><p>${esc(p.address||'')}</p><p>${tenancyLabel(p,tn)}${people?' · '+people:''}${tn.start?' · '+t('tenancy.dates',{start:dateText(tn.start),end:tn.end?dateText(tn.end):t('tenancy.open')}):''}</p><p class="help">${t('pack.generated',{date:dateText(today()),name:esc(me().name)})}</p><p class="help">${t('pack.help')}</p>${fpLine(whole)}</section>${ids.map(section).join('')}${checkout}</div>`;
 }
@@ -759,12 +851,44 @@ function readSpacesForm(){
  const data=new FormData(form);
  draft.spaces=draft.spaces.map((s,i)=>({type:String(data.get('type-'+i)||s.type),name:String(data.get('name-'+i)??s.name),shared:form.elements['shared-'+i]?form.elements['shared-'+i].checked:s.shared}));
 }
+// Working copy of one room while the landlord edits it, kept across
+// re-renders (adding or removing a row) until the room is saved.
+function recordDraft(p,s){
+ const key=p.id+'|'+s.id;
+ if(!drafts[key]){const r=p.records[s.id]||{};const inv=r.cond||r.items?{cond:{...blankInventory(s.type).cond,...r.cond},items:r.items||[]}:blankInventory(s.type);drafts[key]=JSON.parse(JSON.stringify({notes:r.notes||'',...inv}))}
+ return drafts[key];
+}
+function readRecordForm(){
+ const form=document.querySelector('#record'),p=prop(editId),s=p&&spaceOf(p,recordSpace);if(!form||!s)return;
+ const dr=recordDraft(p,s),f=n=>form.elements[n];
+ if(f('notes'))dr.notes=f('notes').value;
+ for(const c of condKeys(s.type)){const e=dr.cond[c]||={r:'good'};if(f('cr-'+c))e.r=f('cr-'+c).value;if(f('cn-'+c))e.note=f('cn-'+c).value}
+ dr.items.forEach((i,n)=>{
+  if(f('it-'+n))i.tier=f('it-'+n).value;if(f('ir-'+n))i.r=f('ir-'+n).value;if(f('in-'+n))i.name=f('in-'+n).value;if(f('inn-'+n))i.note=f('inn-'+n).value;
+  const q=Math.round(Number(f('iq-'+n)?.value));if(i.tier==='group'&&q>0)i.qty=q;else delete i.qty;
+ });
+}
+const photoPicker=name=>filePicker(`name="${name}" type="file" accept="image/png,image/jpeg,image/webp"`);
+function invEditor(p,s){
+ const dr=recordDraft(p,s);
+ const extra=(e,noteName,photoName)=>`<div class="inv-extra"${e.r==='good'&&!e.note?' hidden':''}><input name="${noteName}" value="${esc(e.note||'')}" maxlength="200" placeholder="${t('inv.notePlaceholder')}" aria-label="${t('inv.note')}">${photoPicker(photoName)}${e.photo?`<div class="inv-photo">${media(e.photo)}</div>`:e.r!=='good'?`<small class="warn-text">${t('inv.needsPhoto')}</small>`:''}</div>`;
+ const condRows=condKeys(s.type).map(c=>{const e=dr.cond[c]||{r:'good'};return `<li class="inv-edit"><div class="inv-main"><span class="inv-name">${condName(c)}<br><small class="hint">${t('cond.'+c+'.hint')}</small></span>${ratingSelect('cr-'+c,e.r)}</div>${extra(e,'cn-'+c,'cp-'+c)}</li>`}).join('');
+ const itemRows=dr.items.map((i,n)=>`<li class="inv-edit"><div class="inv-main">${i.k?`<span class="inv-name">${invName(i)}</span>`:`<input class="inv-name-input" name="in-${n}" value="${esc(i.name||'')}" required maxlength="40" placeholder="${t('inv.customPlaceholder')}" aria-label="${t('inv.itemName')}">`}<select name="it-${n}" aria-label="${t('inv.tier')}">${['key','group'].map(x=>`<option value="${x}" ${(i.tier||'key')===x?'selected':''}>${t('tier.'+x+'One')}</option>`).join('')}</select><input class="qty" name="iq-${n}" type="number" min="1" max="999" inputmode="numeric" value="${i.qty||''}" placeholder="${t('inv.qty')}" aria-label="${t('inv.qty')}"${i.tier==='group'?'':' hidden'}>${ratingSelect('ir-'+n,i.r)}<button type="button" class="remove" data-inv-remove="${n}" aria-label="${t('inv.removeLabel',{name:esc(invLabel(i)||t('inv.itemName'))})}">✕</button></div>${extra(i,'inn-'+n,'ip-'+n)}</li>`).join('');
+ const addable=ALL_ITEMS.filter(([k])=>!dr.items.some(i=>i.k===k)).sort((a,b)=>t('inv.'+a[0]).localeCompare(t('inv.'+b[0]),t('locale')));
+ const missingPhotos=[...Object.values(dr.cond),...dr.items].filter(e=>e.r!=='good'&&!e.photo).length;
+ return `<h3>${t('inv.overview')}</h3><label>${t('records.condition')} ${optional()}<textarea name="notes" placeholder="${t('records.conditionPlaceholder')}">${esc(dr.notes)}</textarea></label><label>${t('records.photo')} ${optional()}${photoPicker('photo')}</label>${media(p.records[s.id]?.photo)}
+<h3>${t('inv.conditionTitle')}</h3><p class="help">${t('inv.conditionHelp')}</p><ul class="inv-list">${condRows}</ul>
+<h3>${t('inv.itemsTitle')}</h3><p class="help">${t('tier.help')}</p><ul class="inv-list">${itemRows}</ul>
+<div class="row inv-add"><select name="add-k" aria-label="${t('inv.addLabel')}"><option value="">${t('inv.addChoose')}</option>${addable.map(([k])=>`<option value="${k}">${esc(t('inv.'+k))}</option>`).join('')}<option value="custom">${t('inv.addCustom')}</option></select>${actionBtn('+ '+t('inv.add'),'inv-add')}</div>
+${missingPhotos?`<p class="help warn-text">${t('inv.missingPhotos',{n:missingPhotos})}</p>`:''}`;
+}
 function records(){
  const p=prop(editId);if(!p||!isManager(p))return home();
  if(!spaceOf(p,recordSpace))recordSpace=p.spaces[0]?.id;
- const s=spaceOf(p,recordSpace),item=p.records[recordSpace]||{};
+ const s=spaceOf(p,recordSpace);
  const count=p.spaces.filter(x=>p.records[x.id]).length,locked=spaceLocked(p,recordSpace);
- return `<div class="panel"><section class="card">${p.ready?'':`<div class="steps">${t('flow.step',{n:isLandlord()?5:4,total:isLandlord()?5:4})}</div>`}<div class="row spread"><h2>${t('records.title')} · ${esc(p.name)}</h2>${pill(t('records.count',{count,total:p.spaces.length}))}</div><div class="row">${p.spaces.map(x=>`<button type="button" data-record-space="${x.id}" aria-pressed="${x.id===recordSpace}" class="${x.id===recordSpace?'primary':''}">${esc(spaceName(x))}${p.records[x.id]?' ✓':''}</button>`).join('')}</div><p><strong>${t('records.whatToRecord')}</strong> &nbsp; ${t('records.tip.'+(s?.type||'other'))}</p>${locked?`${evidence(p.records[recordSpace],t('home.noRecord'))}<p class="help lock-note">🔒 ${t('lock.recordsLocked')}</p>${addendumForm(recordSpace)}<div class="row">${btn(t(p.ready?'records.done':'records.finish'),'finish')}</div>`:`<form id="record"><label>${t('records.condition')} <textarea name="notes" required placeholder="${t('records.conditionPlaceholder')}">${esc(drafts[recordSpace]??item.notes)}</textarea></label><label>${t('records.photo')} ${optional()}${filePicker('type="file" name="photo" accept="image/png,image/jpeg,image/webp"')}</label>${media(item.photo)}<div class="row"><button class="primary">${t('records.save')}</button>${btn(t(p.ready?'records.done':'records.finish'),'finish')}</div></form>`}</section><section class="card"><h3>${t('records.importTitle')}</h3><form id="import"><label>${t('records.importLabel')} <textarea name="existing" placeholder="${esc(t('records.importPlaceholder'))}" required>${esc(importText)}</textarea></label><button>${t('records.importButton')}</button></form></section></div>`;
+ const finish=btn(t(p.ready?'records.done':'records.finish'),'finish');
+ return `<div class="panel"><section class="card">${p.ready?'':`<div class="steps">${t('flow.step',{n:isLandlord()?5:4,total:isLandlord()?5:4})}</div>`}<div class="row spread"><h2>${t('records.title')} · ${esc(p.name)}</h2>${pill(t('records.count',{count,total:p.spaces.length}))}</div><div class="row">${p.spaces.map(x=>`<button type="button" data-record-space="${x.id}" aria-pressed="${x.id===recordSpace}" class="${x.id===recordSpace?'primary':''}">${esc(spaceName(x))}${p.records[x.id]?' ✓':''}</button>`).join('')}</div><p><strong>${t('records.whatToRecord')}</strong> &nbsp; ${t('inv.editIntro')}</p>${locked?`${evidence(p.records[recordSpace],t('home.noRecord'))}${invView(p,s,{open:true})}<p class="help lock-note">🔒 ${t('lock.recordsLocked')}</p>${addendumForm(recordSpace)}<div class="row">${finish}</div>`:`<form id="record">${invEditor(p,s)}<div class="row"><button class="primary">${t('records.save')}</button>${finish}</div></form>`}</section><section class="card"><h3>${t('records.importTitle')}</h3><form id="import"><label>${t('records.importLabel')} <textarea name="existing" placeholder="${esc(t('records.importPlaceholder'))}" required>${esc(importText)}</textarea></label><button>${t('records.importButton')}</button></form></section></div>`;
 }
 function uniqueCode(base){
  const all=new Set(db.properties.flatMap(p=>p.tenancies.map(x=>x.code)));
@@ -855,6 +979,31 @@ function render(){
  renderDemo();
 }
 
+// Native date fields show their text in the browser's language, not the
+// app's. Each one gets a label drawn on top in the app's language; the
+// browser's own calendar still opens on click.
+function dateLabel(input){
+ const box=input.parentElement.querySelector('.date-text');
+ const text=input.value?new Intl.DateTimeFormat(t('locale'),{dateStyle:'medium',timeZone:'UTC'}).format(new Date(input.value+'T00:00:00Z')):t('date.placeholder');
+ if(box&&box.textContent!==text)box.textContent=text; // only on change, or the observer below loops
+ box?.classList.toggle('empty',!input.value);
+}
+function enhanceDates(root=document){
+ root.querySelectorAll('input[type=date]').forEach(input=>{
+  if(!input.parentElement.classList.contains('date-field')){
+   const wrap=document.createElement('span');wrap.className='date-field';
+   input.replaceWith(wrap);wrap.append(input);
+   wrap.insertAdjacentHTML('beforeend','<span class="date-text" aria-hidden="true"></span>');
+   input.addEventListener('input',()=>dateLabel(input));
+   input.addEventListener('change',()=>dateLabel(input));
+   input.addEventListener('click',()=>{try{input.showPicker()}catch{}});
+  }
+  input.setAttribute('aria-label',input.closest('label')?.firstChild?.textContent?.trim()||t('date.pick'));
+  dateLabel(input);
+ });
+}
+new MutationObserver(()=>enhanceDates()).observe(document.querySelector('main'),{childList:true,subtree:true});
+
 // ── Files ───────────────────────────────────────────────────────────
 function fileData(file,types){
  if(!file||!file.size)return Promise.resolve(null);
@@ -875,10 +1024,7 @@ document.addEventListener('error',e=>{
 },true);
 
 // ── Events ──────────────────────────────────────────────────────────
-function keepRecordDraft(){
- const draftBox=document.querySelector('#record textarea'),p=prop(editId);
- if(draftBox&&p&&draftBox.value!==(p.records[recordSpace]?.notes||''))drafts[recordSpace]=draftBox.value;
-}
+function keepRecordDraft(){readRecordForm()}
 function showIntro(){
  const a=me();if(!a||a.seenIntro)return;
  const role=a.role==='landlord'?'landlord':'tenant';
@@ -891,6 +1037,9 @@ function login(id){
 }
 function startAddProperty(){draft={};editId=null;foundProperty=null;material=null;materialPending=false;materialVersion++;postcodeQuery='';postcodeSearched=false;go('setup')}
 document.addEventListener('change',async e=>{
+ const nm=e.target.name||'';
+ if(/^(cr|ir)-/.test(nm)){const x=e.target.closest('.inv-edit')?.querySelector('.inv-extra');if(x&&e.target.value!=='good')x.hidden=false;return}
+ if(/^it-/.test(nm)){const q=e.target.closest('.inv-edit')?.querySelector('.qty');if(q)q.hidden=e.target.value!=='group';return}
  if(e.target.name==='space'&&e.target.closest('#report')){const box=document.querySelector('#dup-hint');if(box)box.innerHTML=dupHint(prop(propId),e.target.value);return}
  if(e.target.id==='lang-switch'){
   if(!i18n[e.target.value])return;
@@ -949,6 +1098,7 @@ document.addEventListener('click',e=>{
  if(d.ticket){ticketSel=d.ticket;go('repair');return}
  if(d.mode){if(draft.mode!==d.mode)draft.spaces=null;draft.mode=d.mode;go('spaces');return}
  if(d.recordSpace){keepRecordDraft();recordSpace=d.recordSpace;render();return}
+ if(d.invRemove!==undefined){readRecordForm();const p=prop(editId),s=p&&spaceOf(p,recordSpace);if(!s)return;recordDraft(p,s).items.splice(Number(d.invRemove),1);render();return}
  if(d.removeSpace!==undefined){readSpacesForm();if(draft.spaces.length>1)draft.spaces.splice(Number(d.removeSpace),1);else notice.textContent=t('err.needSpace');render();return}
  if(d.method){method=d.method;material=null;materialPending=false;materialVersion++;for(const x of document.querySelectorAll('[data-method]'))x.setAttribute('aria-pressed',x.dataset.method===method);showMaterial();return}
  if(d.affect){
@@ -960,8 +1110,12 @@ document.addEventListener('click',e=>{
   if(page==='report'&&box&&sel)box.innerHTML=dupHint(p,sel.value);else render();
   save(t(on?'msg.affectedOff':'msg.affectedOn'));return;
  }
- if(d.checkOk){const p=prop(propId),tn=p&&myCheckDue(p);if(!tn)return;((tn.checks||={})[db.session]||={})[d.checkOk]={status:'ok',at:today()};checkOpen=null;render();save();return}
- if(d.checkIssue){checkOpen=d.checkIssue;render();document.querySelector('#check-issue textarea')?.focus();return}
+ if(d.checkOk){const p=prop(propId),tn=p&&myCheckDue(p);if(!tn)return;const mine=(tn.checks||={})[db.session]||={},c=mine[d.checkOk]||={};
+  c.at=today();c.status=flagCount(c)?'issue':'ok';checkOpen=null;render();save(t('msg.roomConfirmed',{room:spaceName(spaceOf(p,d.checkOk))}));
+  const next=checkSpaceIds(p,tn).find(id=>!mine[id]?.at);document.querySelector(next?'#check-'+next:'[data-action="submit-check"]')?.scrollIntoView({block:'start',behavior:'smooth'});return}
+ if(d.flag){checkOpen=d.flag;render();document.querySelector('#check-flag textarea')?.focus();return}
+ if(d.unflag){const p=prop(propId),tn=p&&myCheckDue(p);if(!tn)return;const [sid,ref]=d.unflag.split('|'),c=tn.checks?.[db.session]?.[sid];if(!c?.flags)return;
+  delete c.flags[ref];if(c.at)c.status=flagCount(c)?'issue':'ok';checkOpen=null;render();save();return}
  switch(d.action){
   case 'add-property':startAddProperty();return;
   case 'add-space':readSpacesForm();draft.spaces.push({type:'other',shared:false,name:''});render();document.querySelector(`[name="name-${draft.spaces.length-1}"]`)?.focus();return;
@@ -975,6 +1129,13 @@ document.addEventListener('click',e=>{
    go('upload');return;
   case 'reopen':{const x=prop(propId)?.tickets.find(k=>k.id===ticketSel);if(!x||x.status!==3)return;x.status=2;(x.updates||=[]).push({by:db.session,at:today(),status:2,note:t('update.reopened')});notify([prop(propId).ownerId],'note.reopened',{name:me().name,what:x.location},{prop:propId,ticket:x.id});render();save(t('msg.reopened'));return}
   case 'check-cancel':checkOpen=null;render();return;
+  case 'inv-add':{
+   const k=document.querySelector('#record [name="add-k"]')?.value;if(!k)return;
+   readRecordForm();const p=prop(editId),s=p&&spaceOf(p,recordSpace);if(!s)return;
+   const dr=recordDraft(p,s),tpl=ALL_ITEMS.find(x=>x[0]===k);
+   dr.items.push(k==='custom'||!tpl?{id:'c'+(db.seq++),name:'',tier:'key',r:'good'}:{id:k,k,tier:tpl[1],r:'good',...(tpl[2]?{qty:tpl[2]}:{})});
+   render();const last=document.querySelectorAll('#record .inv-edit');last[last.length-1]?.querySelector('input,select')?.focus();return;
+  }
   case 'close-dialog':{const dlg=document.querySelector('#info-dialog');dlg.close?dlg.close():dlg.removeAttribute('open');onDialogClose?.();return}
   case 'demo-panel':demoOpen=!demoOpen;renderDemo();if(demoOpen)document.querySelector('#demo-panel h2')?.focus();else document.querySelector('#demo-fab').focus();return;
   case 'tour-start':runTour(0);return;
@@ -994,9 +1155,9 @@ document.addEventListener('click',e=>{
   case 'submit-check':{
    const p=prop(propId),tn=p&&myCheckDue(p);if(!tn)return;
    const ids=checkSpaceIds(p,tn),mine=tn.checks?.[db.session]||{};
-   if(ids.some(id=>!mine[id])){notice.textContent=t('err.checkAll');return}
+   if(ids.some(id=>!mine[id]?.at)){notice.textContent=t('err.checkAll');return}
    (tn.submitted||={})[db.session]=today();
-   notify([p.ownerId],'note.checkDone',{name:me().name,issues:Object.values(mine).filter(c=>c.status==='issue').length},{prop:p.id});
+   notify([p.ownerId],'note.checkDone',{name:me().name,issues:Object.values(mine).reduce((n,c)=>n+(c.status==='issue'?Math.max(1,flagCount(c)):0),0)},{prop:p.id});
    if(tn.tenantIds.every(id=>tn.submitted[id])){tn.inventory='confirmed';tn.lockedAt||=today()}
    go('home');save(t(tn.inventory==='confirmed'?'msg.inventoryConfirmed':'msg.checkSubmitted'));return;
   }
@@ -1055,12 +1216,19 @@ document.addEventListener('submit',async e=>{
     go('records',{replace:true});save(t('msg.spacesSaved'));break;
    }
    case 'record':{
-    const p=prop(editId),sid=recordSpace,notes=v('notes');if(!p)break;
+    const p=prop(editId),sid=recordSpace,s=spaceOf(p,sid);if(!p||!s)break;
     if(spaceLocked(p,sid))throw new Error(t('lock.recordsLocked'));
-    if(!notes)throw new Error(t('err.conditionRequired'));
-    p.records[sid]={notes,photo:await photo()||p.records[sid]?.photo||null,photoDate:p.records[sid]?.photoDate,by:db.session};delete drafts[sid];
-    const next=p.spaces.find(s=>!p.records[s.id]);if(next)recordSpace=next.id;
-    render();save(t('msg.roomSaved',{room:spaceName(spaceOf(p,sid))}));break;
+    readRecordForm();
+    const dr=recordDraft(p,s);
+    if(dr.items.some(i=>!i.k&&!String(i.name||'').trim()))throw new Error(t('err.itemName'));
+    for(const c of condKeys(s.type)){const f=await fileData(data.get('cp-'+c),images);if(f)dr.cond[c].photo=f}
+    for(let n=0;n<dr.items.length;n++){const f=await fileData(data.get('ip-'+n),images);if(f)dr.items[n].photo=f}
+    const tidy=e=>{e.note=String(e.note||'').trim();if(!e.note)delete e.note;if(e.name)e.name=e.name.trim();return e};
+    const prev=p.records[sid];
+    p.records[sid]={...prev,notes:dr.notes.trim(),photo:await photo()||prev?.photo||null,photoDate:prev?.photoDate,by:db.session,cond:Object.fromEntries(Object.entries(dr.cond).map(([c,e])=>[c,tidy(e)])),items:dr.items.map(tidy)};
+    delete drafts[p.id+'|'+sid];
+    const next=p.spaces.find(x=>!p.records[x.id]);if(next)recordSpace=next.id;
+    render();window.scrollTo(0,0);save(t('msg.roomSaved',{room:spaceName(s)}));break;
    }
    case 'import':{
     const p=prop(editId);if(!p)break;
@@ -1115,12 +1283,15 @@ document.addEventListener('submit',async e=>{
     notify([prop(propId).ownerId,x.reporterId,...(x.affected||[])],'note.comment',{name:me().name,what:x.location},{prop:propId,ticket:x.id});
     render();save(t('msg.commentSaved'));break;
    }
-   case 'check-issue':{
-    const p=prop(propId),tn=p&&myCheckDue(p),sid=v('space');if(!tn)break;
+   case 'check-flag':{
+    const p=prop(propId),tn=p&&myCheckDue(p),sid=v('space'),ref=v('ref');if(!tn||!checkSpaceIds(p,tn).includes(sid))break;
     if(!v('note'))throw new Error(t('err.noteRequired'));
-    const prev=tn.checks?.[db.session]?.[sid];
-    ((tn.checks||={})[db.session]||={})[sid]={status:'issue',note:v('note'),photo:await photo()||prev?.photo||null,at:today()};
-    checkOpen=null;render();save(t('msg.checkSaved'));break;
+    const c=((tn.checks||={})[db.session]||={})[sid]||={},prev=c.flags?.[ref];
+    const kind=['differs','missing','unlisted'].includes(v('kind'))?v('kind'):'differs';
+    (c.flags||={})[ref]={kind,note:v('note'),photo:await photo()||prev?.photo||null,at:today()};
+    if(c.at)c.status='issue';
+    if(ref.startsWith('extra:')&&!prev)db.seq++;
+    checkOpen=null;render();save(t('msg.checkSaved'));document.querySelector('#check-'+sid)?.scrollIntoView({block:'nearest'});break;
    }
    case 'addendum':{
     const p=page==='records'?prop(editId):prop(propId),sid=v('space');
@@ -1137,7 +1308,9 @@ document.addEventListener('submit',async e=>{
     const amount=outcome==='damage'?Math.max(0,Math.round(Number(v('amount'))||0)):0;
     if(outcome==='damage'&&!amount)throw new Error(t('err.amountRequired'));
     const prev=co.items?.[sid];
-    (co.items||={})[sid]={outcome,notes:v('notes'),amount,photo:await photo()||prev?.photo||null,photoDate:today()};
+    const s=spaceOf(p,sid),changes={};
+    for(const [ref,,e] of invLines(s.type,p.records[sid])){const r=v('line-'+ref);if(RATINGS.includes(r)&&r!==e.r)changes[ref]=r}
+    (co.items||={})[sid]={outcome,notes:v('notes'),amount,changes,photo:await photo()||prev?.photo||null,photoDate:today()};
     render();save(t('msg.checkoutItemSaved',{room:spaceName(spaceOf(p,sid))}));break;
    }
    case 'checkout-reply':{

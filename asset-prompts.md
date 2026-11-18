@@ -166,3 +166,13 @@ AI 生成的户型图常常墙体对不上、文字是乱码，我也拿不到�
 ```
 Clean 2D architectural floor plan, top-down orthographic view, flat vector style, white background, walls in solid royal blue (#0f6cbd), room floors filled with very pale blue (#e8f2ff), door swings and windows drawn as thin blue lines, simple furniture symbols (beds, sofa, kitchen counter, bath, toilet, basin). NO text, NO labels, NO numbers, NO dimensions, NO compass. Layout: [在这里描述户型，例如 "ground floor: living room at the back, kitchen beside it, hallway with stairs at the front; first floor: two bedrooms and a bathroom"]. Portrait 3:4.
 ```
+
+## 9. Inventory close-ups (optional)
+
+Three inventory lines are rated "Fair" without a close-up photo, so the landlord currently sees "Add a close-up photo" on them, which is part of the demo. Generate these only if you want those lines to carry photos too. Same style as the other item photos: a phone photo taken by a landlord, natural light, no people, no text, 4:3, saved as JPG in `demo/`.
+
+| File | Prompt |
+|---|---|
+| `inv-alder-b5-wardrobe.jpg` | Close-up phone photo of a white flat-pack wardrobe door in a UK loft bedroom, the door slightly ajar and a little misaligned with the frame at the top hinge, sloped ceiling visible at the edge, soft daylight. |
+| `inv-alder-living-floor.jpg` | Close-up phone photo of light oak laminate flooring just inside a living-room door in a UK shared house, a few fine light scratches across the boards near the door threshold, door edge and skirting board visible, daylight. |
+| `inv-alder-bath2-grout.jpg` | Close-up phone photo of white square wall tiles in the corner of a UK shower cubicle, the grout lines in the bottom corner slightly yellow-grey and discoloured, chrome shower tray edge visible, bright bathroom light. |
