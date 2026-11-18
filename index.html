@@ -16,18 +16,21 @@ nav select.lang-switch{display:inline-block;width:auto;margin:0;padding:7px 8px;
 :root[data-theme=dark]{--wall:#5a9fd8;--shared:#23402c;--warn:#ffb4b4;--selected:#2f5a85}
 .grid.three{grid-template-columns:repeat(auto-fit,minmax(min(100%,240px),1fr))}
 .floorplan{display:block;width:100%;max-width:400px;max-height:none;margin:8px auto 12px;font-family:inherit;border-radius:0}
-.floorplan rect{stroke:var(--wall);stroke-width:3}
+.floorplan .shape,.floorplan .outer{stroke:var(--wall);stroke-width:3}
 .floorplan .outer{fill:none;stroke-width:7;pointer-events:none}
-.floorplan text{text-anchor:middle;dominant-baseline:middle;fill:var(--text);font-size:12px;font-weight:600;pointer-events:none}
-.floorplan .cap{font-size:10px;font-weight:400;fill:var(--muted)}
-.room rect{fill:var(--tint)}.room.vacant rect{fill:var(--card)}.room.shared rect{fill:var(--shared)}.room.locked rect{fill:var(--surface)}.room.locked text{fill:var(--muted);font-weight:400}
-.room[data-space]{cursor:pointer}.room[data-space]:hover rect{filter:brightness(.94)}
-.room.selected rect{fill:var(--selected);stroke-width:6}
-.room:focus,.pin-svg:focus{outline:none}.room:focus-visible rect{stroke:#479ef5;stroke-width:6}
-.circ rect{fill:var(--surface)}.circ text{fill:var(--muted);font-weight:400;font-size:10px}
+.floorplan text{text-anchor:middle;dominant-baseline:middle;fill:var(--text);font-weight:600;pointer-events:none;paint-order:stroke;stroke:var(--card);stroke-linejoin:round}
+.floorplan .cap{font-weight:400;fill:var(--muted)}
+.room .shape{fill:var(--tint)}.room.vacant .shape{fill:var(--card)}.room.shared .shape{fill:var(--shared)}.room.locked .shape{fill:var(--surface)}.room.locked text{fill:var(--muted);font-weight:400}
+.room[data-space]{cursor:pointer}.room[data-space]:hover .shape{filter:brightness(.94)}
+.room.selected .shape{fill:var(--selected);stroke-width:6}
+.room:focus,.pin-svg:focus{outline:none}.room:focus-visible .shape{stroke:#479ef5;stroke-width:6}
+.circ .shape{fill:var(--surface)}.circ text{fill:var(--muted);font-weight:400}
 .repair-dot{fill:#d13438;stroke:var(--card);stroke-width:2}
-.pin-svg{cursor:pointer}.pin-svg circle{fill:var(--accent);stroke:#fff;stroke-width:2}.pin-svg text{fill:#fff;font-size:11px;font-weight:700}.pin-svg:hover circle{filter:brightness(1.2)}.pin-svg:focus-visible circle{stroke:#479ef5;stroke-width:4}
+.pin-svg{cursor:pointer}.pin-svg circle{fill:var(--accent);stroke:#fff;stroke-width:2}.pin-svg text{fill:#fff;font-weight:700;stroke:none}.pin-svg:hover circle{filter:brightness(1.2)}.pin-svg:focus-visible circle{stroke:#479ef5;stroke-width:4}
 .floor-tabs{justify-content:center}
+.imgplan{background:#fff;border-radius:8px}.imgplan .shape{stroke:none;fill-opacity:.45}.imgplan .room.vacant .shape{fill-opacity:0}.imgplan .room.locked .shape{fill-opacity:.65}
+.imgplan .room[data-space]:hover .shape{filter:none;fill-opacity:.65}.imgplan .room.selected .shape{fill-opacity:.55;stroke:var(--accent);stroke-width:10}.imgplan .room:focus-visible .shape{stroke:#479ef5;stroke-width:12}
+:root[data-theme=dark] .imgplan{background:#1d1d1d}:root[data-theme=dark] .imgplan image{filter:invert(.88) hue-rotate(180deg)}
 .legend{display:flex;flex-wrap:wrap;gap:6px 14px;justify-content:center;font-size:13px;color:var(--muted);margin-bottom:12px}
 .swatch{display:inline-block;width:14px;height:14px;border:2px solid var(--wall);border-radius:3px;vertical-align:-2px;margin-right:5px}
 .s-mine,.s-let{background:var(--tint)}.s-vacant{background:var(--card)}.s-shared{background:var(--shared)}.s-locked{background:var(--surface)}.s-repair{background:#d13438;border-color:var(--card);border-radius:50%}
@@ -64,9 +67,19 @@ nav select.lang-switch{display:inline-block;width:auto;margin:0;padding:7px 8px;
 .update-log{list-style:none;padding:0;margin:0 0 12px}.update-log li{padding:10px 0;border-top:1px solid var(--border)}.update-log p{margin:4px 0 0}
 .dup-hint{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:12px;margin:4px 0 12px}.dup-row{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;align-items:center;padding:6px 0}
 button[aria-disabled=true]{opacity:.55}
+.badge{display:inline-grid;place-items:center;min-width:18px;height:18px;padding:0 5px;margin-left:2px;border-radius:9px;background:#d13438;color:#fff;font-size:11px;font-weight:700;vertical-align:top}
+@media(max-width:480px){nav{gap:4px}nav button{white-space:nowrap;padding:6px 7px;font-size:14px}nav select.lang-switch{max-width:96px;padding:6px 4px;font-size:13px}}
+.visually-hidden{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.inbox-list{list-style:none;padding:0;margin:0}.inbox-list li+li{margin-top:6px}.inbox-list button{display:flex;flex-direction:column;gap:3px;width:100%;text-align:left}.inbox-list .unread button{border-left:4px solid var(--accent);background:var(--tint);font-weight:600}.inbox-list small{color:var(--muted);font-weight:400}
+.tenancy-actions{flex-basis:100%}
+.compare{display:grid;grid-template-columns:1fr 1fr;gap:18px}.compare img{display:block;width:100%;max-height:220px;object-fit:cover}.compare h3{margin-bottom:8px}.compare form label:first-of-type{margin-top:0}
+.reply{border:1px solid var(--border);border-radius:8px;padding:12px;margin-top:12px}.reply legend{font-weight:600;padding:0 4px}
+.totals{padding-left:20px}.totals li{margin:4px 0}
+@media(max-width:640px){.compare{grid-template-columns:1fr}}
+@media print{header,.back-row,#notice,button,.file-picker{display:none!important}body{background:#fff}.card{box-shadow:none;break-inside:avoid}main{padding-top:0}}
 @media(max-width:640px){.space-editor li{grid-template-columns:1fr 1fr}.space-editor li label:first-child{grid-column:1/-1}}
 </style>
-<header><nav aria-label="Main navigation"><button type="button" class="logo" data-go="start" aria-label="HomeLog home"><span class="logo-mark" aria-hidden="true">⌂</span><span class="logo-text">HomeLog</span></button><button data-go="home">Dashboard</button><button id="account-nav" data-go="profile">Account</button><select id="lang-switch" class="lang-switch" aria-label="Language"></select></nav></header>
+<header><nav aria-label="Main navigation"><button type="button" class="logo" data-go="start" aria-label="HomeLog home"><span class="logo-mark" aria-hidden="true">⌂</span><span class="logo-text">HomeLog</span></button><button data-go="home">Dashboard</button><button id="inbox-nav" type="button" data-go="inbox" hidden></button><button id="account-nav" data-go="profile">Account</button><select id="lang-switch" class="lang-switch" aria-label="Language"></select></nav></header>
 <div id="notice" role="status"></div><main><div class="back-row"><button type="button" data-go="back" hidden>← Back</button></div><div id="app"></div></main>
 <script>
 // ── Language dictionary ──────────────────────────────────────────────
@@ -77,7 +90,7 @@ const i18n={
  en:{
   'lang.name':'English','locale':'en-GB',
   'app.title':'HomeLog · Property Records',
-  'nav.label':'Main navigation','nav.home':'HomeLog home','nav.dashboard':'Dashboard','nav.properties':'My properties','nav.account':'Account','nav.signIn':'Sign in','nav.back':'← Back',
+  'nav.label':'Main navigation','nav.home':'HomeLog home','nav.dashboard':'Dashboard','nav.properties':'Properties','nav.account':'Account','nav.signIn':'Sign in','nav.back':'← Back',
 
   'common.optional':'Optional','common.optionalUpTo2MB':'Optional · Up to 2 MB','common.chooseFile':'Choose file','common.noFile':'No file chosen','common.photoTaken':'Photo taken {date}','common.photoTakenOn':'Photo taken on',
   'img.pending':'Photo coming soon',
@@ -207,12 +220,35 @@ const i18n={
   'msg.ackSaved':'Report acknowledged. The tenant can see your update.','msg.started':'Marked as in progress.','msg.completed':'Marked as completed. Waiting for the tenant to sign off.','msg.commentSaved':'Comment posted.',
   'msg.affectedOn':'Marked as affected.','msg.affectedOff':'No longer marked as affected.','msg.checkSaved':'Saved.','msg.inventoryConfirmed':'Inventory confirmed and locked.','msg.checkSubmitted':'Your check is saved. Waiting for your housemates.',
   'msg.addendumSaved':'Dated note added.','msg.reopened':'Sent back for repair.',
-  'err.checkAll':'Check every room before confirming.','err.noteRequired':'Enter a note.'
+  'err.checkAll':'Check every room before confirming.','err.noteRequired':'Enter a note.',
+  'nav.inbox':'Notifications','inbox.title':'Notifications','inbox.help':'In the full product these would also arrive by email or push notification.','inbox.markAll':'Mark all as read','inbox.empty':'No notifications yet.','inbox.unreadLabel':'{n} unread','inbox.new':'New:',
+  'note.reported':'{name} reported “{what}”','note.status':'{name} updated “{what}”: {status}','note.comment':'{name} commented on “{what}”','note.signedOff':'{name} signed off “{what}”','note.reopened':'{name} sent “{what}” back for repair','note.affected':'{name} is also affected by “{what}”',
+  'note.joined':'{name} joined {space} with an invite code','note.joinedHome':'{name} joined {prop} with an invite code','note.checkDone':'{name} confirmed the move-in inventory · differences flagged: {issues}','note.checkReminder':'Check your move-in inventory by {date}',
+  'note.checkoutSent':'{name} completed your move-out check. Please review it.','note.checkoutReply':'{name} responded to the move-out check · agreed {agreed}, disputed {disputed}','note.endingSoon':'Your tenancy ends on {date}. Your landlord will do a move-out check.',
+  'demo.tLucas':'12 Alder Road · Bedroom 4 · moving out soon',
+  'tenancy.endingSoon':'ends in {n} days','ll.attnEnding':'Tenancies ending soon: {n} · start the move-out check',
+  'checkout.eyebrow':'Move-out check','checkout.title':'Move-out comparison','checkout.start':'Start move-out check','checkout.view':'Move-out check',
+  'checkout.introLandlord':'For each room, compare the move-in record with the condition now. Only damage beyond fair wear and tear should lead to a deduction from the deposit.',
+  'checkout.introTenant':'Your landlord compared each room with the move-in record. Agree or dispute each proposed deduction.',
+  'checkout.status.draft':'Draft','checkout.status.sent':'Sent to tenant','checkout.status.responded':'Tenant responded',
+  'checkout.moveIn':'At move-in','checkout.moveOut':'At move-out','checkout.notRecorded':'Not recorded yet',
+  'checkout.outcome':'Condition','checkout.outcome.same':'Same as move-in','checkout.outcome.wear':'Fair wear and tear','checkout.outcome.damage':'Damage',
+  'checkout.notes':'Move-out notes','checkout.amount':'Proposed deduction (£)','checkout.amountHelp':'Only for damage beyond fair wear and tear.','checkout.photo':'Move-out photo','checkout.save':'Save room','checkout.saved':'Saved',
+  'checkout.proposed':'Proposed deduction','checkout.repairsDuring':'Repairs during this tenancy','checkout.total':'Proposed deductions in total: {amount}',
+  'checkout.sendHelp':'Record every room, then send the comparison to the tenant.','checkout.send':'Send to tenant','checkout.waiting':'Sent on {date}. Waiting for the tenant to respond.',
+  'checkout.yourResponse':'Your response to the {amount} deduction','checkout.agree':'Agree','checkout.dispute':'Dispute','checkout.comment':'Comment','checkout.commentHelp':'Required if you dispute.','checkout.reply':'Send my response',
+  'checkout.responseAgree':'{name} agrees','checkout.responseDispute':'{name} disputes',
+  'checkout.summaryTitle':'Summary','checkout.summaryProposed':'Proposed: {amount}','checkout.summaryAgreed':'Agreed: {amount}','checkout.summaryDisputed':'Disputed: {amount}','checkout.noDamage':'No deductions proposed.',
+  'checkout.disputeHelp':'Disputed amounts stay protected in the tenancy deposit scheme. Either side can use the scheme’s free dispute resolution service, with this record as evidence.',
+  'checkout.youResponded':'You responded on {date}.','checkout.print':'Print or save as PDF',
+  'checkout.bannerTitle':'Review your move-out check','checkout.bannerBody':'Your landlord proposed deductions of {amount}. Agree or dispute each one.','checkout.review':'Review','checkout.bannerDone':'Your move-out check is complete.','checkout.viewSummary':'View summary',
+  'msg.checkoutStarted':'Move-out check started.','msg.checkoutItemSaved':'Saved {room}.','msg.checkoutSent':'Sent to the tenant.','msg.checkoutReplied':'Response sent to your landlord.',
+  'err.recordAll':'Record every room before sending.','err.amountRequired':'Enter the proposed deduction for damage.','err.disputeComment':'Add a comment for each item you dispute.'
  },
  'zh-CN':{
   'lang.name':'简体中文','locale':'zh-CN',
   'app.title':'HomeLog · 房屋记录',
-  'nav.label':'主导航','nav.home':'HomeLog 首页','nav.dashboard':'我的房屋','nav.properties':'我的房产','nav.account':'账户','nav.signIn':'登录','nav.back':'← 返回',
+  'nav.label':'主导航','nav.home':'HomeLog 首页','nav.dashboard':'我的房屋','nav.properties':'房产','nav.account':'账户','nav.signIn':'登录','nav.back':'← 返回',
 
   'common.optional':'选填','common.optionalUpTo2MB':'选填 · 最大 2 MB','common.chooseFile':'选择文件','common.noFile':'未选择文件','common.photoTaken':'拍摄于 {date}','common.photoTakenOn':'拍摄日期',
   'img.pending':'照片即将添加',
@@ -342,7 +378,30 @@ const i18n={
   'msg.ackSaved':'已受理，租客可以看到你的更新。','msg.started':'已标记为维修中。','msg.completed':'已标记为完成，等待租客验收。','msg.commentSaved':'留言已发送。',
   'msg.affectedOn':'已标记为受影响。','msg.affectedOff':'已取消受影响标记。','msg.checkSaved':'已保存。','msg.inventoryConfirmed':'清单已确认并锁定。','msg.checkSubmitted':'你的核对已保存，正在等待室友。',
   'msg.addendumSaved':'已追加带日期的备注。','msg.reopened':'已退回重修。',
-  'err.checkAll':'请先核对所有房间再确认。','err.noteRequired':'请填写备注。'
+  'err.checkAll':'请先核对所有房间再确认。','err.noteRequired':'请填写备注。',
+  'nav.inbox':'通知','inbox.title':'通知','inbox.help':'正式产品中，这些通知也会通过邮件或手机推送发送。','inbox.markAll':'全部标为已读','inbox.empty':'还没有通知。','inbox.unreadLabel':'{n} 条未读','inbox.new':'新：',
+  'note.reported':'{name} 报修了“{what}”','note.status':'{name} 更新了“{what}”：{status}','note.comment':'{name} 在“{what}”下留言','note.signedOff':'{name} 验收了“{what}”','note.reopened':'{name} 把“{what}”退回重修','note.affected':'{name} 也受“{what}”影响',
+  'note.joined':'{name} 用邀请码加入了{space}','note.joinedHome':'{name} 用邀请码加入了 {prop}','note.checkDone':'{name} 确认了入住清单 · 标出不一致：{issues} 处','note.checkReminder':'请在 {date} 前核对入住清单',
+  'note.checkoutSent':'{name} 完成了你的退租检查，请查看。','note.checkoutReply':'{name} 回复了退租检查 · 同意 {agreed}，有异议 {disputed}','note.endingSoon':'你的租约将于 {date} 结束，房东会进行退租检查。',
+  'demo.tLucas':'12 Alder Road · 卧室 4 · 即将退租',
+  'tenancy.endingSoon':'{n} 天后到期','ll.attnEnding':'即将到期的租约：{n} · 可以开始退租检查',
+  'checkout.eyebrow':'退租检查','checkout.title':'退租对比','checkout.start':'开始退租检查','checkout.view':'退租检查',
+  'checkout.introLandlord':'逐个房间对比入住记录和现在的状况。只有超出正常损耗的损坏，才应该从押金中扣除。',
+  'checkout.introTenant':'房东已经对比了每个房间的入住记录。请对每一项拟扣款选择同意或提出异议。',
+  'checkout.status.draft':'草稿','checkout.status.sent':'已发给租客','checkout.status.responded':'租客已回复',
+  'checkout.moveIn':'入住时','checkout.moveOut':'退租时','checkout.notRecorded':'还没有记录',
+  'checkout.outcome':'状况','checkout.outcome.same':'与入住时相同','checkout.outcome.wear':'正常损耗','checkout.outcome.damage':'损坏',
+  'checkout.notes':'退租备注','checkout.amount':'拟扣款（英镑）','checkout.amountHelp':'仅限超出正常损耗的损坏。','checkout.photo':'退租照片','checkout.save':'保存房间','checkout.saved':'已保存',
+  'checkout.proposed':'拟扣款','checkout.repairsDuring':'租期内的报修','checkout.total':'拟扣款合计：{amount}',
+  'checkout.sendHelp':'记录完所有房间后，把对比结果发给租客。','checkout.send':'发给租客','checkout.waiting':'已于 {date} 发送，等待租客回复。',
+  'checkout.yourResponse':'你对 {amount} 扣款的意见','checkout.agree':'同意','checkout.dispute':'有异议','checkout.comment':'说明','checkout.commentHelp':'提出异议时必填。','checkout.reply':'提交我的回复',
+  'checkout.responseAgree':'{name} 同意','checkout.responseDispute':'{name} 有异议',
+  'checkout.summaryTitle':'汇总','checkout.summaryProposed':'拟扣款：{amount}','checkout.summaryAgreed':'已同意：{amount}','checkout.summaryDisputed':'有异议：{amount}','checkout.noDamage':'没有拟扣款。',
+  'checkout.disputeHelp':'有异议的金额会继续由押金保护机构保管。双方都可以申请该机构的免费争议调解，这份记录可以作为证据。',
+  'checkout.youResponded':'你已于 {date} 回复。','checkout.print':'打印或保存为 PDF',
+  'checkout.bannerTitle':'查看你的退租检查','checkout.bannerBody':'房东拟扣款 {amount}，请逐项选择同意或提出异议。','checkout.review':'查看','checkout.bannerDone':'你的退租检查已完成。','checkout.viewSummary':'查看汇总',
+  'msg.checkoutStarted':'已开始退租检查。','msg.checkoutItemSaved':'已保存{room}。','msg.checkoutSent':'已发给租客。','msg.checkoutReplied':'回复已发送给房东。',
+  'err.recordAll':'请先记录所有房间再发送。','err.amountRequired':'请填写损坏的拟扣款金额。','err.disputeComment':'请为每一项有异议的扣款写明理由。'
  }
 };
 
@@ -364,7 +423,7 @@ const addDays=(date,n)=>new Date(Date.parse(date+'T00:00:00Z')+n*864e5).toISOStr
 // ── Demo data ────────────────────────────────────────────────────────
 // Everything lives in one browser "database" so several demo accounts can
 // work on the same properties (landlord, tenants in a shared house, …).
-const STORE='homelog-v2',LEGACY='zhujidemo-v1',DEMO_PASSWORD='test',SEED_REV=3;
+const STORE='homelog-v2',LEGACY='zhujidemo-v1',DEMO_PASSWORD='test',SEED_REV=5;
 const SPACE_TYPES=['bedroom','kitchen','living','bathroom','other'];
 function seedDb(){
  const acc=(id,name,email,role,demo)=>({id,name,email,role,...(demo?{demo}:{})});
@@ -375,7 +434,7 @@ function seedDb(){
   acc('t-new','Test User','test@homelog.demo','tenant','demo.tNew'),
   acc('ll-main','Priya Shah','landlord@homelog.demo','landlord','demo.llMain'),
   acc('ll-new','Alex Morgan','new.landlord@homelog.demo','landlord','demo.llNew'),
-  acc('t-lucas','Lucas Silva','lucas@homelog.demo','tenant'),
+  acc('t-lucas','Lucas Silva','lucas@homelog.demo','tenant','demo.tLucas'),
   acc('t-mina','Mina Park','mina@homelog.demo','tenant'),
   acc('t-sofia','Sofia Rossi','sofia@homelog.demo','tenant')
  ].map(a=>[a.id,a]));
@@ -404,12 +463,12 @@ function seedDb(){
   ],
   records:alderRecords,
   items:[
-   {id:'alder-hob',spaceId:'kitchen',floor:'g',x:205,y:300,photo:'item-alder-hob'},
-   {id:'alder-fridge',spaceId:'kitchen',floor:'g',x:30,y:300,photo:'item-alder-fridge'},
-   {id:'alder-boiler',spaceId:'kitchen',floor:'g',x:118,y:378,photo:'item-alder-boiler'},
-   {id:'alder-b1-window',spaceId:'b1',floor:'g',x:75,y:18,photo:'item-alder-b1-window'},
-   {id:'alder-shower',spaceId:'bath1',floor:'1',x:28,y:236,photo:'item-alder-shower'},
-   {id:'alder-b3-desk',spaceId:'b3',floor:'1',x:210,y:376,photo:'item-alder-b3-desk'}
+   {id:'alder-hob',spaceId:'kitchen',floor:'g',x:790,y:1228,photo:'item-alder-hob'},
+   {id:'alder-fridge',spaceId:'kitchen',floor:'g',x:240,y:1215,photo:'item-alder-fridge'},
+   {id:'alder-boiler',spaceId:'kitchen',floor:'g',x:640,y:1425,photo:'item-alder-boiler'},
+   {id:'alder-b1-window',spaceId:'b1',floor:'g',x:405,y:92,photo:'item-alder-b1-window'},
+   {id:'alder-shower',spaceId:'bath1',floor:'1',x:255,y:905,photo:'item-alder-shower'},
+   {id:'alder-b3-desk',spaceId:'b3',floor:'1',x:690,y:1390,photo:'item-alder-b3-desk'}
   ],
   tickets:[
    {id:'k1',spaceId:'kitchen',reporterId:'t-wei',created:'2026-11-08',noticed:'2026-11-07',location:'Under the kitchen sink',description:'Water is dripping from a pipe joint under the sink. The cupboard base is wet.',priority:'Urgent',status:2,photo:{demo:'repair-leak-before'},photoDate:'2026-11-08',baseline:alderRecords.kitchen},
@@ -429,10 +488,10 @@ function seedDb(){
   tenancies:[{id:'river-joint',spaceIds:['rkl','rb1','rb2','rbath'],tenantIds:['t-tom','t-sofia'],code:'RIVER-4B',start:'2026-09-15',end:'2027-09-14',inventory:'confirmed'}],
   records:riverRecords,
   items:[
-   {id:'river-washer',spaceId:'rkl',floor:'f',x:22,y:22,photo:'item-riverside-washer'},
-   {id:'river-hob',spaceId:'rkl',floor:'f',x:60,y:22,photo:'item-riverside-hob'},
-   {id:'river-window',spaceId:'rb1',floor:'f',x:338,y:22,photo:'item-riverside-window'},
-   {id:'river-basin',spaceId:'rbath',floor:'f',x:22,y:238,photo:'item-riverside-basin'}
+   {id:'river-washer',spaceId:'rkl',floor:'f',x:185,y:88,photo:'item-riverside-washer'},
+   {id:'river-hob',spaceId:'rkl',floor:'f',x:318,y:88,photo:'item-riverside-hob'},
+   {id:'river-window',spaceId:'rb1',floor:'f',x:1440,y:220,photo:'item-riverside-window'},
+   {id:'river-basin',spaceId:'rbath',floor:'f',x:275,y:945,photo:'item-riverside-basin'}
   ],
   tickets:[
    {id:'k4',spaceId:'rbath',itemId:'river-basin',reporterId:'t-tom',created:'2026-11-12',location:'Bathroom basin',description:'The basin tap is loose and turns in its fitting.',priority:'Routine',status:1,photo:{demo:'repair-tap-before'},photoDate:'2026-11-12',baseline:riverRecords.rbath}
@@ -457,7 +516,20 @@ function seedDb(){
  alder.tenancies[0].checks['t-wei'].b1={status:'issue',at:'2026-09-04',note:'The chip on the windowsill is about 3 cm wide, larger than described. There is also a small scuff on the wardrobe door.',photo:{demo:'check-alder-b1-windowsill'}};
  // Aisha moved in a few days ago, so her 7-day inventory check is still open.
  const b3=alder.tenancies[2];b3.start=addDays(today(),-5);b3.due=addDays(b3.start,7);b3.checks={'t-aisha':{b3:{status:'ok',at:addDays(today(),-4)}}};b3.submitted={};
- return {version:2,rev:SEED_REV,seq:100,session:null,prefs:{theme:'system',lang:'en'},accounts,properties:[alder,riverside]};
+ // Lucas moves out soon, so the move-out check can be demonstrated.
+ const b4=alder.tenancies[3];b4.end=addDays(today(),5);
+ const note=(to,at,key,vars,link,read=false)=>({to,at:at+'T09:00:00Z',key,vars,link,read});
+ const notifications=[
+  note('ll-main','2026-11-14','note.reported',{name:'Aisha Khan',what:'Silicone along the bath'},{prop:'alder',ticket:'k2'}),
+  note('ll-main','2026-11-12','note.reported',{name:'Tom Becker',what:'Bathroom basin'},{prop:'riverside',ticket:'k4'},true),
+  note('ll-main','2026-09-04','note.checkDone',{name:'Wei Zhang',issues:1},{prop:'alder'},true),
+  note('t-wei','2026-11-14','note.reported',{name:'Aisha Khan',what:'Silicone along the bath'},{prop:'alder',ticket:'k2'}),
+  note('t-wei','2026-11-11','note.status',{name:'Priya Shah',what:'Under the kitchen sink',status:2},{prop:'alder',ticket:'k1'}),
+  note('t-aisha',today(),'note.checkReminder',{date:b3.due},{prop:'alder',page:'check'}),
+  note('t-tom','2026-11-13','note.status',{name:'Priya Shah',what:'Bathroom basin',status:1},{prop:'riverside',ticket:'k4'},true),
+  note('t-lucas',today(),'note.endingSoon',{date:b4.end},{prop:'alder'})
+ ].map((n,i)=>({id:'seed-n'+i,...n}));
+ return {version:2,rev:SEED_REV,seq:100,notifications,session:null,prefs:{theme:'system',lang:'en'},accounts,properties:[alder,riverside]};
 }
 // Old single-property data (before accounts existed) becomes a personal
 // record owned by the "Test User" tenant.
@@ -479,6 +551,7 @@ function refreshDemo(d){
  const fresh=seedDb(),ids=fresh.properties.map(p=>p.id);
  d.properties=[...fresh.properties,...d.properties.filter(p=>!ids.includes(p.id))];
  d.accounts={...fresh.accounts,...Object.fromEntries(Object.entries(d.accounts).filter(([id])=>!fresh.accounts[id]))};
+ d.notifications=[...fresh.notifications,...(d.notifications||[]).filter(n=>!String(n.id).startsWith('seed-'))];
  d.rev=SEED_REV;d.seq=Math.max(d.seq||100,fresh.seq);
 }
 function loadDb(){
@@ -518,13 +591,35 @@ const spaceLocked=(p,id)=>p.tenancies.some(tn=>tn.tenantIds.length&&tnLocked(tn)
 function checksFor(p,id){const out=[];for(const tn of p.tenancies)for(const [who,c] of Object.entries(tn.checks||{}))if(c[id])out.push({who,...c[id]});return out}
 const myCheckDue=p=>{const tn=tenancyOf(p);return tn&&!p.selfManaged&&tn.inventory==='pending'&&tn.due&&today()<=tn.due&&!tn.submitted?.[db.session]?tn:null};
 const daysLeft=due=>Math.max(0,Math.round((Date.parse(due)-Date.parse(today()))/864e5));
+const money=n=>new Intl.NumberFormat(t('locale'),{style:'currency',currency:'GBP',maximumFractionDigits:0}).format(n||0);
+// ── Notifications ───────────────────────────────────────────────────
+// Stored as a text key plus raw values, so they follow the reader's language.
+// In the real product these would also go out by email or push.
+function notify(to,key,vars={},link={}){
+ const ids=[...new Set(to)].filter(id=>id&&id!==db.session&&db.accounts[id]);
+ for(const id of ids)(db.notifications||=[]).push({id:'n'+(db.seq++),to:id,at:new Date().toISOString(),key,vars,link,read:false});
+}
+// Everyone who can see a space: the owner, its tenants, and housemates for shared areas.
+function audience(p,sid){const s=spaceOf(p,sid);return [p.ownerId,...p.tenancies.flatMap(tn=>tn.spaceIds.includes(sid)||(p.mode==='rooms'&&s?.shared)?tn.tenantIds:[])]}
+const myNotes=()=>(db.notifications||[]).filter(n=>n.to===db.session).sort((a,b)=>b.at.localeCompare(a.at));
+const unreadCount=()=>myNotes().filter(n=>!n.read).length;
+function noteText(n){
+ const p=prop(n.link?.prop),raw=n.vars||{},v={};
+ for(const [k,val] of Object.entries(raw))v[k]=esc(val);
+ if(raw.status!=null)v.status=statusLabel(raw.status);
+ if(raw.date)v.date=dateText(raw.date);
+ if(raw.space)v.space=esc(spaceName(spaceOf(p,raw.space)));
+ for(const k of ['agreed','disputed','amount'])if(raw[k]!=null)v[k]=money(raw[k]);
+ v.prop=esc(p?.name||'');
+ return t(n.key,v);
+}
 const firstName=id=>id===db.session?t('people.you'):(db.accounts[id]?.name||'').split(' ')[0];
 const personName=id=>id===db.session?t('people.you'):(db.accounts[id]?.name||t('people.unknown'));
 
 // ── Navigation state ────────────────────────────────────────────────
 let page='start',trail=[];
 let propId=null,spaceSel=null,floorSel=null,itemSel=null,ticketSel=null,editId=null,recordSpace=null;
-let signinRole='tenant',repairFilter='All',reportCtx={},draft=null,checkOpen=null;
+let signinRole='tenant',repairFilter='All',reportCtx={},draft=null,checkOpen=null,checkoutTn=null;
 let method='upload',material=null,materialPending=false,materialVersion=0,importText='',drafts={};
 let postcodeQuery='',postcodeSearched=false,foundProperty=null;
 const sampleProperty={name:'Harbour Court · Flat 3',address:'Harbour Street, London E1 · Demo'};
@@ -538,7 +633,7 @@ function save(message=''){
  try{localStorage.setItem(STORE,JSON.stringify(db));notice.textContent=message}
  catch{notice.textContent=t('msg.storageFull')}
 }
-const SIGNED_IN=['move-in','link','setup','upload','mode','spaces','records','property','report','repair','asset','check'];
+const SIGNED_IN=['move-in','link','setup','upload','mode','spaces','records','property','report','repair','asset','check','inbox','checkout'];
 function go(next,{replace=false}={}){
  if(!me()&&SIGNED_IN.includes(next))next='signin';
  if(isLandlord()&&['move-in','link'].includes(next))next='home';
@@ -576,20 +671,28 @@ const dateText=date=>photoDate(date)||esc(date);
 function evidence(item,placeholder){return item?`${media(item.photo)}${item.photo&&item.photoDate?`<small>${t('common.photoTaken',{date:photoDate(item.photoDate)})}</small>`:''}<p class="notes">${esc(item.notes||item.description)}</p>${(item.addenda||[]).map(a=>`<p class="addendum"><small>${t('addendum.label',{name:esc(personName(a.by)),date:dateText(a.at)})}</small><br><span class="notes">${esc(a.note)}</span></p>`).join('')}`:`<p>${placeholder}</p>`}
 
 // ── Floor plans ─────────────────────────────────────────────────────
-// Rooms are [spaceId, x, y, width, height] in plan units. A sixth value marks
-// a hallway or landing (not a space) and gives its label key.
+// Drawn plans are a floor-plan image (demo/plan-*.png) with clickable room
+// outlines laid over it. Each room is [spaceId, points, labelPosition]; a
+// fourth value marks a hall or landing (not a space) and gives its label key.
+// Coordinates are image pixels. `unit` scales text and markers to the image.
+const R=(x,y,w,h)=>[[x,y],[x+w,y],[x+w,y+h],[x,y+h]];
+const BAY=(right,bottom)=>[[195,145],[258,145],[302,42],[508,42],[550,145],[right,145],[right,bottom],[195,bottom]];
 const PLANS={
  alder:{floors:[
-  {id:'g',nameKey:'floor.ground',w:240,h:400,rooms:[['b1',0,0,150,140],['hall',150,0,90,270,'plan.hall'],['living',0,140,150,130],['kitchen',0,270,240,130]]},
-  {id:'1',nameKey:'floor.first',w:240,h:400,rooms:[['b2',0,0,150,150],['landing',150,0,90,260,'plan.landing'],['bath1',0,150,150,110],['b3',0,260,240,140]]},
-  {id:'2',nameKey:'floor.second',w:240,h:400,rooms:[['b4',0,0,150,170],['landing2',150,0,90,230,'plan.landing'],['b5',0,170,150,230],['bath2',150,230,90,170]]}
+  {id:'g',nameKey:'floor.ground',img:'plan-alder-ground',w:1024,h:1536,unit:3.1,rooms:[
+   ['b1',BAY(626,633),[420,492]],['hall',R(640,145,190,955),[735,300],'plan.hall'],['living',R(195,650,431,446),[360,705]],['kitchen',R(195,1115,635,350),[360,1250]]]},
+  {id:'1',nameKey:'floor.first',img:'plan-alder-first',w:1024,h:1536,unit:3.1,rooms:[
+   ['b2',BAY(626,760),[430,585]],['landing',R(640,145,190,955),[735,300],'plan.landing'],['bath1',R(195,775,431,325),[440,860]],['b3',R(195,1115,635,350),[620,1250]]]},
+  {id:'2',nameKey:'floor.second',img:'plan-alder-second',w:1024,h:1536,unit:3.1,rooms:[
+   ['b4',BAY(640,945),[400,830]],['landing2',[[655,145],[830,145],[830,1080],[575,1080],[575,962],[655,962]],[740,300],'plan.landing'],['b5',R(195,962,365,503),[370,1095]],['bath2',R(575,1085,255,380),[702,1240]]]}
  ]},
- riverside:{floors:[{id:'f',nameKey:'floor.flat',w:360,h:260,rooms:[['rkl',0,0,200,160],['rb1',200,0,160,130],['rb2',200,130,160,130],['rbath',0,160,110,100],['hall',110,160,90,100,'plan.hall']]}]}
+ riverside:{floors:[{id:'f',nameKey:'floor.flat',img:'plan-riverside',w:1536,h:1024,unit:4.6,rooms:[
+  ['rkl',R(128,42,730,601),[715,570]],['rb1',R(878,42,594,558),[1180,430]],['rb2',[[1005,612],[1472,612],[1472,985],[842,985],[842,728],[1005,728]],[1110,770]],['rbath',R(130,665,450,320),[370,800]],['hall',R(600,665,222,320),[711,850],'plan.hall']]}]}
 };
 // Properties without a drawn plan get a simple tile layout of their spaces.
 function schematic(p){
  const n=p.spaces.length,rows=Math.ceil(n/2);
- return {schematic:true,floors:[{id:'s',nameKey:'floor.flat',w:300,h:rows*96,rooms:p.spaces.map((s,i)=>{const last=i===n-1&&n%2;return [s.id,last?0:(i%2)*150,Math.floor(i/2)*96,last?300:150,96]})}]};
+ return {schematic:true,floors:[{id:'s',nameKey:'floor.flat',w:300,h:rows*96,unit:1,rooms:p.spaces.map((s,i)=>{const last=i===n-1&&n%2,x=last?0:(i%2)*150,y=Math.floor(i/2)*96,w=last?300:150;return [s.id,R(x,y,w,96),[x+w/2,y+48]]})}]};
 }
 const planDef=p=>PLANS[p.plan?.svg]||schematic(p);
 function spaceState(p,s){
@@ -612,22 +715,24 @@ function spaceCaption(p,s,st){
 function floorPlan(p){
  const floors=planDef(p).floors;
  const f=floors.find(x=>x.id===floorSel)||floors.find(x=>x.rooms.some(r=>r[0]===spaceSel))||floors[0];
- const kinds=new Set();let repairs=false;
- const rooms=f.rooms.map(([id,x,y,w,h,labelKey])=>{
-  const cx=x+w/2,cy=y+h/2;
-  if(labelKey)return `<g class="circ"><rect x="${x}" y="${y}" width="${w}" height="${h}"/><text x="${cx}" y="${cy}">${t(labelKey)}</text></g>`;
+ const u=f.unit||1,kinds=new Set();let repairs=false;
+ const pts=list=>list.map(([x,y])=>x+','+y).join(' ');
+ const text=(x,y,content,cls='')=>`<text class="${cls}" x="${x}" y="${y}" font-size="${(cls?10:12)*u}" stroke-width="${4*u}">${content}</text>`;
+ const rooms=f.rooms.map(([id,shape,[lx,ly],labelKey])=>{
+  if(labelKey!==undefined)return `<g class="circ">${f.img?'':`<polygon class="shape" points="${pts(shape)}"/>`}${text(lx,ly,t(labelKey),'circ-label')}</g>`;
   const s=spaceOf(p,id);if(!s)return '';
   const st=spaceState(p,s),cap=spaceCaption(p,s,st),sel=id===spaceSel,label=esc(spaceName(s));
   kinds.add(st.kind);repairs||=st.repair;
+  const xs=shape.map(q=>q[0]),ys=shape.map(q=>q[1]);
   const attrs=st.kind==='locked'?'aria-hidden="true"':`data-space="${id}" role="button" tabindex="0" aria-pressed="${sel}" aria-label="${label}${cap?', '+esc(cap):''}${st.repair?', '+t('plan.openRepair'):''}"`;
-  return `<g class="room ${st.kind}${sel?' selected':''}" ${attrs}><rect x="${x}" y="${y}" width="${w}" height="${h}"/><text x="${cx}" y="${cap?cy-7:cy}">${label}</text>${cap?`<text class="cap" x="${cx}" y="${cy+9}">${esc(cap)}</text>`:''}${st.repair?`<circle class="repair-dot" cx="${x+w-12}" cy="${y+12}" r="5"/>`:''}</g>`;
+  return `<g class="room ${st.kind}${sel?' selected':''}" ${attrs}><polygon class="shape" points="${pts(shape)}"/>${text(lx,cap?ly-7*u:ly,label)}${cap?text(lx,ly+9*u,esc(cap),'cap'):''}${st.repair?`<circle class="repair-dot" cx="${Math.max(...xs)-14*u}" cy="${Math.min(...ys)+14*u}" r="${5*u}" stroke-width="${2*u}"/>`:''}</g>`;
  }).join('');
- const pins=(p.items||[]).map((it,i)=>({it,n:i+1})).filter(({it})=>it.floor===f.id&&canSee(p,it.spaceId)).map(({it,n})=>`<g class="pin-svg" data-item="${it.id}" role="button" tabindex="0" aria-label="${n}. ${esc(itemName(it))}"><circle cx="${it.x}" cy="${it.y}" r="11"/><text x="${it.x}" y="${it.y+1}">${n}</text></g>`).join('');
- const pad=6;
+ const pins=(p.items||[]).map((it,i)=>({it,n:i+1})).filter(({it})=>it.floor===f.id&&canSee(p,it.spaceId)).map(({it,n})=>`<g class="pin-svg" data-item="${it.id}" role="button" tabindex="0" aria-label="${n}. ${esc(itemName(it))}"><circle cx="${it.x}" cy="${it.y}" r="${11*u}" stroke-width="${2*u}"/><text x="${it.x}" y="${it.y+u}" font-size="${11*u}">${n}</text></g>`).join('');
+ const pad=f.img?0:6,maxWidth=f.img?(f.h>f.w?380:560):400;
  const tabs=floors.length>1?`<div class="row floor-tabs" role="group" aria-label="${t('plan.floors')}">${floors.map(x=>`<button type="button" class="filter" data-floor="${x.id}" aria-pressed="${x.id===f.id}">${t(x.nameKey)}</button>`).join('')}</div>`:'';
  const legendKinds=['mine','let','vacant','shared','locked'].filter(k=>kinds.has(k)&&!(k==='mine'&&kinds.size===1));
  const legend=legendKinds.length||repairs?`<div class="legend">${legendKinds.map(k=>`<span><i class="swatch s-${k}"></i>${t('legend.'+k)}</span>`).join('')}${repairs?`<span><i class="swatch s-repair"></i>${t('legend.repair')}</span>`:''}</div>`:'';
- return `${tabs}<svg class="floorplan" viewBox="${-pad} ${-pad} ${f.w+2*pad} ${f.h+2*pad}" role="group" aria-label="${t('plan.label',{floor:t(f.nameKey)})}">${rooms}<rect class="outer" x="0" y="0" width="${f.w}" height="${f.h}"/>${pins}</svg>${legend}`;
+ return `${tabs}<svg class="floorplan${f.img?' imgplan':''}" style="max-width:${maxWidth}px" viewBox="${-pad} ${-pad} ${f.w+2*pad} ${f.h+2*pad}" role="group" aria-label="${t('plan.label',{floor:t(f.nameKey)})}">${f.img?`<image href="demo/${f.img}.png" x="0" y="0" width="${f.w}" height="${f.h}"/>`:''}${rooms}${f.img?'':`<rect class="outer" x="0" y="0" width="${f.w}" height="${f.h}"/>`}${pins}</svg>${legend}`;
 }
 
 // ── Pages: start, sign-in, account ──────────────────────────────────
@@ -664,8 +769,9 @@ function occupancy(p){
 function attention(p){
  const open=p.tickets.filter(x=>x.status<4),urgent=open.filter(x=>x.priority==='Urgent').length;
  const pending=p.tenancies.filter(x=>x.inventory==='pending'&&x.due&&today()<=x.due).length,vacant=p.tenancies.filter(x=>!x.tenantIds.length).length;
- const score=urgent*100+open.length*10+pending*5+vacant;
- const line=urgent?t('ll.attnUrgent',{n:urgent}):pending?t('ll.attnInventory',{n:pending}):open.length?t('ll.attnOpen',{n:open.length}):vacant?t('ll.attnVacant',{n:vacant}):t('ll.attnNone');
+ const ending=p.tenancies.filter(endingSoon).length;
+ const score=urgent*100+ending*20+open.length*10+pending*5+vacant;
+ const line=urgent?t('ll.attnUrgent',{n:urgent}):ending?t('ll.attnEnding',{n:ending}):pending?t('ll.attnInventory',{n:pending}):open.length?t('ll.attnOpen',{n:open.length}):vacant?t('ll.attnVacant',{n:vacant}):t('ll.attnNone');
  return {open:open.length,urgent,score,line,warn:urgent>0};
 }
 function portfolio(){
@@ -702,12 +808,13 @@ function spacesCard(p){
  return `<section class="card"><div class="row spread"><h2>${t(fromLandlord?'landlord.title':landlordView(p)?'spaces.titleLandlord':'spaces.titleOwn')}</h2>${fromLandlord?pill(t('landlord.badge')):''}</div>${fromLandlord?`<p>${t('landlord.body')}</p>`:''}${groups.filter(([,list])=>list.length).map(([key,list])=>`<h3>${t(key)}</h3><ul class="space-list">${list.map(entry).join('')}</ul>`).join('')}${isManager(p)?actionBtn(t('home.editInventory'),'edit-inventory'):''}</section>`;
 }
 function tenanciesCard(p){
+ const ending=x=>endingSoon(x)||(x.tenantIds.length&&x.end&&x.end>=today()&&daysLeft(x.end)<=14)?' · '+t('tenancy.endingSoon',{n:daysLeft(x.end)}):'';
  const inv=x=>{
   const issues=Object.values(x.checks||{}).flatMap(c=>Object.values(c)).filter(c=>c.status==='issue').length;
   const base=x.inventory==='pending'?(tnLocked(x)?t('inventory.autoLocked'):t('inventory.pendingDue',{date:dateText(x.due)})):t('inventory.'+(x.inventory||'none'));
   return base+(issues?' · '+t('inventory.flagged',{n:issues}):'');
  };
- return `<section class="card"><h2>${t('tenancy.title')}</h2><p class="help">${t(p.mode==='rooms'?'tenancy.helpRooms':'tenancy.helpJoint')}</p><ul class="tenancy-list">${p.tenancies.map(x=>`<li><div><strong>${x.spaceIds.length===p.spaces.length?t('tenancy.wholeHome'):x.spaceIds.map(id=>esc(spaceName(spaceOf(p,id)))).join(', ')}</strong> · ${x.tenantIds.length?x.tenantIds.map(id=>esc(personName(id))).join(', '):`<em>${t('plan.vacant')}</em>`}<br><small>${x.start?t('tenancy.dates',{start:dateText(x.start),end:x.end?dateText(x.end):t('tenancy.open')})+' · ':''}${x.tenantIds.length?inv(x):t('tenancy.shareCode')}</small></div><div class="code-box"><code>${esc(x.code)}</code><button type="button" data-copy="${esc(x.code)}" aria-label="${t('tenancy.copyLabel',{code:esc(x.code)})}">${t('tenancy.copy')}</button></div></li>`).join('')}</ul></section>`;
+ return `<section class="card"><h2>${t('tenancy.title')}</h2><p class="help">${t(p.mode==='rooms'?'tenancy.helpRooms':'tenancy.helpJoint')}</p><ul class="tenancy-list">${p.tenancies.map(x=>`<li><div><strong>${x.spaceIds.length===p.spaces.length?t('tenancy.wholeHome'):x.spaceIds.map(id=>esc(spaceName(spaceOf(p,id)))).join(', ')}</strong> · ${x.tenantIds.length?x.tenantIds.map(id=>esc(personName(id))).join(', '):`<em>${t('plan.vacant')}</em>`}<br><small>${x.start?t('tenancy.dates',{start:dateText(x.start),end:x.end?dateText(x.end):t('tenancy.open')})+' · ':''}${x.tenantIds.length?inv(x)+ending(x):t('tenancy.shareCode')}</small></div><div class="code-box"><code>${esc(x.code)}</code><button type="button" data-copy="${esc(x.code)}" aria-label="${t('tenancy.copyLabel',{code:esc(x.code)})}">${t('tenancy.copy')}</button></div>${x.tenantIds.length?`<div class="tenancy-actions">${x.checkout?`<button type="button" data-checkout="${x.id}">${t('checkout.view')} · ${t('checkout.status.'+x.checkout.status)}</button>`:`<button type="button" data-start-checkout="${x.id}">${t('checkout.start')}</button>`}</div>`:''}</li>`).join('')}</ul></section>`;
 }
 const ticketRow=p=>x=>`<li><button type="button" data-ticket="${x.id}"><strong>${esc(x.location)}</strong>${priorityPill(x.priority)}<br><small>${statusLabel(x.status)} · ${esc(spaceName(spaceOf(p,x.spaceId)))}${x.affected?.length?' · '+t('affected.short',{n:x.affected.length+1}):''}${x.reporterId&&x.reporterId!==db.session?' · '+t('repair.by',{name:esc(personName(x.reporterId))}):''}</small></button></li>`;
 function repairQueue(p){
@@ -730,6 +837,11 @@ function propertyView(p){
 
 // ── Inventory checks and locking ────────────────────────────────────
 function inventoryBanner(p){
+ const own=tenancyOf(p),co=own?.checkout;
+ if(co&&co.status!=='draft'&&!p.selfManaged){
+  if(co.status==='sent'&&!co.responses?.[db.session])return `<section class="card banner"><div><h2>${t('checkout.bannerTitle')}</h2><p>${t('checkout.bannerBody',{amount:money(checkoutTotals(own).proposed)})}</p></div><button type="button" class="primary" data-checkout="${own.id}">${t('checkout.review')}</button></section>`;
+  return `<section class="card banner"><p>${t('checkout.bannerDone')}</p><button type="button" data-checkout="${own.id}">${t('checkout.viewSummary')}</button></section>`;
+ }
  const due=myCheckDue(p);
  if(due){
   const done=Object.keys(due.checks?.[db.session]||{}).length,total=checkSpaceIds(p,due).length;
@@ -764,6 +876,65 @@ function checkPage(){
   return `<section class="card check-card"><div class="row spread"><h2>${esc(spaceName(s))}</h2>${status}</div>${evidence(p.records[id],t('home.noRecord'))}${body}</section>`;
  };
  return `<div class="panel"><section class="card"><h1>${t('check.title')}</h1><p>${t('check.intro')}</p><p><strong>${t('check.due',{date:dateText(tn.due),days:daysLeft(tn.due)})}</strong> · ${pill(t('check.progress',{done,total:ids.length}))}</p></section>${ids.map(card).join('')}<section class="card"><p class="help">${done<ids.length?t('check.remaining',{n:ids.length-done}):t('check.submitHelp')}</p>${actionBtn(t('check.submit'),'submit-check',true,done<ids.length?'aria-disabled="true"':'')}</section></div>`;
+}
+
+// ── Notifications page ──────────────────────────────────────────────
+function inbox(){
+ const list=myNotes();
+ return `<div class="panel"><section class="card"><div class="row spread"><h1>${t('inbox.title')}</h1>${list.some(n=>!n.read)?actionBtn(t('inbox.markAll'),'read-all'):''}</div><p class="help">${t('inbox.help')}</p>${list.length?`<ul class="inbox-list">${list.map(n=>`<li class="${n.read?'':'unread'}"><button type="button" data-note="${n.id}"><span>${n.read?'':`<span class="visually-hidden">${t('inbox.new')} </span>`}${noteText(n)}</span><small>${dateText(n.at.slice(0,10))}${prop(n.link?.prop)?' · '+esc(prop(n.link.prop).name):''}</small></button></li>`).join('')}</ul>`:`<p>${t('inbox.empty')}</p>`}</section></div>`;
+}
+function openNote(link={}){
+ if(link.prop)propId=link.prop;
+ if(link.ticket){ticketSel=link.ticket;go('repair')}
+ else if(link.page==='check')go('check');
+ else if(link.page==='checkout'){checkoutTn=link.tenancy;go('checkout')}
+ else go(isLandlord()?'property':'home');
+}
+
+// ── Move-out check ──────────────────────────────────────────────────
+// The landlord compares each room with the move-in record and proposes
+// deductions only for damage beyond fair wear and tear; tenants agree or
+// dispute each item. The summary can be printed as evidence for the
+// deposit protection scheme.
+const findTenancy=(p,id)=>p?.tenancies.find(x=>x.id===id);
+const endingSoon=x=>x.tenantIds.length&&x.end&&x.end>=today()&&daysLeft(x.end)<=14&&(!x.checkout||x.checkout.status==='draft');
+const tenancyLabel=(p,tn)=>tn.spaceIds.length===p.spaces.length?t('tenancy.wholeHome'):tn.spaceIds.map(id=>esc(spaceName(spaceOf(p,id)))).join(', ');
+function checkoutTotals(tn){
+ const co=tn.checkout||{},damage=Object.entries(co.items||{}).filter(([,i])=>i.outcome==='damage');
+ const disputedIds=new Set(Object.values(co.responses||{}).flatMap(r=>Object.entries(r).filter(([,x])=>!x.agree).map(([id])=>id)));
+ const sum=list=>list.reduce((a,[,i])=>a+(i.amount||0),0);
+ const proposed=sum(damage),disputed=sum(damage.filter(([id])=>disputedIds.has(id)));
+ return {proposed,disputed,agreed:proposed-disputed};
+}
+const outcomePill=i=>pill(t('checkout.outcome.'+i.outcome),i.outcome==='damage'?'urgent':'');
+function checkoutCard(p,tn,id,mode){
+ const s=spaceOf(p,id),co=tn.checkout,item=co.items?.[id];
+ const flagged=checksFor(p,id).filter(c=>tn.tenantIds.includes(c.who)&&c.status==='issue');
+ const moveIn=`<div><h3>${t('checkout.moveIn')}</h3>${evidence(p.records[id],t('home.noRecord'))}${flagged.map(c=>`<p class="notes issue-note"><small>${t('check.resultsTitle')} · ${esc(personName(c.who))}</small><br>${esc(c.note)}</p>`).join('')}</div>`;
+ const moveOut=mode==='edit'
+  ?`<form data-form="checkout-item" data-target="${id}"><h3>${t('checkout.moveOut')}</h3><label>${t('checkout.outcome')} <select name="outcome">${['same','wear','damage'].map(o=>`<option value="${o}" ${(item?.outcome||'same')===o?'selected':''}>${t('checkout.outcome.'+o)}</option>`).join('')}</select></label><label>${t('checkout.notes')} <textarea name="notes" required>${esc(item?.notes||'')}</textarea></label><label>${t('checkout.amount')} <small>${t('checkout.amountHelp')}</small><input type="number" name="amount" min="0" step="1" inputmode="numeric" value="${item?.amount||''}"></label><label>${t('checkout.photo')} ${optional(true)}${filePicker('name="photo" type="file" accept="image/png,image/jpeg,image/webp" capture="environment"')}</label>${item?.photo?media(item.photo):''}<div class="row"><button class="primary">${t('checkout.save')}</button>${item?pill('✓ '+t('checkout.saved')):''}</div></form>`
+  :`<div><h3>${t('checkout.moveOut')}</h3>${item?`${outcomePill(item)}${evidence(item,'')}${item.outcome==='damage'?`<p><strong>${t('checkout.proposed')}: ${money(item.amount)}</strong></p>`:''}`:`<p>${t('checkout.notRecorded')}</p>`}</div>`;
+ const reps=p.tickets.filter(x=>x.spaceId===id&&(!tn.start||x.created>=tn.start)&&(!tn.end||x.created<=tn.end));
+ const repairs=reps.length?`<h4>${t('checkout.repairsDuring')}</h4><ul class="repair-list">${reps.map(ticketRow(p)).join('')}</ul>`:'';
+ const responses=Object.entries(co.responses||{}).map(([who,r])=>r[id]?`<p class="${r[id].agree?'':'issue-note'}"><strong>${t(r[id].agree?'checkout.responseAgree':'checkout.responseDispute',{name:esc(personName(who))})}</strong>${r[id].comment?` · <span class="notes">${esc(r[id].comment)}</span>`:''}</p>`:'').join('');
+ const reply=mode==='reply'&&item?.outcome==='damage'?`<fieldset class="reply"><legend>${t('checkout.yourResponse',{amount:money(item.amount)})}</legend><label class="check"><input type="radio" name="agree-${id}" value="agree" required> ${t('checkout.agree')}</label><label class="check"><input type="radio" name="agree-${id}" value="dispute"> ${t('checkout.dispute')}</label><label>${t('checkout.comment')} <small>${t('checkout.commentHelp')}</small><textarea name="comment-${id}"></textarea></label></fieldset>`:'';
+ return `<section class="card"><h2>${esc(spaceName(s))}</h2><div class="compare">${moveIn}${moveOut}</div>${repairs}${responses}${reply}</section>`;
+}
+function checkoutPage(){
+ const p=prop(propId),tn=findTenancy(p,checkoutTn),co=tn?.checkout;
+ if(!co)return home();
+ const lv=landlordView(p),tenant=tn.tenantIds.includes(db.session);
+ if(!lv&&!(tenant&&co.status!=='draft'))return home();
+ const myReply=co.responses?.[db.session],replying=tenant&&co.status==='sent'&&!myReply;
+ const mode=lv&&co.status==='draft'?'edit':replying?'reply':'view';
+ const totals=checkoutTotals(tn),recorded=tn.spaceIds.every(id=>co.items?.[id]);
+ const head=`<section class="card"><div class="eyebrow">${t('checkout.eyebrow')} · ${esc(p.name)}</div><div class="row spread"><h1>${t('checkout.title')}</h1>${pill(t('checkout.status.'+co.status))}</div><p>${tenancyLabel(p,tn)} · ${tn.tenantIds.map(id=>esc(personName(id))).join(', ')}${tn.start?' · '+t('tenancy.dates',{start:dateText(tn.start),end:tn.end?dateText(tn.end):t('tenancy.open')}):''}</p><p>${t(lv?'checkout.introLandlord':'checkout.introTenant')}</p></section>`;
+ const cards=tn.spaceIds.map(id=>checkoutCard(p,tn,id,mode)).join('');
+ const total=`<p><strong>${t('checkout.total',{amount:money(totals.proposed)})}</strong></p>`;
+ if(mode==='edit')return `<div class="panel">${head}${cards}<section class="card">${total}<p class="help">${t('checkout.sendHelp')}</p>${actionBtn(t('checkout.send'),'send-checkout',true,recorded?'':'aria-disabled="true"')}</section></div>`;
+ if(mode==='reply')return `<div class="panel">${head}<form id="checkout-reply">${cards}<section class="card">${total}<button class="primary">${t('checkout.reply')}</button></section></form></div>`;
+ const summary=`<section class="card summary"><h2>${t('checkout.summaryTitle')}</h2>${totals.proposed?`<ul class="totals"><li>${t('checkout.summaryProposed',{amount:money(totals.proposed)})}</li>${co.status==='responded'?`<li>${t('checkout.summaryAgreed',{amount:money(totals.agreed)})}</li><li><strong>${t('checkout.summaryDisputed',{amount:money(totals.disputed)})}</strong></li>`:''}</ul>`:`<p>${t('checkout.noDamage')}</p>`}${co.status==='sent'?`<p class="help">${t('checkout.waiting',{date:dateText(co.sentAt)})}</p>`:''}${myReply?`<p class="help">${t('checkout.youResponded',{date:dateText(co.respondedBy?.[db.session])})}</p>`:''}${co.status==='responded'&&totals.disputed?`<p class="help">${t('checkout.disputeHelp')}</p>`:''}${actionBtn(t('checkout.print'),'print')}</section>`;
+ return `<div class="panel">${head}${summary}${cards}</div>`;
 }
 
 // ── Pages: getting started (tenant) ─────────────────────────────────
@@ -868,7 +1039,7 @@ function repair(){
 }
 
 // ── Rendering ───────────────────────────────────────────────────────
-const PAGES={start,signin:signIn,'move-in':moveIn,link:linkRoom,setup,upload,mode:modePage,spaces:spacesPage,records,home,property:propertyPage,asset:assetDetail,report,repair,profile,check:checkPage};
+const PAGES={start,signin:signIn,'move-in':moveIn,link:linkRoom,setup,upload,mode:modePage,spaces:spacesPage,records,home,property:propertyPage,asset:assetDetail,report,repair,profile,check:checkPage,inbox,checkout:checkoutPage};
 function render(){
  lang=i18n[db.prefs.lang]?db.prefs.lang:'en';
  document.documentElement.lang=t('locale');
@@ -879,6 +1050,10 @@ function render(){
  document.querySelector('nav [data-go="home"]').textContent=t(isLandlord()?'nav.properties':'nav.dashboard');
  document.querySelector('#account-nav').textContent=me()?t('nav.account'):t('nav.signIn');
  document.querySelector('#account-nav').dataset.go=me()?'profile':'signin';
+ const inboxNav=document.querySelector('#inbox-nav'),unread=me()?unreadCount():0;
+ inboxNav.hidden=!me();
+ inboxNav.innerHTML=`<span aria-hidden="true">🔔</span>${unread?`<span class="badge" aria-hidden="true">${unread}</span>`:''}`;
+ inboxNav.setAttribute('aria-label',t('nav.inbox')+(unread?' · '+t('inbox.unreadLabel',{n:unread}):''));
  const langSwitch=document.querySelector('#lang-switch'),languages=Object.keys(i18n);
  langSwitch.hidden=languages.length<2;
  langSwitch.setAttribute('aria-label',t('settings.language'));
@@ -953,6 +1128,9 @@ document.addEventListener('click',e=>{
  if(d.action==='reset'){const prefs=db.prefs;db=seedDb();db.prefs=prefs;trail=[];page='start';drafts={};render();save(t('msg.reset'));return}
  if(d.signinRole){signinRole=d.signinRole;render();return}
  if(d.login){login(d.login);return}
+ if(d.note){const n=(db.notifications||[]).find(x=>x.id===d.note);if(!n)return;n.read=true;save();openNote(n.link);return}
+ if(d.checkout){checkoutTn=d.checkout;go('checkout');return}
+ if(d.startCheckout){const tn=findTenancy(prop(propId),d.startCheckout);if(!tn)return;tn.checkout||={status:'draft',items:{}};checkoutTn=tn.id;go('checkout');save(t('msg.checkoutStarted'));return}
  if(d.filter){repairFilter=d.filter;render();return}
  if(d.floor){floorSel=d.floor;render();return}
  if(d.copy){const code=d.copy;Promise.resolve(navigator.clipboard?.writeText(code)).then(()=>{notice.textContent=t('msg.codeCopied',{code})},()=>{notice.textContent=code});return}
@@ -968,7 +1146,8 @@ document.addEventListener('click',e=>{
  if(d.affect){
   const p=prop(propId),x=p?.tickets.find(k=>k.id===d.affect);if(!x||x.reporterId===db.session)return;
   const list=x.affected||=[],on=list.includes(db.session);
-  if(on)list.splice(list.indexOf(db.session),1);else list.push(db.session);
+  if(on)list.splice(list.indexOf(db.session),1);
+  else{list.push(db.session);notify([p.ownerId],'note.affected',{name:me().name,what:x.location},{prop:p.id,ticket:x.id})}
   const box=document.querySelector('#dup-hint'),sel=document.querySelector('#report select[name="space"]');
   if(page==='report'&&box&&sel)box.innerHTML=dupHint(p,sel.value);else render();
   save(t(on?'msg.affectedOff':'msg.affectedOn'));return;
@@ -986,13 +1165,23 @@ document.addEventListener('click',e=>{
    foundProperty=sampleProperty;method='upload';materialVersion++;materialPending=false;
    material={src:'demo/floor-plan.png',type:'image/png',name:t('setup.planAlt',{name:sampleProperty.name})};
    go('upload');return;
-  case 'reopen':{const x=prop(propId)?.tickets.find(k=>k.id===ticketSel);if(!x||x.status!==3)return;x.status=2;(x.updates||=[]).push({by:db.session,at:today(),status:2,note:t('update.reopened')});render();save(t('msg.reopened'));return}
+  case 'reopen':{const x=prop(propId)?.tickets.find(k=>k.id===ticketSel);if(!x||x.status!==3)return;x.status=2;(x.updates||=[]).push({by:db.session,at:today(),status:2,note:t('update.reopened')});notify([prop(propId).ownerId],'note.reopened',{name:me().name,what:x.location},{prop:propId,ticket:x.id});render();save(t('msg.reopened'));return}
   case 'check-cancel':checkOpen=null;render();return;
+  case 'read-all':for(const n of myNotes())n.read=true;render();save();return;
+  case 'print':window.print();return;
+  case 'send-checkout':{
+   const p=prop(propId),tn=findTenancy(p,checkoutTn),co=tn?.checkout;if(!co||co.status!=='draft'||!landlordView(p))return;
+   if(!tn.spaceIds.every(id=>co.items?.[id])){notice.textContent=t('err.recordAll');return}
+   co.status='sent';co.sentAt=today();
+   notify(tn.tenantIds,'note.checkoutSent',{name:me().name},{prop:p.id,page:'checkout',tenancy:tn.id});
+   render();window.scrollTo(0,0);save(t('msg.checkoutSent'));return;
+  }
   case 'submit-check':{
    const p=prop(propId),tn=p&&myCheckDue(p);if(!tn)return;
    const ids=checkSpaceIds(p,tn),mine=tn.checks?.[db.session]||{};
    if(ids.some(id=>!mine[id])){notice.textContent=t('err.checkAll');return}
    (tn.submitted||={})[db.session]=today();
+   notify([p.ownerId],'note.checkDone',{name:me().name,issues:Object.values(mine).filter(c=>c.status==='issue').length},{prop:p.id});
    if(tn.tenantIds.every(id=>tn.submitted[id])){tn.inventory='confirmed';tn.lockedAt||=today()}
    go('home');save(t(tn.inventory==='confirmed'?'msg.inventoryConfirmed':'msg.checkSubmitted'));return;
   }
@@ -1012,7 +1201,7 @@ document.addEventListener('submit',async e=>{
  const data=new FormData(form),v=k=>String(data.get(k)||'').trim(),photo=()=>fileData(data.get('photo'),images);
  form.dataset.busy='yes';
  try{
-  switch(form.id){
+  switch(form.dataset.form||form.id){
    case 'signin':{
     const a=Object.values(db.accounts).find(x=>x.email===v('email').toLowerCase());
     if(!a||data.get('password')!==DEMO_PASSWORD)throw new Error(t('err.signIn'));
@@ -1026,6 +1215,7 @@ document.addEventListener('submit',async e=>{
     if(!found)throw new Error(t('err.roomCode'));
     if(found.p.mode==='rooms'&&found.tn.tenantIds.length)throw new Error(t('err.roomTaken'));
     found.tn.tenantIds.push(db.session);found.tn.start||=today();found.tn.inventory='pending';found.tn.due=addDays(today(),7);found.tn.checks||={};found.tn.submitted||={};
+    notify([found.p.ownerId],found.p.mode==='rooms'?'note.joined':'note.joinedHome',{name:me().name,space:found.tn.spaceIds[0]},{prop:found.p.id});
     propId=found.p.id;spaceSel=found.tn.spaceIds[0];trail=['start'];
     go('home',{replace:true});save(t('msg.roomLinked',{name:found.p.name}));break;
    }
@@ -1078,13 +1268,15 @@ document.addEventListener('submit',async e=>{
     if(!canSee(p,sid))throw new Error(t('err.reportRequired'));
     const baseline=it?{notes:t('item.'+it.id+'.notes'),photo:{demo:it.photo,name:itemName(it)}}:p.records[sid]||null;
     const x={id:'k'+(db.seq++),spaceId:sid,itemId:it?.id,reporterId:db.session,created:today(),noticed:v('noticed'),location:v('location'),description:v('description'),priority:v('priority'),status:0,baseline,photo:await photo(),photoDate:v('photoDate'),updates:[{by:db.session,at:today(),status:0}],affected:[]};
-    p.tickets.push(x);ticketSel=x.id;go('repair',{replace:true});save(t('msg.reportSaved'));break;
+    p.tickets.push(x);ticketSel=x.id;
+    notify(audience(p,sid),'note.reported',{name:me().name,what:x.location},{prop:p.id,ticket:x.id});
+    go('repair',{replace:true});save(t('msg.reportSaved'));break;
    }
    case 'accept':{
     const x=prop(propId)?.tickets.find(k=>k.id===ticketSel);if(!x)break;
     if(!v('notes'))throw new Error(t('err.signOffRequired'));
     if(x.status!==3)break;
-    x.after={notes:v('notes'),photo:await photo(),photoDate:v('photoDate')};x.status=4;(x.updates||=[]).push({by:db.session,at:today(),status:4,note:v('notes')});render();save(t('msg.signedOff'));break;
+    x.after={notes:v('notes'),photo:await photo(),photoDate:v('photoDate')};x.status=4;(x.updates||=[]).push({by:db.session,at:today(),status:4,note:v('notes')});notify([prop(propId).ownerId,...(x.affected||[])],'note.signedOff',{name:me().name,what:x.location},{prop:propId,ticket:x.id});render();save(t('msg.signedOff'));break;
    }
    case 'repair-step':{
     const p=prop(propId),x=p?.tickets.find(k=>k.id===ticketSel);if(!x||!isManager(p))break;
@@ -1095,13 +1287,16 @@ document.addEventListener('submit',async e=>{
     x.status=next;
     const u={by:db.session,at:today(),status:next};if(note)u.note=note;if(v('date'))u.visit=v('date');
     (x.updates||=[]).push(u);
+    notify([x.reporterId,...(x.affected||[])],'note.status',{name:me().name,what:x.location,status:next},{prop:p.id,ticket:x.id});
     if(step==='done')x.completion={notes:note,photo:shot,photoDate:shot?today():'',by:db.session};
     render();save(t({ack:'msg.ackSaved',start:'msg.started',done:'msg.completed'}[step]));break;
    }
    case 'repair-comment':{
     const x=prop(propId)?.tickets.find(k=>k.id===ticketSel);if(!x)break;
     if(!v('note'))throw new Error(t('err.noteRequired'));
-    (x.updates||=[]).push({by:db.session,at:today(),note:v('note')});render();save(t('msg.commentSaved'));break;
+    (x.updates||=[]).push({by:db.session,at:today(),note:v('note')});
+    notify([prop(propId).ownerId,x.reporterId,...(x.affected||[])],'note.comment',{name:me().name,what:x.location},{prop:propId,ticket:x.id});
+    render();save(t('msg.commentSaved'));break;
    }
    case 'check-issue':{
     const p=prop(propId),tn=p&&myCheckDue(p),sid=v('space');if(!tn)break;
@@ -1116,6 +1311,33 @@ document.addEventListener('submit',async e=>{
     if(!v('note'))throw new Error(t('err.noteRequired'));
     const r=p.records[sid]||={notes:''};
     (r.addenda||=[]).push({by:db.session,at:today(),note:v('note')});render();save(t('msg.addendumSaved'));break;
+   }
+   case 'checkout-item':{
+    const p=prop(propId),tn=findTenancy(p,checkoutTn),co=tn?.checkout,sid=form.dataset.target;
+    if(!co||co.status!=='draft'||!landlordView(p)||!tn.spaceIds.includes(sid))break;
+    if(!v('notes'))throw new Error(t('err.noteRequired'));
+    const outcome=['same','wear','damage'].includes(v('outcome'))?v('outcome'):'same';
+    const amount=outcome==='damage'?Math.max(0,Math.round(Number(v('amount'))||0)):0;
+    if(outcome==='damage'&&!amount)throw new Error(t('err.amountRequired'));
+    const prev=co.items?.[sid];
+    (co.items||={})[sid]={outcome,notes:v('notes'),amount,photo:await photo()||prev?.photo||null,photoDate:today()};
+    render();save(t('msg.checkoutItemSaved',{room:spaceName(spaceOf(p,sid))}));break;
+   }
+   case 'checkout-reply':{
+    const p=prop(propId),tn=findTenancy(p,checkoutTn),co=tn?.checkout;
+    if(!co||co.status!=='sent'||!tn.tenantIds.includes(db.session)||co.responses?.[db.session])break;
+    const reply={};
+    for(const [id,i] of Object.entries(co.items||{})){
+     if(i.outcome!=='damage')continue;
+     const agree=v('agree-'+id)!=='dispute',comment=v('comment-'+id);
+     if(!agree&&!comment)throw new Error(t('err.disputeComment'));
+     reply[id]={agree,comment};
+    }
+    (co.responses||={})[db.session]=reply;(co.respondedBy||={})[db.session]=today();
+    if(tn.tenantIds.every(id=>co.responses[id])){co.status='responded';co.respondedAt=today()}
+    const tot=checkoutTotals(tn);
+    notify([p.ownerId],'note.checkoutReply',{name:me().name,agreed:tot.agreed,disputed:tot.disputed},{prop:p.id,page:'checkout',tenancy:tn.id});
+    render();window.scrollTo(0,0);save(t('msg.checkoutReplied'));break;
    }
    case 'profile':
     if(!me()||!v('displayName'))throw new Error(t('err.displayName'));

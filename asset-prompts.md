@@ -13,7 +13,7 @@
 - **维修前后照片要成对生成：** 先生成「维修前」，再把它作为参考图，用图生图 / 编辑功能生成「维修后」。这样两张的角度和构图才会一致。
 - **同一套房子的照片尽量在同一个对话里连续生成：** 把同一段「房屋设定」放在每条 prompt 里，地板、墙色、门窗风格才会统一。
 - **房屋名称和地址都是虚构的：** 新的演示房产用虚构名称和地址，避免和真实楼盘重名。
-- **数量：** 总共 36 张（第 6 节的 3 张是第二期补充的）。时间紧的话，标「可选」的可以先跳过，代码里会复用其他图片。
+- **数量：** 照片共 36 张（第 6 节的 3 张是第二期补充的），另加第 7 节的 4 张写实户型图。时间紧的话，标「可选」的可以先跳过，代码里会复用其他图片。
 
 ---
 
@@ -123,7 +123,43 @@ Same photo, same camera angle, framing and lighting. The issue has been professi
 
 ---
 
-## 7. 备选：AI 生成户型图（不推荐，优先用我画的 SVG）
+## 7. 写实户型图（4 张）
+
+用来替换现在示意性的 SVG 户型图。做法是**图片作底图 + 透明可点击层**：
+
+- **底图：** 由 GPT 生成，**图上不能有任何文字**。
+- **叠加层：** 图片放进 `demo/` 后，我看图标出每个房间的区域，房间名（中英文）、出租状态颜色、编号标记都叠加在上面，点击功能保持不变。
+
+**生成要点：**
+- **布局照描述来：** 每张图的房间位置要和下面的描述一致，因为演示数据里的房间和物品标记都对应这些位置。
+- **三层要对齐：** 12 Alder Road 的三层**外轮廓相同、楼梯在同一位置**（右侧），尽量在同一个对话里连续生成，第二、三张可以上传第一张作参考：「Same house footprint, same staircase position and same drawing style as the attached plan.」
+- **图上有文字就重新生成：** 如果出现文字、尺寸或指南针，补一句「Remove all text and labels」重新生成。
+
+### 户型图通用风格（每条前面都加上）
+
+```
+Professional UK estate agent floor plan, top-down orthographic 2D view, clean vector line drawing. Solid black walls with realistic thickness (thicker external walls), white floors, door openings with thin quarter-circle swing arcs, windows drawn as thin double lines in the walls, simple grey outline furniture and fixtures. Crisp, high contrast, white background, generous white margin around the building. Absolutely NO text, NO room labels, NO numbers, NO dimensions, NO measurements, NO compass, NO scale bar, NO logo, NO watermark, NO colour fills, NO shadows, NO 3D.
+```
+
+### 文件与布局
+
+图中**上方是房子正面（临街）**，下方是后院一侧。
+
+| 文件名 | 比例 | Prompt（接在「户型图通用风格」之后） |
+|---|---|---|
+| `plan-alder-ground` | 竖版 2:3 | Ground floor of a narrow Victorian terraced house, a tall rectangle about 5 m wide and 12 m deep. Front of the house at the top. TOP-LEFT (about 60% of the width, top third): a front bedroom with a projecting bay window on the front wall, a double bed, wardrobe and desk. RIGHT SIDE (about 40% of the width, from the top down to two thirds of the depth): an entrance hallway with the front door at the top right, and a straight staircase running along the right-hand wall, treads drawn with a direction arrow. MIDDLE-LEFT (below the front bedroom): a living room with a sofa, armchair, coffee table and a chimney breast on the left wall. BOTTOM (full width, last third of the depth): a kitchen across the back of the house: tall fridge-freezer at the top-left corner of the kitchen, worktops along the left and bottom walls, sink under the rear window in the middle of the bottom wall, washing machine under the worktop, a 4-ring hob and oven on the right wall near the top of the kitchen, small dining table, back door to the garden at the bottom right. |
+| `plan-alder-first` | 竖版 2:3 | First floor of the same Victorian terraced house: identical outer footprint, staircase in the same position along the right-hand wall arriving at a landing. TOP-LEFT (about 60% of the width, top 37%): a front bedroom with a double bed, chest of drawers, desk and one sash window on the front wall. RIGHT SIDE (top two thirds): landing and staircase. MIDDLE-LEFT: a bathroom with a bath and shower screen along the left wall, a pedestal basin and a toilet. BOTTOM (full width, last third of the depth): a small rear bedroom with a single bed on the left, a wardrobe, and a desk under the rear window on the right side. |
+| `plan-alder-second` | 竖版 2:3 | Loft (second) floor of the same Victorian terraced house: identical outer footprint, staircase in the same position along the right-hand wall arriving at a small landing. Show sloping ceilings with thin dashed lines parallel to the front and back walls. TOP-LEFT (about 60% of the width, top 42%): a loft bedroom with a double bed and a skylight drawn as a small rectangle with diagonal hatching, desk under the skylight. RIGHT SIDE (top 57%): landing and staircase. BOTTOM-LEFT (about 60% of the width): a small loft bedroom with a single bed, wardrobe and desk, small rear window. BOTTOM-RIGHT (about 40% of the width): a compact shower room with a square shower tray, wall-hung basin and toilet. |
+| `plan-riverside` | 横版 3:2 | A 2-bedroom flat in a modern apartment block, roughly 9 m wide and 6.5 m deep, entrance at the bottom. TOP-LEFT (about 55% of the width, top 60%): an open-plan kitchen and living room: straight kitchen run along the top wall at the left with an integrated washing machine at the far left and an induction hob next to it, a breakfast bar, a two-seater sofa, a small dining table, and a balcony door with a narrow balcony on the left wall. TOP-RIGHT (about 45% of the width, top half): main bedroom with a double bed, built-in sliding wardrobe and a large window on the right wall near the top. BOTTOM-RIGHT (about 45% of the width, bottom half): second bedroom with a single bed, desk and wardrobe. BOTTOM-LEFT (about 30% of the width, bottom 40%): bathroom with a bath along the left wall, vanity basin at the bottom-left corner, toilet and heated towel rail. BOTTOM-MIDDLE: a small entrance hall with the front door in the bottom wall, connecting to all rooms. |
+
+**尺寸：** 竖版约 1024×1536，横版约 1536×1024，PNG 最好（线条更清晰）。
+
+---
+
+## 8. 旧备选：不推荐的「带颜色」户型图
+
+第 7 节的写实黑白户型图出来以后，这一节就不需要了。保留只是作为记录。
+
 
 AI 生成的户型图常常墙体对不上、文字是乱码，我也拿不到准确的房间坐标，所以没法点击单个房间、也没法按出租状态着色。下面这条仅作备用。
 
