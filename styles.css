@@ -299,3 +299,64 @@ button.link{border:0;background:none;color:var(--accent);padding:4px 0;text-deco
 .pill.changed-pill{background:var(--wall);color:#fff;font-size:12px;padding:1px 7px}
 .follow-up{margin:4px 0 8px 26px;padding-left:12px;border-left:2px solid var(--border)}
 .follow-up[hidden]{display:none}
+
+/* Contractor job link */
+.dispatch form{margin-top:8px}
+.job-state{padding:8px 12px;border-radius:6px;background:var(--surface);font-weight:600}
+.job-state.ok{background:#dff6dd;color:#0e700e}
+:root[data-theme=dark] .job-state.ok{background:#1f3a1e;color:#9fd89f}
+.job-state.wait{background:#fff4ce;color:#5c4400}
+:root[data-theme=dark] .job-state.wait{background:#433519;color:#ffe08a}
+.job-link{margin:10px 0;padding:10px 12px;border:1px dashed var(--border);border-radius:8px}
+.job-link code{display:block;overflow-wrap:anywhere;font-size:13px;margin-bottom:8px}
+a.button{display:inline-flex;align-items:center;padding:8px 14px;border:1px solid var(--border);border-radius:6px;color:var(--text);text-decoration:none;background:var(--card)}
+a.button:hover{background:var(--tint)}
+.job-line{padding:8px 12px;border-radius:6px;background:var(--surface)}
+.job-page h1{margin-top:4px}
+.job-privacy{margin-top:14px}
+/* Agency and owners */
+.prop-who{display:block;color:var(--muted);margin-top:2px}
+.approvals{list-style:none;padding:0;margin:0}
+.approval{padding:12px 0;border-top:1px solid var(--border)}
+.approval:first-child{border-top:0}
+.banner-card{border-left:4px solid var(--wall)}
+.owner-repairs li{padding:6px 0}
+
+/* Space between the property cards and the Team card */
+.prop-grid+.card{margin-top:18px}
+/* Property page: one column on phones, in a task-first order */
+@media(max-width:640px){
+ .prop-cols{display:flex;flex-direction:column}
+ .prop-cols>div{display:contents}
+ .prop-cols .slot{order:var(--m)}
+}
+
+/* Sign-in suggestions and sign-up link */
+.suggest{position:relative;margin-bottom:12px}
+.suggest input{margin:4px 0 0}
+.suggest-list{position:absolute;left:0;right:0;top:100%;z-index:20;list-style:none;margin:4px 0 0;padding:4px;background:var(--card);border:1px solid var(--border);border-radius:8px;box-shadow:0 8px 24px #0002;max-height:280px;overflow:auto}
+.suggest-list[hidden]{display:none}
+.suggest-list button{display:block;width:100%;text-align:left;border:0;background:none;padding:8px 10px;border-radius:6px;line-height:1.35}
+.suggest-list button:hover,.suggest-list button:focus{background:var(--tint);outline:none}
+.signup-line{margin:4px 0 10px;font-size:14px}
+
+/* Agency set-up */
+.team-code{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:12px}
+.team-code span{font-size:14px;color:var(--muted)}
+.pending-staff{padding:10px 12px;border-radius:8px;background:var(--surface);margin-bottom:12px}
+.pending-staff h3{margin:0 0 6px;font-size:15px}
+.reply-status select{width:auto;margin:0;padding:3px 6px;font-size:14px}
+.onboard{list-style:none;padding:0;margin:14px 0 0}
+.onboard li{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:10px 0;border-top:1px solid var(--border)}
+.onboard li>span{width:20px;font-weight:700;color:var(--muted)}
+.onboard li.done>span{color:#0e700e}
+.admin-cards{margin-top:18px}
+#signup .follow-up{margin-left:26px}
+
+/* Home page: agency registration entry, bottom right */
+.agency-entry{display:flex;align-items:center;gap:16px;max-width:520px;margin:6px 0 16px auto;padding:16px 18px;border-left:4px solid var(--wall)}
+.agency-entry p{margin:4px 0 0;font-size:14px;color:var(--muted)}
+.agency-entry .primary{white-space:nowrap}
+@media(max-width:640px){.agency-entry{margin-left:0;max-width:none;flex-direction:column;align-items:flex-start}}
+#agency-signup h2{font-size:18px;margin:18px 0 6px}
+.plan-card .button,.plan-card button{margin-top:6px}

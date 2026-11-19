@@ -16,7 +16,7 @@ const addDays=(date,n)=>new Date(Date.parse(date+'T00:00:00Z')+n*864e5).toISOStr
 // ── Demo data ────────────────────────────────────────────────────────
 // Everything lives in one browser "database" so several demo accounts can
 // work on the same properties (landlord, tenants in a shared house, …).
-const STORE='homelog-v2',LEGACY='zhujidemo-v1',DEMO_PASSWORD='test',SEED_REV=12;
+const STORE='homelog-v2',LEGACY='zhujidemo-v1',DEMO_PASSWORD='test',SEED_REV=14;
 const SPACE_TYPES=['bedroom','kitchen','living','bathroom','other'];
 // Room inventory. Each room has a few fixed condition checks (cleanliness,
 // walls, floor…) and a list of items. Key items, anything that would cost
@@ -50,8 +50,17 @@ function seedDb(){
   acc('t-lucas','Lucas Silva','lucas@homelog.demo','tenant','demo.tLucas'),
   acc('t-mina','Mina Park','mina@homelog.demo','tenant'),
   acc('t-sofia','Sofia Rossi','sofia@homelog.demo','tenant'),
-  acc('t-yuki','Yuki Tanaka','yuki@homelog.demo','tenant','demo.tYuki')
+  acc('t-yuki','Yuki Tanaka','yuki@homelog.demo','tenant','demo.tYuki'),
+  // A letting agency: an admin and a property manager, two owner clients and their tenants.
+  acc('ag-olivia','Olivia Grant','olivia@harbourlettings.demo','agent','demo.agAdmin'),
+  acc('ag-sam','Sam Patel','sam@harbourlettings.demo','agent','demo.agManager'),
+  acc('ow-margaret','Margaret Hughes','margaret@homelog.demo','owner','demo.owner'),
+  acc('ow-james','James Whitfield','','owner'),
+  acc('t-chen','Chen Jing','chen@homelog.demo','tenant','demo.tChen'),
+  acc('t-omar','Omar Haddad','omar@homelog.demo','tenant')
  ].map(a=>[a.id,a]));
+ Object.assign(accounts['ag-olivia'],{org:'org-harbour',orgRole:'admin'});Object.assign(accounts['ag-sam'],{org:'org-harbour',orgRole:'manager'});
+ Object.assign(accounts['ow-margaret'],{approvalLimit:250,org:'org-harbour',inviteCode:'HARB-OWN-MH'});Object.assign(accounts['ow-james'],{approvalLimit:500,org:'org-harbour',inviteCode:'HARB-OWN-JW',invited:true});
  const sp=(id,type,shared,photo,n)=>({id,type,shared,photo,nameKey:n?'space.'+type+'N':'type.'+type,...(n?{n}:{})});
  // A room record: overview note and photo, plus the inventory, which starts
  // from the template with only the differences filled in.
@@ -121,6 +130,18 @@ function seedDb(){
    {id:'k4',spaceId:'rbath',itemId:'river-basin',reporterId:'t-tom',created:'2026-11-12',location:'Bathroom basin',description:'The basin tap is loose and turns in its fitting.',priority:'Routine',status:1,photo:{demo:'repair-tap-before'},photoDate:'2026-11-12',baseline:riverRecords.rbath}
   ]
  };
+ // Harbour Lettings manages two flats in Harbour Court for two owners. Flat 3
+ // (Margaret's) has a shower leak whose £320 quote is over her £250 limit, so
+ // it waits for her approval; Flat 7 (James's) has a cold radiator to dispatch.
+ const hSpaces=()=>[{id:'hkl',type:'kitchen',nameKey:'space.kitchenLiving',shared:false},{id:'hbed',type:'bedroom',nameKey:'type.bedroom',shared:false},{id:'hbath',type:'bathroom',nameKey:'space.showerRoom',shared:false}];
+ const hRecords=()=>({hkl:rec('kitchen','Open-plan kitchen and living room. Island and hob in good condition. Laminate floor clean.',null,{date:'2026-09-14',skip:['washer']}),hbed:rec('bedroom','Double bedroom. Fitted wardrobe and carpet in good condition.',null,{date:'2026-09-14',skip:['desk','chair']}),hbath:rec('bathroom','Walk-in shower, basin and toilet working. Grout clean.',null,{date:'2026-09-14',skip:['bath']})});
+ const harbour=(id,name,clientId,managerId,tenantId,code,start)=>({id,ownerId:managerId,agency:'org-harbour',clientId,name,address:'Harbour Street, London E1 · Demo',mode:'joint',ready:true,plan:{svg:'harbour'},
+  spaces:hSpaces(),tenancies:[{id:id+'-joint',spaceIds:['hkl','hbed','hbath'],tenantIds:[tenantId],code,start,end:addDays(start,364),inventory:'confirmed'}],records:hRecords(),items:[],tickets:[]});
+ const harbour3=harbour('harbour3','Harbour Court · Flat 3','ow-margaret','ag-sam','t-chen','HARB-3','2026-09-20');
+ const harbour7=harbour('harbour7','Harbour Court · Flat 7','ow-james','ag-olivia','t-omar','HARB-7','2026-08-01');
+ harbour3.tickets.push({id:'h1',spaceId:'hbath',reporterId:'t-chen',created:addDays(today(),-2),location:'Shower tray',description:'Water leaks under the shower tray onto the floor every time the shower runs.',priority:'Urgent',status:1,baseline:harbour3.records.hbath,
+  dispatch:{token:'harb-aqua1',name:'AquaFix Plumbing',contact:'07700 900123',trade:'plumbing',budget:320,access:'Chen is home after 2pm on weekdays. Keys from the office.',at:addDays(today(),-1),by:'ag-sam',status:'approval'}});
+ harbour7.tickets.push({id:'h2',spaceId:'hbed',reporterId:'t-omar',created:addDays(today(),-1),location:'Bedroom radiator',description:'The radiator in the bedroom stays cold while the others heat up.',priority:'Routine',status:0,baseline:harbour7.records.hbed});
  // Activity logs, housemates marked as affected, and tenants' inventory checks.
  const log=(by,at,status,note)=>({by,at,status,...(note?{note}:{})});
  const updates={
@@ -128,10 +149,12 @@ function seedDb(){
   k2:[log('t-aisha','2026-11-14',0)],
   k3:[log('t-wei','2026-10-02',0),log('ll-main','2026-10-03',1,'Handyman will come on Monday.'),log('ll-main','2026-10-06',2),log('ll-main','2026-10-06',3,'Top hinge replaced and door realigned.'),log('t-wei','2026-10-07',4,'Hinge replaced. Door closes properly now.')],
   k4:[log('t-tom','2026-11-12',0),log('ll-main','2026-11-13',1,'I will fix the tap at the weekend.')],
+  h1:[log('t-chen',addDays(today(),-2),0),log('ag-sam',addDays(today(),-1),1,'A plumber is quoting today.')],
+  h2:[log('t-omar',addDays(today(),-1),0)],
   k5:[log('t-lucas','2026-10-20',0),log('ll-main','2026-10-21',1),log('ll-main','2026-10-23',2),log('ll-main','2026-10-24',3,'Carpet professionally cleaned.'),log('t-lucas','2026-10-25',4,'Carpet professionally cleaned. Stain removed.')]
  };
- for(const p of [alder,riverside])for(const x of p.tickets){x.updates=updates[x.id]||[];x.affected=x.id==='k1'?['t-lucas','t-mina']:[]}
- for(const p of [alder,riverside])for(const tn of p.tenancies){
+ for(const p of [alder,riverside,harbour3,harbour7])for(const x of p.tickets){x.updates=updates[x.id]||[];x.affected=x.id==='k1'?['t-lucas','t-mina']:[]}
+ for(const p of [alder,riverside,harbour3,harbour7])for(const tn of p.tenancies){
   if(tn.inventory!=='confirmed')continue;
   const ids=p.spaces.filter(sp=>tn.spaceIds.includes(sp.id)||(p.mode==='rooms'&&sp.shared)).map(sp=>sp.id),at=addDays(tn.start,3);
   tn.due=addDays(tn.start,7);tn.lockedAt=at;tn.checks={};tn.submitted={};
@@ -151,6 +174,12 @@ function seedDb(){
  dep(alder.tenancies[3],700,'2026-08-20','DPS','DPS-4821-1180','2026-09-10');
  dep(alder.tenancies[4],650,'2026-09-01','DPS','DPS-4821-1322','2026-09-12');
  dep(riverside.tenancies[0],1800,'2026-09-10','TDS','TDS-7730-5521','2026-09-25');
+ dep(harbour3.tenancies[0],1350,'2026-09-15','DPS','DPS-5530-2201','2026-09-30');
+ dep(harbour7.tenancies[0],1250,'2026-07-25','DPS','DPS-5530-1874','2026-08-10');
+ harbour3.compliance={gas:{expires:'2027-06-01'},eicr:{expires:'2030-01-15'},epc:{expires:'2032-04-01'}};
+ harbour7.compliance={gas:{expires:addDays(today(),35)},eicr:{expires:'2030-01-15'},epc:{expires:'2032-04-01'}};
+ // Priya sent the kitchen-sink leak to her own plumber with a job link.
+ Object.assign(alder.tickets.find(x=>x.id==='k1'),{dispatch:{token:'alder-bow1',name:'Bow Plumbing',contact:'020 7946 0018',trade:'plumbing',budget:150,access:'Cupboard under the sink is empty.',at:'2026-11-08',by:'ll-main',status:'accepted',visit:'2026-11-11',acceptedAt:'2026-11-09'}});
  // Safety and compliance dates (demo values): one item due soon on each property.
  alder.compliance={gas:{expires:addDays(today(),20)},eicr:{expires:'2029-03-01'},epc:{expires:'2033-05-01'}};
  riverside.compliance={gas:{expires:'2027-08-14'},eicr:{expires:addDays(today(),45)},epc:{expires:'2031-02-01'}};
@@ -194,9 +223,12 @@ function seedDb(){
   note('t-aisha',today(),'note.checkReminder',{date:b3.due},{prop:'alder',page:'check'}),
   note('t-tom','2026-11-13','note.status',{name:'Priya Shah',what:'Bathroom basin',status:1},{prop:'riverside',ticket:'k4'},true),
   note('t-lucas',today(),'note.endingSoon',{date:b4.end},{prop:'alder'}),
+  note('ow-margaret',addDays(today(),-1),'note.approvalNeeded',{name:'Sam Patel',what:'Shower tray',amount:320},{prop:'harbour3',page:'owner'}),
+  note('ag-sam',addDays(today(),-2),'note.reported',{name:'Chen Jing',what:'Shower tray'},{prop:'harbour3',ticket:'h1'},true),
+  note('ag-olivia',addDays(today(),-1),'note.reported',{name:'Omar Haddad',what:'Bedroom radiator'},{prop:'harbour7',ticket:'h2'}),
   note('ll-main','2026-10-30','note.outcomeRecorded',{name:'Yuki Tanaka'},{prop:'alder',page:'past',past:'alder-b2-2025'},true)
  ].map((n,i)=>({id:'seed-n'+i,...n}));
- return {version:2,rev:SEED_REV,seq:100,notifications,session:null,prefs:{theme:'system',lang:'en'},accounts,properties:[alder,riverside]};
+ return {version:2,rev:SEED_REV,seq:100,notifications,session:null,prefs:{theme:'system',lang:'en'},accounts,orgs:{'org-harbour':{id:'org-harbour',name:'Harbour Lettings',companyNo:'09876543',redress:{scheme:'TPO',no:'T05512'},cmp:'Propertymark CMP',verified:false,teamCode:'HARB-TEAM-7K2P'}},properties:[alder,riverside,harbour3,harbour7]};
 }
 // Old single-property data (before accounts existed) becomes a personal
 // record owned by the "Test User" tenant.
@@ -219,6 +251,7 @@ function refreshDemo(d){
  d.properties=[...fresh.properties,...d.properties.filter(p=>!ids.includes(p.id))];
  d.accounts={...fresh.accounts,...Object.fromEntries(Object.entries(d.accounts).filter(([id])=>!fresh.accounts[id]))};
  d.notifications=[...fresh.notifications,...(d.notifications||[]).filter(n=>!String(n.id).startsWith('seed-'))];
+ d.orgs={...fresh.orgs,...(d.orgs||{})};
  d.rev=SEED_REV;d.seq=Math.max(d.seq||100,fresh.seq);
 }
 function loadDb(){
@@ -231,12 +264,15 @@ let db=loadDb();
 
 // ── Lookups and permissions ─────────────────────────────────────────
 const me=()=>db.accounts[db.session]||null;
-const isLandlord=()=>me()?.role==='landlord';
+const isLandlord=()=>['landlord','agent'].includes(me()?.role);
+const isOwner=()=>me()?.role==='owner';
+// Agency admins manage every property of their agency; managers only those assigned to them (ownerId).
+const agencyAdminOf=p=>!!p?.agency&&me()?.org===p.agency&&me()?.orgRole==='admin';
 const prop=id=>db.properties.find(p=>p.id===id);
 const tenancyOf=(p,a=me())=>a?p?.tenancies.find(x=>x.tenantIds.includes(a.id)):null;
-const myProps=()=>{const a=me();return a?db.properties.filter(p=>p.ownerId===a.id||tenancyOf(p,a)):[]};
+const myProps=()=>{const a=me();if(!a)return [];if(a.role==='owner')return db.properties.filter(p=>p.clientId===a.id);return db.properties.filter(p=>p.ownerId===a.id||tenancyOf(p,a)||agencyAdminOf(p))};
 const tenantHome=()=>myProps().find(p=>p.ready)||null;
-const isManager=p=>!!p&&p.ownerId===db.session;           // landlord, or tenant keeping a personal record
+const isManager=p=>!!p&&(p.ownerId===db.session||agencyAdminOf(p));           // landlord, or tenant keeping a personal record
 const landlordView=p=>isManager(p)&&!p.selfManaged;
 const spaceOf=(p,id)=>p?.spaces.find(s=>s.id===id);
 const spaceName=s=>s?(s.name||t(s.nameKey,{n:s.n})):'';
@@ -294,8 +330,9 @@ const money=n=>new Intl.NumberFormat(t('locale'),{style:'currency',currency:'GBP
 // ── Notifications ───────────────────────────────────────────────────
 // Stored as a text key plus raw values, so they follow the reader's language.
 // In the real product these would also go out by email or push.
-function notify(to,key,vars={},link={}){
- const ids=[...new Set(to)].filter(id=>id&&id!==db.session&&db.accounts[id]);
+// includeSelf: for actions taken by someone outside the account (a contractor's link).
+function notify(to,key,vars={},link={},includeSelf=false){
+ const ids=[...new Set(to)].filter(id=>id&&(includeSelf||id!==db.session)&&db.accounts[id]);
  for(const id of ids)(db.notifications||=[]).push({id:'n'+(db.seq++),to:id,at:new Date().toISOString(),key,vars,link,read:false});
 }
 // Everyone who can see a space: the owner, its tenants, and housemates for shared areas.
@@ -318,7 +355,7 @@ const personName=id=>id===db.session?t('people.you'):(db.accounts[id]?.name||t('
 // ── Navigation state ────────────────────────────────────────────────
 let page='start',trail=[];
 let propId=null,spaceSel=null,floorSel=null,itemSel=null,ticketSel=null,editId=null,recordSpace=null;
-let pastSel=null,prepOpen=null,justSaved=null,packTn=null,onDialogClose=null,signinRole='tenant',repairFilter='All',reportCtx={},draft=null,checkOpen=null,checkoutTn=null,demoOpen=false,tourStep=-1;
+let jobToken=null,pastSel=null,prepOpen=null,justSaved=null,packTn=null,onDialogClose=null,signinRole='tenant',repairFilter='All',reportCtx={},draft=null,checkOpen=null,checkoutTn=null,demoOpen=false,tourStep=-1;
 let method='upload',material=null,materialPending=false,materialVersion=0,importText='',drafts={};
 let postcodeQuery='',postcodeSearched=false,foundProperty=null;
 const sampleProperty={name:'Harbour Court · Flat 3',address:'Harbour Street, London E1 · Demo'};
@@ -334,8 +371,9 @@ function save(message=''){
 }
 const SIGNED_IN=['moveout','past','move-in','link','setup','upload','mode','spaces','records','property','report','repair','asset','check','inbox','checkout','pack'];
 function go(next,{replace=false}={}){
+ if(next!=='job'&&location.hash.startsWith('#job='))history.replaceState(null,'',location.pathname+location.search);
  if(!me()&&SIGNED_IN.includes(next))next='signin';
- if(isLandlord()&&['move-in','link'].includes(next))next='home';
+ if((isLandlord()||isOwner())&&['move-in','link','moveout'].includes(next))next='home';
  if(next==='back')page=trail.pop()||'start';
  else if(next!==page){if(!replace)trail.push(page);page=next}
  notice.textContent='';render();window.scrollTo(0,0);
@@ -460,8 +498,8 @@ function floorPlan(p){
 // ── Pages: start, sign-in, account ──────────────────────────────────
 function start(){
  const a=me();
- const [label,to]=!a?['start.signIn','signin']:a.role==='landlord'?['start.viewProperties','home']:tenantHome()?['start.view','home']:['start.moveIn','move-in'];
- return `<section class="hero"><div><h1>${t('start.title')}</h1><p>${t('start.intro')}</p><div class="row">${btn(t(label),to,true)}</div></div><img class="welcome-cover" src="demo/welcome-cover.png" alt=""></section><div class="grid three"><section class="card"><h3>${t('start.inventoryTitle')}</h3><p>${t('start.inventoryBody')}</p></section><section class="card"><h3>${t('start.repairsTitle')}</h3><p>${t('start.repairsBody')}</p></section><section class="card"><h3>${t('start.landlordTitle')}</h3><p>${t('start.landlordBody')}</p>${btn(t('about.open'),'about')}</section></div>`;
+ const [label,to]=!a?['start.signIn','signin']:isLandlord()||isOwner()?['start.viewProperties','home']:tenantHome()?['start.view','home']:['start.moveIn','move-in'];
+ return `<section class="hero"><div><h1>${t('start.title')}</h1><p>${t('start.intro')}</p><div class="row">${btn(t(label),to,true)}</div></div><img class="welcome-cover" src="demo/welcome-cover.png" alt=""></section><div class="grid three"><section class="card"><h3>${t('start.inventoryTitle')}</h3><p>${t('start.inventoryBody')}</p></section><section class="card"><h3>${t('start.repairsTitle')}</h3><p>${t('start.repairsBody')}</p></section><section class="card"><h3>${t('start.landlordTitle')}</h3><p>${t('start.landlordBody')}</p>${btn(t('about.open'),'about')}</section></div><aside class="card agency-entry"><div><strong>${t('agsu.entryTitle')}</strong><p>${t('agsu.entryBody')}</p></div>${btn(t('agsu.entryBtn'),'agency-signup',true)}</aside>`;
 }
 const avatar=(name,cls='')=>`<span class="avatar ${cls}" aria-hidden="true">${esc((name||'?').slice(0,1).toUpperCase())}</span>`;
 // Third-party sign-in buttons are placeholders in the demo.
@@ -471,9 +509,9 @@ const SOCIAL_ICONS={
  microsoft:'<path fill="#F25022" d="M3 3h8.5v8.5H3z"/><path fill="#7FBA00" d="M12.5 3H21v8.5h-8.5z"/><path fill="#00A4EF" d="M3 12.5h8.5V21H3z"/><path fill="#FFB900" d="M12.5 12.5H21V21h-8.5z"/>'
 };
 function signIn(){
- const list=Object.values(db.accounts).filter(a=>a.demo&&a.role===signinRole);
+ const list=Object.values(db.accounts).filter(a=>a.demo&&(signinRole==='tenant'?a.role==='tenant':a.role!=='tenant'));
  const social=Object.entries(SOCIAL_ICONS).map(([k,icon])=>`<button type="button" class="social-btn" data-social="${k}"><svg class="social-icon" viewBox="0 0 24 24" aria-hidden="true">${icon}</svg>${t('signin.'+k)}</button>`).join('');
- return `<div class="panel"><section class="card"><h1>${t('signin.title')}</h1><form id="signin"><label>${t('signin.email')} <input name="email" type="email" required autocomplete="username" placeholder="wei@homelog.demo"></label><label>${t('signin.password')} <input name="password" type="password" required autocomplete="current-password"></label><p class="help">${t('signin.hint')}</p><button class="primary">${t('signin.submit')}</button></form><div class="or-divider"><span>${t('signin.or')}</span></div><div class="social-list">${social}</div><p class="help social-note">${t('signin.socialSoon')}</p></section><section class="card"><h2>${t('signin.demoAccounts')}</h2><p>${t('signin.intro')}</p><div class="segmented" role="group" aria-label="${t('signin.roleLabel')}">${['tenant','landlord'].map(r=>`<button type="button" data-signin-role="${r}" aria-pressed="${signinRole===r}">${t('signin.as.'+r)}</button>`).join('')}</div><ul class="account-list">${list.map(a=>`<li><button type="button" data-login="${a.id}">${avatar(a.name,'small')}<span><strong>${esc(a.name)}</strong><br><small>${t(a.demo)}</small></span><span class="arrow" aria-hidden="true">›</span></button></li>`).join('')}</ul></section></div>`;
+ return `<div class="panel"><section class="card"><h1>${t('signin.title')}</h1><form id="signin"><label for="si-email">${t('signin.email')}</label><div class="suggest"><input id="si-email" name="email" type="email" required autocomplete="off" placeholder="wei@homelog.demo" data-suggest="email" aria-autocomplete="list" aria-controls="sg-email"><ul class="suggest-list" id="sg-email" role="listbox" hidden></ul></div><label for="si-pass">${t('signin.password')}</label><div class="suggest"><input id="si-pass" name="password" type="password" required autocomplete="off" data-suggest="password" aria-autocomplete="list" aria-controls="sg-password"><ul class="suggest-list" id="sg-password" role="listbox" hidden></ul></div><p class="signup-line">${t('signup.prompt')} <button type="button" class="link" data-go="signup">${t('signup.link')}</button></p><p class="help">${t('signin.hint')}</p><button class="primary">${t('signin.submit')}</button></form><div class="or-divider"><span>${t('signin.or')}</span></div><div class="social-list">${social}</div><p class="help social-note">${t('signin.socialSoon')}</p></section><section class="card"><h2>${t('signin.demoAccounts')}</h2><p>${t('signin.intro')}</p><div class="segmented" role="group" aria-label="${t('signin.roleLabel')}">${['tenant','landlord'].map(r=>`<button type="button" data-signin-role="${r}" aria-pressed="${signinRole===r}">${t('signin.as.'+r)}</button>`).join('')}</div><ul class="account-list">${list.map(a=>`<li><button type="button" data-login="${a.id}">${avatar(a.name,'small')}<span><strong>${esc(a.name)}</strong><br><small>${t(a.demo)}</small></span><span class="arrow" aria-hidden="true">›</span></button></li>`).join('')}</ul></section></div>`;
 }
 function profile(){
  const a=me();if(!a)return signIn();
@@ -486,7 +524,9 @@ function profile(){
 function home(){
  const a=me();
  if(!a)return `<section class="panel card"><h1>${t('dash.eyebrow')}</h1><p>${t('home.signInPrompt')}</p>${btn(t('start.signIn'),'signin',true)}</section>`;
- if(a.role==='landlord')return portfolio();
+ if(a.role==='owner')return ownerHome();
+ if(a.role==='agent'&&a.orgRole==='pending')return pendingStaff(a);
+ if(isLandlord())return portfolio();
  const p=tenantHome();
  if(!p)return `<div class="panel"><section class="card"><h1>${t('dash.eyebrow')}</h1><p>${t('home.noProperty')}</p>${btn(t('home.startMoveIn'),'move-in',true)}</section>${pastList(pastFor(a),true)}</div>`;
  propId=p.id;return propertyView(p);
@@ -505,11 +545,13 @@ function attention(p){
 }
 function portfolio(){
  const a=me(),mine=myProps(),ready=mine.filter(p=>p.ready),unfinished=mine.filter(p=>!p.ready);
+ if(!ready.length&&!unfinished.length&&orgOf(a)&&a.orgRole==='admin')return agencyWelcome(a,orgOf(a));
  if(!ready.length&&!unfinished.length)return `<section class="panel card"><div class="eyebrow">${t('ll.eyebrow')}</div><h1>${t('ll.welcomeTitle',{name:esc(a.name.split(' ')[0])})}</h1><p>${t('ll.welcomeBody')}</p><ol class="steps-list"><li>${t('ll.step1')}</li><li>${t('ll.step2')}</li><li>${t('ll.step3')}</li></ol>${actionBtn(t('ll.addFirst'),'add-property',true)}</section>`;
- const cards=ready.map(p=>({p,at:attention(p)})).sort((x,y)=>y.at.score-x.at.score).map(({p,at})=>`<li><button type="button" class="prop-card" data-prop="${p.id}">${p.cover?demoImg(p.cover,'','cover'):''}<span class="prop-body"><span class="row spread"><strong>${esc(p.name)}</strong>${pill(t(p.mode==='rooms'?'mode.roomsShort':'mode.jointShort'))}</span><small>${esc(p.address)}</small><span class="prop-stats">${occupancy(p)} · ${t('ll.openRepairs',{n:at.open})}${at.urgent?' '+priorityPill('Urgent'):''}</span><span class="attention ${at.warn?'warn':''}">${at.line}</span></span></button></li>`).join('');
- return `<div class="row spread dash-head"><div><div class="eyebrow">${t('ll.eyebrow')}</div><h1>${t('ll.title')}</h1><p>${t('ll.summary',{n:ready.length})}</p></div>${actionBtn(t('ll.add'),'add-property',true)}</div>${unfinished.length?`<section class="card"><h2>${t('ll.unfinished')}</h2><ul class="repair-list">${unfinished.map(p=>`<li><button type="button" data-continue="${p.id}"><strong>${esc(p.name)}</strong><br><small>${t('ll.continueSetup')}</small></button></li>`).join('')}</ul></section>`:''}<ul class="prop-grid">${cards}</ul>`;
+ const cards=ready.map(p=>({p,at:attention(p)})).sort((x,y)=>y.at.score-x.at.score).map(({p,at})=>`<li><button type="button" class="prop-card" data-prop="${p.id}">${p.cover?demoImg(p.cover,'','cover'):''}<span class="prop-body"><span class="row spread"><strong>${esc(p.name)}</strong>${pill(t(p.mode==='rooms'?'mode.roomsShort':'mode.jointShort'))}</span><small>${esc(p.address)}</small>${p.agency?`<small class="prop-who">${t('ag.cardWho',{owner:esc(p.clientId?personName(p.clientId):'—'),manager:esc(personName(p.ownerId))})}</small>`:''}<span class="prop-stats">${occupancy(p)} · ${t('ll.openRepairs',{n:at.open})}${at.urgent?' '+priorityPill('Urgent'):''}</span><span class="attention ${at.warn?'warn':''}">${at.line}</span></span></button></li>`).join('');
+ const org=orgOf(a);
+ return `<div class="row spread dash-head"><div><div class="eyebrow">${org?esc(org.name)+' · '+t('ag.role.'+a.orgRole):t('ll.eyebrow')}</div><h1>${t('ll.title')}</h1><p>${t('ll.summary',{n:ready.length})}${org&&a.orgRole!=='admin'?' · '+t('ag.yourShare'):''}</p></div>${actionBtn(t('ll.add'),'add-property',true)}</div>${org?agencyDashboard(ready):''}${unfinished.length?`<section class="card"><h2>${t('ll.unfinished')}</h2><ul class="repair-list">${unfinished.map(p=>`<li><button type="button" data-continue="${p.id}"><strong>${esc(p.name)}</strong><br><small>${t('ll.continueSetup')}</small></button></li>`).join('')}</ul></section>`:''}<ul class="prop-grid">${cards}</ul>${org&&a.orgRole==='admin'?`<div class="grid admin-cards"><div>${teamCard(org)}</div><div>${ownersCard(org)}${orgCard(org)}</div></div>`:''}`;
 }
-function propertyPage(){const p=prop(propId);return p&&myProps().includes(p)?propertyView(p):home()}
+function propertyPage(){const p=prop(propId);return p&&!isOwner()&&myProps().includes(p)?propertyView(p):home()}
 function spaceKindLabel(p,s){
  const st=spaceState(p,s);
  return {let:t('kind.let'),vacant:t('kind.vacant'),shared:t('kind.shared'),mine:p.mode==='rooms'&&!s.shared?t('kind.yours'):''}[st.kind]||'';
@@ -564,13 +606,22 @@ function itemsCard(p){
  if(!list.length)return '';
  return `<section class="card"><h2>${t('dash.items')}</h2><ol class="item-list">${list.map(({it,n})=>`<li><button type="button" data-item="${it.id}"><span class="item-number">${n}</span><span><strong>${esc(itemName(it))}</strong><br><small>${esc(spaceName(spaceOf(p,it.spaceId)))}</small></span><span class="arrow" aria-hidden="true">›</span></button></li>`).join('')}</ol></section>`;
 }
+// Property page layout. Desktop: two columns. Phone: one column in its own
+// order, most actionable first (each card carries its phone position).
+function propertyColumns(p,lv,plan){
+ const slot=(html,n)=>html?`<div class="slot" style="--m:${n}">${html}</div>`:'';
+ const [left,right]=lv
+  ?[[slot(plan,4),slot(repairQueue(p),2),slot(itemsCard(p),6),slot(spacesCard(p),7)],[slot(managementCard(p),1),slot(tenanciesCard(p),3),slot(complianceCard(p),5)]]
+  :[[slot(plan,1),slot(itemsCard(p),5),slot(depositCard(p),4)],[slot(spacesCard(p),3),slot(repairQueue(p),2)]];
+ return `<div class="grid prop-cols"><div>${left.join('')}</div><div>${right.join('')}</div></div>`;
+}
 function propertyView(p){
  if(!canSee(p,spaceSel))spaceSel=null;
  const lv=landlordView(p),tn=tenancyOf(p);
  const eyebrow=lv?t(p.mode==='rooms'?'mode.rooms':'mode.joint'):p.selfManaged?t('dash.personal'):t(p.mode==='rooms'?'dash.roomTenant':'dash.jointTenant');
  const meta=[p.address&&esc(p.address),p.selfManaged&&p.date&&t('home.moveInDate',{date:dateText(p.date)}),!lv&&!p.selfManaged&&tn?.start&&t('tenancy.dates',{start:dateText(tn.start),end:tn.end?dateText(tn.end):t('tenancy.open')}),lv&&occupancy(p)].filter(Boolean).join(' · ');
  const uploaded=p.plan?.src&&!p.plan.sample?(p.plan.type.startsWith('image/')?`<details class="uploaded-plan"><summary>${t('home.viewUpload')}</summary><div class="property-plan">${media(p.plan)}</div></details>`:`<details class="uploaded-plan"><summary>${t('home.viewUpload')}</summary>${media(p.plan)}</details>`):'';
- return `<div class="row spread dash-head"><div><div class="eyebrow">${t('dash.eyebrow')} · ${eyebrow}</div><h1>${esc(p.name)}</h1><p>${meta}</p></div><div class="row">${lv?'':actionBtn(t('home.report'),'report',true)}${!lv&&tn?`<button type="button" data-pack="${tn.id}">${t('pack.button')}</button>`:''}</div></div>${landlordView(p)?landlordBanner(p):inventoryBanner(p)}<div class="grid"><div><section class="card"><h2>${t('dash.floorPlan')}</h2>${floorPlan(p)}${uploaded}${spacePanel(p)}</section>${lv?itemsCard(p)+spacesCard(p):itemsCard(p)+depositCard(p)}</div><div>${lv?tenanciesCard(p)+repairQueue(p)+complianceCard(p):spacesCard(p)+repairQueue(p)}</div></div>`;
+ return `<div class="row spread dash-head"><div><div class="eyebrow">${t('dash.eyebrow')} · ${eyebrow}</div><h1>${esc(p.name)}</h1><p>${meta}</p></div><div class="row">${lv?'':actionBtn(t('home.report'),'report',true)}${!lv&&tn?`<button type="button" data-pack="${tn.id}">${t('pack.button')}</button>`:''}</div></div>${landlordView(p)?landlordBanner(p):inventoryBanner(p)}${propertyColumns(p,lv,`<section class="card"><h2>${t('dash.floorPlan')}</h2>${floorPlan(p)}${uploaded}${spacePanel(p)}</section>`)}`;
 }
 
 // ── Room inventory ──────────────────────────────────────────────────
@@ -685,6 +736,7 @@ function openNote(link={}){
  else if(link.page==='check')go('check');
  else if(link.page==='checkout'){checkoutTn=link.tenancy;go('checkout')}
  else if(link.page==='past'){pastSel=link.past;go('past')}
+ else if(link.page==='owner')go('home');
  else go(isLandlord()?'property':'home');
 }
 
@@ -805,6 +857,14 @@ function replyStatus(p,tn,co,lv){
 // the original, which stays the reference. The demo ships translations for its
 // sample content; a real product would call a translation service.
 const CONTENT_TR={'zh-CN':{
+ 'Open-plan kitchen and living room. Island and hob in good condition. Laminate floor clean.':'开放式厨房和客厅。中岛和灶台状况良好。复合地板干净。',
+ 'Double bedroom. Fitted wardrobe and carpet in good condition.':'双人卧室。嵌入式衣柜和地毯状况良好。',
+ 'Walk-in shower, basin and toilet working. Grout clean.':'淋浴间、洗手盆和马桶正常。瓷砖缝干净。',
+ 'Water leaks under the shower tray onto the floor every time the shower runs.':'每次用淋浴，水都会从淋浴底盘下面漏到地上。',
+ 'The radiator in the bedroom stays cold while the others heat up.':'其他暖气片都热了，卧室的暖气片还是冷的。',
+ 'A plumber is quoting today.':'今天有水管工来报价。',
+ 'Chen is home after 2pm on weekdays. Keys from the office.':'Chen 工作日下午 2 点后在家。钥匙在办公室取。',
+ 'Cupboard under the sink is empty.':'水槽下面的柜子已清空。',
  'The stain is much bigger now. Do you have anything showing how big it was when you moved in?':'现在污渍大了很多。你有能证明入住时污渍大小的东西吗？',
  'Yes. The Floor line of the move-in inventory has a photo from 28 August 2025, and I confirmed it on 3 September.':'有的。入住清单的「地面」一项有 2025 年 8 月 28 日的照片，我在 9 月 3 日确认过。',
  'Carpet professionally cleaned after the last tenancy; a faint mark remains by the bed. Chest of drawers and desk in good condition. Window opens and locks.':'上一段租约结束后地毯已专业清洗，床边还留有一点淡淡的印记。五斗柜和书桌状况良好。窗户能正常开关和上锁。',
@@ -946,6 +1006,109 @@ function prepSummary(p,tn){
  return Object.entries(tn.prep||{}).map(([who,pr])=>`<p class="prep-sum"><strong>${esc(personName(who))}</strong> · ${t('prep.progress',{n:prepCount(p,tn,who),total:6})}${pr.meters?` · ${pr.meters.na?t('prep.meters.naDone'):t('prep.meters.short')+': '+['electric','gas','water'].filter(m=>pr.meters[m]).map(m=>t('prep.meters.'+m)+' '+esc(pr.meters[m])).join(', ')}`:''}${pr.keys?' · '+t('prep.keys.summary',{n:pr.keys.count,to:esc(pr.keys.to),date:dateText(pr.keys.at)}):''}${pr.forward&&isManager(p)?`<br><small>${t('prep.forward.label')}: </small><span class="notes">${esc(pr.forward.text)}</span>`:''}</p>`).join('');
 }
 
+// ── Dispatch link (contractors) ────────────────────────────────────
+// The landlord or agent hands a repair to their own contractor with a link.
+// No account: the link shows only this job and stops working once the job
+// is done or cancelled. Above an owner's limit the owner approves first.
+const TRADES=['plumbing','electrics','heating','carpentry','cleaning','general'];
+const jobUrl=token=>location.href.split('#')[0]+'#job='+token;
+const jobActive=d=>!!d&&['sent','accepted'].includes(d.status);
+const newToken=()=>Math.random().toString(36).slice(2,8)+Date.now().toString(36).slice(-4);
+const ownerLimit=p=>p.clientId?db.accounts[p.clientId]?.approvalLimit??null:null;
+function findJob(token){for(const p of db.properties)for(const x of p.tickets)if(x.dispatch?.token===token)return {p,x};return null}
+function dispatchCard(p,x){
+ const d=x.dispatch,closed=!d||['cancelled','declined','refused'].includes(d.status);
+ const limit=ownerLimit(p);
+ const prior=d&&closed?`<p class="help">${t('job.prior.'+d.status,{name:esc(d.name)})}${d.declineNote?` · ${userText(d.declineNote)}`:''}${d.approval?.note?` · ${userText(d.approval.note)}`:''}</p>`:'';
+ if(closed&&x.status>=3)return prior?`<section class="card"><h3>${t('job.title')}</h3>${prior}</section>`:'';
+ if(closed)return `<section class="card dispatch"><h3>${t('job.title')}</h3><p class="help">${t('job.intro')}</p>${prior}<form id="dispatch"><div class="grid"><label>${t('job.name')} <input name="name" required maxlength="60" placeholder="${t('job.namePlaceholder')}" value="${esc(x.contractor||'')}"></label><label>${t('job.contact')} ${optional()}<input name="contact" maxlength="80" placeholder="${t('job.contactPlaceholder')}"></label><label>${t('job.trade')} <select name="trade">${TRADES.map(k=>`<option value="${k}">${t('trade.'+k)}</option>`).join('')}</select></label><label>${t('job.budget')} ${optional()}<input name="budget" type="number" min="0" step="1" inputmode="numeric"></label></div><label>${t('job.access')} ${optional()}<textarea name="access" maxlength="300" placeholder="${t('job.accessPlaceholder')}"></textarea></label>${limit!=null?`<p class="help">${t('job.limitHelp',{owner:esc(personName(p.clientId)),limit:money(limit)})}</p>`:''}<button class="primary">${t('job.create')}</button></form></section>`;
+ const head=`<p><strong>${esc(d.name)}</strong> · ${t('trade.'+d.trade)}${d.budget?` · ${t('job.budgetIs',{amount:money(d.budget)})}`:''}${d.contact?` · ${esc(d.contact)}`:''}</p>`;
+ const offOwner=d.status==='approval'&&db.accounts[p.clientId]?.invited?`<details class="protect"><summary>${t('job.ownerOff')}</summary><form id="owner-off"><label class="check"><input type="radio" name="ok" value="yes" required> ${t('job.ownerOffYes')}</label><label class="check"><input type="radio" name="ok" value="no"> ${t('job.ownerOffNo')}</label><label>${t('joint.offNote')} <textarea name="note" required maxlength="300"></textarea></label><button class="primary">${t('dep.save')}</button></form></details>`:'';
+ const state=d.status==='approval'?`<p class="job-state wait">⏳ ${t('job.state.approval',{owner:esc(personName(p.clientId)),amount:money(d.budget),limit:money(limit??0)})}</p>${offOwner}`
+  :d.status==='sent'?`<p class="job-state">📨 ${t('job.state.sent',{date:dateText(d.at)})}</p>`
+  :d.status==='accepted'?`<p class="job-state ok">✓ ${t('job.state.accepted',{date:d.visit?dateText(d.visit):'—'})}</p>`
+  :`<p class="job-state ok">✓ ${t('job.state.done',{date:dateText(d.doneAt)})}</p>`;
+ const link=jobActive(d)?`<div class="job-link"><code>${esc(jobUrl(d.token))}</code><div class="row"><button type="button" data-copy-link="${d.token}">${t('job.copy')}</button><a class="button" href="${esc(jobUrl(d.token))}" target="_blank" rel="noopener">${t('job.open')}</a></div><p class="help">${t('job.linkHelp')}</p></div>`:'';
+ const cancel=d.status==='done'?'':`<button type="button" class="link" data-job-cancel="${x.id}">${t('job.cancel')}</button>`;
+ return `<section class="card dispatch"><h3>${t('job.title')}</h3>${head}${state}${link}${cancel}</section>`;
+}
+// What the contractor sees: only this job, no sign-in.
+function jobPage(){
+ const found=jobToken&&findJob(jobToken);
+ const shell=body=>`<div class="panel job-page"><section class="card"><div class="eyebrow">${t('job.eyebrow')}</div>${body}</section></div>`;
+ if(!found)return shell(`<h1>${t('job.gone')}</h1><p>${t('job.goneBody')}</p>`);
+ const {p,x}=found,d=x.dispatch,s=spaceOf(p,x.spaceId);
+ if(d.status==='approval')return shell(`<h1>${t('job.waitingTitle')}</h1><p>${t('job.waitingBody')}</p>`);
+ if(!jobActive(d))return shell(`<h1>${t(d.status==='done'?'job.doneTitle':'job.gone')}</h1><p>${t(d.status==='done'?'job.doneBody':'job.goneBody')}</p>`);
+ const area=(p.address||'').split(',').slice(-1)[0].replace('· Demo','').trim();
+ const where=d.status==='accepted'?esc(p.address||''):t('job.areaOnly',{area:esc(area)});
+ const item=x.itemId&&p.items?.find(i=>i.id===x.itemId);
+ const info=`<h1>${esc(x.location)}</h1><p>${priorityPill(x.priority)||esc(priorityLabel(x.priority))} · ${t('trade.'+d.trade)} · ${t('job.reported',{date:dateText(x.created)})}</p><dl class="dep-facts"><div><dt>${t('job.where')}</dt><dd>${where}</dd></div><div><dt>${t('job.room')}</dt><dd>${esc(spaceName(s))}</dd></div><div><dt>${t('job.from')}</dt><dd>${esc(personName(d.by))}</dd></div>${d.budget?`<div><dt>${t('job.budget')}</dt><dd>${money(d.budget)}</dd></div>`:''}</dl><h3>${t('job.problem')}</h3><p>${userText(x.description)}</p>${x.photo?`<div class="photo-strip">${x.photo?`<figure><figcaption><small><strong>${t('repair.before')}</strong>${x.photoDate?' · '+dateText(x.photoDate):''}</small></figcaption>${media(x.photo)}</figure>`:''}${x.baseline?.photo?`<figure><figcaption><small><strong>${t('checkout.moveIn')}</strong>${x.baseline.photoDate?' · '+dateText(x.baseline.photoDate):''}</small></figcaption>${media(x.baseline.photo)}</figure>`:''}</div>`:x.baseline?.photo?`<div class="photo-strip"><figure><figcaption><small><strong>${t('checkout.moveIn')}</strong></small></figcaption>${media(x.baseline.photo)}</figure></div>`:''}${item?`<p class="help">${t('job.item',{name:esc(itemName(item))})}</p>`:''}${d.access?`<h3>${t('job.access')}</h3><p>${userText(d.access)}</p>`:''}`;
+ const act=d.status==='sent'
+  ?`<form id="job-accept" class="step-form"><h3>${t('job.acceptTitle')}</h3><label>${t('job.visit')} <input type="date" name="visit" required></label><label>${t('job.noteToTenant')} ${optional()}<textarea name="note" maxlength="300"></textarea></label><button class="primary">${t('job.accept')}</button></form><details class="protect"><summary>${t('job.decline')}</summary><form id="job-decline"><label>${t('job.declineWhy')} <textarea name="note" required maxlength="300"></textarea></label><button>${t('job.declineSend')}</button></form></details>`
+  :`<p class="job-state ok">✓ ${t('job.youAccepted',{date:d.visit?dateText(d.visit):'—'})}</p><form id="job-done" class="step-form"><h3>${t('job.doneTitleForm')}</h3><label>${t('step.doneNote')} <textarea name="note" required maxlength="600"></textarea></label><label>${t('step.cost')} ${optional()}<input name="cost" type="number" min="0" step="1" inputmode="numeric"></label><label>${t('repair.afterPhoto')} ${optional(true)}${filePicker('name="photo" type="file" accept="image/png,image/jpeg,image/webp" capture="environment"')}</label><button class="primary">${t('job.markDone')}</button></form>`;
+ return shell(`${info}${act}<p class="help job-privacy">🔒 ${t('job.privacy')}</p>`);
+}
+function openJobFromHash(){const m=/^#job=([\w-]+)/.exec(location.hash);if(m){jobToken=m[1];page='job';trail=[];render();window.scrollTo(0,0);return true}return false}
+window.addEventListener('hashchange',openJobFromHash);
+
+// ── Agency: dashboard, team, owners ─────────────────────────────────
+const orgOf=a=>a?.org&&a.orgRole!=='pending'?db.orgs?.[a.org]:null;
+const orgAdmins=oid=>Object.values(db.accounts).filter(a=>a.org===oid&&a.orgRole==='admin').map(a=>a.id);
+const orgOwners=oid=>Object.values(db.accounts).filter(a=>a.role==='owner'&&a.org===oid);
+// Invite codes like HARB-TEAM-7K2P: the agency's first word, the kind, four random characters.
+function newCode(name,kind){const pre=(String(name).toUpperCase().replace(/[^A-Z0-9 ]/g,'').trim().split(/\s+/)[0]||'ORG').slice(0,6),all=new Set([...Object.values(db.orgs||{}).map(o=>o.teamCode),...Object.values(db.accounts).map(a=>a.inviteCode)]);let c;do c=`${pre}-${kind}-${Math.random().toString(36).slice(2,6).toUpperCase()}`;while(all.has(c));return c}
+const pendingApprovals=list=>list.flatMap(p=>p.tickets.filter(x=>x.dispatch?.status==='approval').map(x=>({p,x})));
+// Portfolio figures for an agency (or any landlord with several properties).
+function agencyDashboard(list){
+ const held=list.flatMap(p=>p.tenancies.filter(tn=>tn.tenantIds.length));
+ const units=list.reduce((n,p)=>n+p.tenancies.length,0),open=list.flatMap(p=>p.tickets.filter(x=>x.status<4));
+ const tiles=[[t('ag.units'),`${held.length}/${units}`],[t('ag.open'),open.length],[t('ag.overdue'),list.flatMap(p=>p.tickets).filter(isOverdue).length,'warn'],[t('ag.approvals'),pendingApprovals(list).length,'warn'],[t('ag.compliance'),list.reduce((n,p)=>n+complianceAlerts(p),0),'warn'],[t('ag.spend'),money(list.flatMap(p=>p.tickets).reduce((n,x)=>n+(x.cost||0),0))]];
+ return `<section class="card"><h2>${t('ag.dashboard')}</h2><div class="stat-row">${tiles.map(([l,v,c])=>`<div class="stat ${c&&Number(v)>0?c:''}"><small>${l}</small><strong>${v}</strong></div>`).join('')}</div></section>`;
+}
+function teamCard(org){
+ const staff=Object.values(db.accounts).filter(a=>a.org===org.id&&a.role==='agent'),all=db.properties.filter(p=>p.agency===org.id).length;
+ const pending=staff.filter(a=>a.orgRole==='pending'),members=staff.filter(a=>a.orgRole!=='pending');
+ const row=a=>{const n=db.properties.filter(p=>p.agency===org.id&&p.ownerId===a.id).length,self=a.id===db.session;
+  return `<li><strong>${esc(a.name)}</strong>${self?` <small class="muted">(${t('people.you')})</small>`:''} · ${self?t('ag.role.'+a.orgRole):`<select data-staff-role="${a.id}" aria-label="${t('ag.roleLabel',{name:esc(a.name)})}">${['manager','admin'].map(r=>`<option value="${r}" ${a.orgRole===r?'selected':''}>${t('ag.role.'+r)}</option>`).join('')}</select>`}<br><small>${a.orgRole==='admin'?t('ag.oversees',{all,n}):t('ag.manages',{n})}</small></li>`};
+ return `<section class="card" id="team"><h2>${t('ag.team')}</h2>${pending.length?`<div class="pending-staff"><h3>${t('ag.pendingTitle')}</h3><ul class="reply-status">${pending.map(a=>`<li><strong>${esc(a.name)}</strong> · <small>${esc(a.email)}</small><div class="row"><button type="button" class="primary" data-staff-ok="${a.id}">${t('ag.approve')}</button><button type="button" data-staff-no="${a.id}">${t('ag.reject')}</button></div></li>`).join('')}</ul></div>`:''}<ul class="reply-status">${members.map(row).join('')}</ul><div class="code-box team-code"><span>${t('ag.teamCode')}</span><code>${esc(org.teamCode)}</code><button type="button" data-copy="${esc(org.teamCode)}">${t('tenancy.copy')}</button><button type="button" class="link" data-new-team-code="${org.id}">${t('ag.newCode')}</button></div><p class="help">${t('ag.teamCodeHelp')}</p></section>`;
+}
+// The agency's owner clients: joined or invited, with their approval limits.
+function ownersCard(org){
+ const owners=orgOwners(org.id);
+ return `<section class="card" id="owners"><h2>${t('ag.owners')}</h2>${owners.length?`<ul class="reply-status">${owners.map(o=>{const n=db.properties.filter(p=>p.clientId===o.id).length;return `<li><strong>${esc(o.name)}</strong> · ${o.invited?pill(t('ag.ownerInvited'),'dep-due'):pill(t('ag.ownerJoined'),'dep-ok')}<br><small>${t('ag.ownerLine',{n,limit:money(o.approvalLimit??0)})}</small>${o.invited?`<div class="code-box"><code>${esc(o.inviteCode)}</code><button type="button" data-copy="${esc(o.inviteCode)}">${t('tenancy.copy')}</button></div>`:''}</li>`}).join('')}</ul>`:`<p class="help">${t('ag.noOwners')}</p>`}<details class="protect"><summary>${t('ag.addOwner')}</summary><form id="add-owner"><div class="grid"><label>${t('ag.ownerName')} <input name="name" required maxlength="60"></label><label>${t('ag.ownerLimit')} <input name="limit" type="number" min="0" step="10" inputmode="numeric" value="250" required></label></div><p class="help">${t('ag.addOwnerHelp')}</p><button class="primary">${t('ag.addOwnerBtn')}</button></form></details></section>`;
+}
+function orgCard(org){
+ const r=org.redress;
+ return `<section class="card"><div class="row spread"><h2>${esc(org.name)}</h2>${pill(t(org.verified?'ag.verified':'ag.unverified'),org.verified?'dep-ok':'dep-due')}</div><dl class="dep-facts">${org.companyNo?`<div><dt>${t('su.companyNo')}</dt><dd>${esc(org.companyNo)}</dd></div>`:''}${r?`<div><dt>${t('su.redress')}</dt><dd>${esc(r.scheme==='TPO'?'The Property Ombudsman':'Property Redress Scheme')}${r.no?` · ${esc(r.no)}`:''}</dd></div>`:''}${org.cmp?`<div><dt>${t('su.cmp')}</dt><dd>${esc(org.cmp)}</dd></div>`:''}</dl><p class="help">${t('ag.verifyHelp')}</p></section>`;
+}
+// A new agency with nothing set up yet.
+function agencyWelcome(a,org){
+ const owners=orgOwners(org.id).length,team=Object.values(db.accounts).filter(x=>x.org===org.id&&x.role==='agent').length;
+ const step=(done,label,btn)=>`<li class="${done?'done':''}"><span>${done?'✓':'○'}</span> ${label} ${btn}</li>`;
+ return `<section class="panel card"><div class="eyebrow">${esc(org.name)} · ${t('ag.role.admin')}</div><h1>${t('ag.welcomeTitle',{name:esc(a.name.split(' ')[0])})}</h1><p>${t('ag.welcomeBody')}</p><ol class="onboard">${step(false,t('ag.step1'),actionBtn(t('ll.addFirst'),'add-property',true))}${step(team>1,t('ag.step2'),`<a class="button" href="#team">${t('ag.step2Btn')}</a>`)}${step(owners>0,t('ag.step3'),`<a class="button" href="#owners">${t('ag.step3Btn')}</a>`)}</ol></section>${teamCard(org)}${ownersCard(org)}${orgCard(org)}`;
+}
+// Someone who asked to join an agency, waiting for an admin.
+function pendingStaff(a){
+ const org=db.orgs?.[a.org];
+ return `<section class="panel card"><div class="eyebrow">${esc(org?.name||'')}</div><h1>${t('ag.pendingSelfTitle')}</h1><p>${t('ag.pendingSelfBody',{org:esc(org?.name||'')})}</p></section>`;
+}
+// On an agency property: who owns it, who manages it; admins can reassign.
+function managementCard(p){
+ if(!p.agency)return '';
+ const staff=Object.values(db.accounts).filter(a=>a.org===p.agency&&a.role==='agent'&&a.orgRole!=='pending'),limit=ownerLimit(p);
+ const who=agencyAdminOf(p)?`<label>${t('ag.manager')} <select name="assign" data-prop-assign="${p.id}">${staff.map(a=>`<option value="${a.id}" ${a.id===p.ownerId?'selected':''}>${esc(a.name)}</option>`).join('')}</select></label>`:`<p>${t('ag.manager')}: <strong>${esc(personName(p.ownerId))}</strong></p>`;
+ return `<section class="card"><h2>${t('ag.manageTitle')}</h2><p>${t('ag.owner')}: <strong>${p.clientId?esc(personName(p.clientId)):'—'}</strong>${limit!=null?` · ${t('ag.limit',{amount:money(limit)})}`:''}</p>${who}</section>`;
+}
+// Owner (the agency's client): their properties at a glance, and approvals.
+function ownerHome(){
+ const a=me(),list=myProps(),orgName=[...new Set([...list.map(p=>db.orgs?.[p.agency]?.name),db.orgs?.[a.org]?.name].filter(Boolean))].join(', ');
+ const approvals=pendingApprovals(list).map(({p,x})=>{const d=x.dispatch;return `<li class="approval"><div class="row spread"><strong>${esc(p.name)} · ${esc(spaceName(spaceOf(p,x.spaceId)))} · ${esc(x.location)}</strong>${priorityPill(x.priority)}</div><p>${userText(x.description)}</p><p>${t('own.quote',{name:esc(d.name),amount:money(d.budget),limit:money(a.approvalLimit??0)})}</p><p class="help">${t('own.requested',{name:esc(personName(d.by)),date:dateText(d.at)})}</p><label>${t('own.note')} ${optional()}<textarea id="ap-note-${x.id}" maxlength="300"></textarea></label><div class="row"><button type="button" class="primary" data-approve="${p.id}|${x.id}">${t('own.approve')}</button><button type="button" data-refuse="${p.id}|${x.id}">${t('own.refuse')}</button></div></li>`}).join('');
+ const props=list.map(p=>{const tix=p.tickets.slice().sort((x,y)=>y.created.localeCompare(x.created)),spend=tix.reduce((n,x)=>n+(x.cost||0),0),dep=complianceState(p,'deposit');
+  return `<section class="card"><div class="row spread"><h2>${esc(p.name)}</h2>${pill(occupancy(p))}</div><p class="help">${esc(p.address)} · ${t('ag.manager')}: ${esc(personName(p.ownerId))}</p><div class="stat-row"><div class="stat"><small>${t('ag.open')}</small><strong>${tix.filter(x=>x.status<4).length}</strong></div><div class="stat"><small>${t('ag.spend')}</small><strong>${money(spend)}</strong></div><div class="stat"><small>${t('compliance.deposit')}</small><strong>${dep.status==='na'?'—':`${dep.n}/${dep.total}`}</strong></div></div><h3>${t('own.repairs')}</h3>${tix.length?`<ul class="repair-list owner-repairs">${tix.map(x=>`<li><div><strong>${esc(x.location)}</strong> · ${statusLabel(x.status)}${x.cost?` · ${money(x.cost)}`:''}${x.dispatch&&x.dispatch.status!=='cancelled'?` · ${esc(x.dispatch.name)}`:''}<br><small>${dateText(x.created)}</small></div></li>`).join('')}</ul>`:`<p class="help">${t('own.noRepairs')}</p>`}<h3>${t('compliance.title')}</h3><ul class="compliance-list">${['deposit',...COMPLIANCE.map(c=>c[0])].map(k=>{const st=complianceState(p,k);return st.status==='na'?'':`<li><div><strong>${t('compliance.'+k)}</strong> ${pill(k==='deposit'?t('dep.status.'+st.status):t('compliance.status.'+st.status),st.status==='ok'?'':'urgent')}</div></li>`}).join('')}</ul></section>`}).join('');
+ return `<div class="dash-head"><div class="eyebrow">${t('own.eyebrow')}</div><h1>${t('own.title')}</h1><p>${orgName?t('own.managedBy',{org:esc(orgName)}):''}</p></div>${approvals?`<section class="card banner-card"><h2>${t('own.approvalsTitle')}</h2><p class="help">${t('own.approvalsHelp',{limit:money(a.approvalLimit??0)})}</p><ul class="approvals">${approvals}</ul></section>`:''}${props||`<section class="card"><p>${t('own.none')}</p></section>`}<p class="help">${t('own.readOnly')}</p>`;
+}
+
 // ── Deposit (recorded, not held) ────────────────────────────────────
 function depositCard(p){
  const tn=tenancyOf(p);if(!tn||landlordView(p))return '';
@@ -1050,7 +1213,7 @@ function exportFeedback(){
 // ── Page for landlords: value and concept pricing ──────────────────
 function aboutPage(){
  const plans=['free','pro','agency'];
- return `<div class="panel"><section class="hero about-hero"><div><div class="eyebrow">${t('about.eyebrow')}</div><h1>${t('about.title')}</h1><p>${t('about.lead')}</p><div class="row">${btn(t('about.tryLandlord'),'signin',true)}</div></div></section><div class="grid three">${[1,2,3].map(n=>`<section class="card"><h3>${t('about.value.'+n+'.title')}</h3><p>${t('about.value.'+n+'.body')}</p></section>`).join('')}</div><section class="card"><h2>${t('about.tenantTitle')}</h2><p>${t('about.tenantBody')}</p></section><section class="card"><h2>${t('about.pricingTitle')}</h2><p class="help">${t('about.pricingHelp')}</p><div class="grid three">${plans.map(k=>`<div class="plan-card"><h3>${t('about.plan.'+k+'.name')}</h3><p class="price">${t('about.plan.'+k+'.price')}</p><p>${t('about.plan.'+k+'.body')}</p></div>`).join('')}</div></section></div>`;
+ return `<div class="panel"><section class="hero about-hero"><div><div class="eyebrow">${t('about.eyebrow')}</div><h1>${t('about.title')}</h1><p>${t('about.lead')}</p><div class="row">${btn(t('about.tryLandlord'),'signin',true)}</div></div></section><div class="grid three">${[1,2,3].map(n=>`<section class="card"><h3>${t('about.value.'+n+'.title')}</h3><p>${t('about.value.'+n+'.body')}</p></section>`).join('')}</div><section class="card"><h2>${t('about.tenantTitle')}</h2><p>${t('about.tenantBody')}</p></section><section class="card"><h2>${t('about.pricingTitle')}</h2><p class="help">${t('about.pricingHelp')}</p><div class="grid three">${plans.map(k=>`<div class="plan-card"><h3>${t('about.plan.'+k+'.name')}</h3><p class="price">${t('about.plan.'+k+'.price')}</p><p>${t('about.plan.'+k+'.body')}</p>${k==='agency'?btn(t('agsu.entryBtn'),'agency-signup'):''}</div>`).join('')}</div></section></div>`;
 }
 
 // ── Demo panel: account switcher and guided tour ────────────────────
@@ -1089,6 +1252,49 @@ function renderDemo(){
  panel.innerHTML=`<div class="row spread"><h2>${t('demo.title')}</h2><button type="button" class="close" data-action="demo-panel" aria-label="${t('demo.close')}">✕</button></div><section><h3>${t('tour.title')}</h3>${tour}</section><section><h3>${t('demo.switch')}</h3><ul class="switch-list">${accounts.map(a=>`<li><button type="button" data-switch="${a.id}" aria-pressed="${a.id===db.session}">${avatar(a.name,'small')}<span><strong>${esc(a.name)}</strong> · ${t('role.'+a.role)}<br><small>${t(a.demo)}</small></span></button></li>`).join('')}</ul></section><section><h3>${t('feedback.title')}</h3><p class="help">${t('feedback.help')}</p>${feedbackForm()}</section><section><h3>${t('about.eyebrow')}</h3>${btn(t('about.open'),'about')}</section><section><h3>${t('demo.resetTitle')}</h3><p class="help">${t('demo.resetHelp')}</p>${actionBtn(t('demoData.reset'),'reset')}</section>`;
 }
 
+// Swipe right from the left edge to go back, like a phone app.
+{let sx=null,sy=0;
+ document.addEventListener('touchstart',e=>{const t0=e.touches[0];sx=e.touches.length===1&&t0.clientX<=32?t0.clientX:null;sy=t0.clientY},{passive:true});
+ document.addEventListener('touchend',e=>{if(sx==null)return;const t1=e.changedTouches[0],dx=t1.clientX-sx,dy=Math.abs(t1.clientY-sy);sx=null;
+  if(dx>70&&dy<60&&trail.length&&page!=='start'&&!document.querySelector('dialog[open]'))go('back')},{passive:true});
+}
+// Sign-up (demo): the account lives only in this browser.
+function signUp(){
+ const kinds=['tenant','landlord','staff','owner'];
+ const extra={
+  staff:`<label>${t('su.teamCode')} <input name="teamCode" maxlength="24" autocapitalize="characters" spellcheck="false" data-req="staff" placeholder="HARB-TEAM-7K2P"></label><p class="help">${t('su.staffHelp')}</p>`,
+  owner:`<label>${t('su.ownerCode')} <input name="ownerCode" maxlength="24" autocapitalize="characters" spellcheck="false" data-req="owner" placeholder="HARB-OWN-JW"></label><p class="help">${t('su.ownerHelp')}</p>`};
+ return `<div class="panel"><section class="card"><h1>${t('signup.title')}</h1><p>${t('signup.intro')}</p><form id="signup"><label>${t('signup.name')} <input name="name" required maxlength="60" autocomplete="name"></label><label>${t('signin.email')} <input name="email" type="email" required maxlength="80" autocomplete="email"></label><label>${t('signin.password')} <small>${t('signup.passwordHelp')}</small><input name="password" type="password" required minlength="4" maxlength="60" autocomplete="new-password"></label><label>${t('signin.roleLabel')} <select name="role" data-signup-role>${kinds.map(r=>`<option value="${r}">${t('signup.role.'+r)}</option>`).join('')}</select></label>${kinds.filter(r=>extra[r]).map(r=>`<div class="follow-up" data-show="${r}" hidden>${extra[r]}</div>`).join('')}<p class="help">${t('signup.local')}</p><button class="primary">${t('signup.submit')}</button></form><p class="signup-line">${t('signup.haveAccount')} <button type="button" class="link" data-go="signin">${t('signin.submit')}</button></p><p class="signup-line">${t('agsu.prompt')} <button type="button" class="link" data-go="agency-signup">${t('agsu.link')}</button></p></section></div>`;
+}
+// Agency registration: a company account, separate from personal sign-up.
+function agencySignUp(){
+ return `<div class="panel"><section class="card"><div class="eyebrow">${t('agsu.eyebrow')}</div><h1>${t('agsu.title')}</h1><p>${t('agsu.intro')}</p><form id="agency-signup"><h2>${t('agsu.company')}</h2><label>${t('su.orgName')} <input name="orgName" required maxlength="80"></label><div class="grid"><label>${t('su.companyNo')} ${optional()}<input name="companyNo" maxlength="12" inputmode="numeric"></label><label>${t('su.redress')} ${optional()}<select name="redress"><option value="">${t('su.redressNone')}</option><option value="TPO">The Property Ombudsman</option><option value="PRS">Property Redress Scheme</option></select></label><label>${t('su.redressNo')} ${optional()}<input name="redressNo" maxlength="20"></label><label>${t('su.cmp')} ${optional()}<input name="cmp" maxlength="60"></label></div><p class="help">${t('su.agencyHelp')}</p><h2>${t('agsu.admin')}</h2><p class="help">${t('agsu.adminHelp')}</p><label>${t('signup.name')} <input name="name" required maxlength="60" autocomplete="name"></label><label>${t('agsu.email')} <input name="email" type="email" required maxlength="80" autocomplete="email"></label><label>${t('signin.password')} <small>${t('signup.passwordHelp')}</small><input name="password" type="password" required minlength="4" maxlength="60" autocomplete="new-password"></label><label class="check"><input type="checkbox" name="authorised" required> ${t('agsu.authorised')}</label><p class="help">${t('signup.local')}</p><button class="primary">${t('agsu.submit')}</button></form><p class="signup-line">${t('agsu.personal')} <button type="button" class="link" data-go="signup">${t('signup.link')}</button> · ${t('agsu.staffNote')}</p></section></div>`;
+}
+
+// Sign-in suggestions: demo accounts under the email field, the demo password
+// under the password field. Picking one fills both fields.
+function suggestItems(kind,q){
+ const accounts=Object.values(db.accounts).filter(a=>a.demo);
+ if(kind==='postcode'){const s=q.replace(/\s/g,'').toUpperCase();return 'E18ER'.startsWith(s)||!s?`<li role="option"><button type="button" data-fill-postcode="E1 8ER"><strong>E1 8ER</strong> <small>${esc(sampleProperty.name)}</small><br><small class="muted">${esc(sampleProperty.address)} · ${t('setup.sampleResult')}</small></button></li>`:''}
+ if(kind==='email'){const s=q.trim().toLowerCase();return accounts.filter(a=>!s||a.email.includes(s)||a.name.toLowerCase().includes(s)).map(a=>`<li role="option"><button type="button" data-fill="${esc(a.email)}"><strong>${esc(a.name)}</strong> <small>${esc(a.email)}</small><br><small class="muted">${t(a.demo)}</small></button></li>`).join('')}
+ const email=document.querySelector('#si-email')?.value.trim().toLowerCase(),known=db.accounts&&Object.values(db.accounts).find(a=>a.email===email);
+ return !known||known.demo?`<li role="option"><button type="button" data-fill-pass="${DEMO_PASSWORD}">${t('signin.demoPass')} <code>${DEMO_PASSWORD}</code></button></li>`:'';
+}
+function showSuggest(input){
+ const list=input.parentElement.querySelector('.suggest-list');if(!list)return;
+ const html=suggestItems(input.dataset.suggest,input.value);list.innerHTML=html;list.hidden=!html;input.setAttribute('aria-expanded',!!html);
+}
+document.addEventListener('focusin',e=>{if(e.target.dataset?.suggest)showSuggest(e.target)});
+document.addEventListener('input',e=>{if(e.target.dataset?.suggest)showSuggest(e.target)});
+document.addEventListener('focusout',e=>{const box=e.target.closest?.('.suggest');if(!box)return;setTimeout(()=>{if(!box.contains(document.activeElement)){const l=box.querySelector('.suggest-list');if(l)l.hidden=true;box.querySelector('input')?.setAttribute('aria-expanded','false')}},120)});
+document.addEventListener('keydown',e=>{
+ const box=e.target.closest?.('.suggest');if(!box)return;const items=[...box.querySelectorAll('.suggest-list button')];
+ if(e.key==='Escape'){box.querySelector('.suggest-list').hidden=true;box.querySelector('input').focus();return}
+ if(e.key==='ArrowDown'||e.key==='ArrowUp'){if(!items.length)return;e.preventDefault();const i=items.indexOf(document.activeElement),n=e.key==='ArrowDown'?(i+1)%items.length:(i<=0?items.length-1:i-1);items[n].focus()}
+});
+// Keep the field focused while a suggestion is pressed.
+document.addEventListener('mousedown',e=>{if(e.target.closest('.suggest-list'))e.preventDefault()});
+
 // ── Pages: getting started (tenant) ─────────────────────────────────
 function moveIn(){return `<div class="panel"><h1>${t('moveIn.title')}</h1><div class="grid"><section class="card"><h2>${t('moveIn.linkTitle')}</h2><p>${t('moveIn.linkBody')}</p>${btn(t('moveIn.linkButton'),'link',true)}</section><section class="card"><h2>${t('moveIn.ownTitle')}</h2><p>${t('moveIn.ownBody')}</p>${actionBtn(t('moveIn.ownButton'),'add-property',true)}</section></div></div>`}
 function linkRoom(){return `<section class="panel card"><h1>${t('link.title')}</h1><p>${t('link.intro')}</p><form id="link-room"><label>${t('link.code')} <input name="code" required autocapitalize="characters" spellcheck="false" placeholder="${t('link.placeholder')}"></label><p>${t('link.hint')}</p><button class="primary">${t('link.submit')}</button></form></section>`}
@@ -1096,11 +1302,11 @@ function linkRoom(){return `<section class="panel card"><h1>${t('link.title')}</
 // ── Pages: adding a property (landlord, or tenant's own record) ─────
 function setup(){
  const match=postcodeSearched&&postcodeKey(postcodeQuery)==='E18ER';
- return `<section class="panel card"><div class="steps">${t('flow.step',{n:1,total:isLandlord()?5:4})}</div><h1>${t('setup.title')}</h1><form id="postcode-search"><label>${t('setup.postcode')} <input name="postcode" required maxlength="12" autocomplete="postal-code" placeholder="${t('setup.postcodePlaceholder')}" value="${esc(postcodeQuery)}"></label><p class="help">${t('setup.hint')}</p><div class="setup-actions"><button class="primary">${t('setup.find')}</button>${btn(t('setup.upload'),'upload')}</div></form>${postcodeSearched?(match?`<section class="postcode-result"><h2>${sampleProperty.name}</h2><p>${sampleProperty.address} · ${t('setup.sampleResult')}</p>${planPreview('harbour',recognisedSpaces('harbour','joint'),'joint')}<p class="help recog-count">✓ ${t('setup.recognised',{n:RECOGNISED.harbour.length})}</p><div class="setup-actions"><button type="button" class="primary" data-action="use-found-plan">${t('setup.usePlan')}</button></div></section>`:`<p>${t('setup.noMatch')}</p>`):''}</section>`;
+ return `<section class="panel card"><div class="steps">${t('flow.step',{n:1,total:isLandlord()?5:4})}</div><h1>${t('setup.title')}</h1><form id="postcode-search"><label for="pc-input">${t('setup.postcode')}</label><div class="suggest"><input id="pc-input" name="postcode" required maxlength="12" autocomplete="off" placeholder="${t('setup.postcodePlaceholder')}" value="${esc(postcodeQuery)}" data-suggest="postcode" aria-autocomplete="list" aria-controls="sg-postcode"><ul class="suggest-list" id="sg-postcode" role="listbox" hidden></ul></div><p class="help">${t('setup.hint')}</p><div class="setup-actions"><button class="primary">${t('setup.find')}</button>${btn(t('setup.upload'),'upload')}</div></form>${postcodeSearched?(match?`<section class="postcode-result"><h2>${sampleProperty.name}</h2><p>${sampleProperty.address} · ${t('setup.sampleResult')}</p>${planPreview('harbour',recognisedSpaces('harbour','joint'),'joint')}<p class="help recog-count">✓ ${t('setup.recognised',{n:RECOGNISED.harbour.length})}</p><div class="setup-actions"><button type="button" class="primary" data-action="use-found-plan">${t('setup.usePlan')}</button></div></section>`:`<p>${t('setup.noMatch')}</p>`):''}</section>`;
 }
 function upload(){
  draft??={};
- return `<div class="panel"><section class="card"><div class="steps">${t('flow.step',{n:2,total:isLandlord()?5:4})}</div><h2>${t('upload.title')}</h2><form id="setup"><label>${t('upload.name')} <input name="name" required placeholder="${t('upload.namePlaceholder')}" value="${esc(foundProperty?.name||draft.name||'')}"></label><div class="grid"><label>${t('upload.address')} ${optional()}<input name="address" value="${esc(foundProperty?.address||draft.address||'')}"></label><label>${t(isLandlord()?'upload.availableDate':'upload.date')} ${optional()}<input type="date" name="date" value="${esc(draft.date||'')}"></label></div>${isLandlord()?'':`<details class="own-deposit"${draft.deposit?' open':''}><summary>${t('dep.ownTitle')} ${optional()}</summary><p class="help">${t('dep.ownHelp')}</p><div class="grid"><label>${t('dep.amount')} <input name="dep-amount" type="number" min="0" step="1" inputmode="numeric" value="${draft.deposit?.amount||''}"></label><label>${t('dep.scheme')} <select name="dep-scheme"><option value="">${t('dep.unsure')}</option>${Object.keys(DEPOSIT_SCHEMES).map(k=>`<option ${draft.deposit?.scheme===k?'selected':''}>${k}</option>`).join('')}</select></label><label>${t('dep.ref')} <input name="dep-ref" maxlength="30" value="${esc(draft.deposit?.ref||'')}"></label></div></details>`}<div class="choices setup-actions">${[['upload','upload.methodPlan'],['video','upload.methodVideo']].map(([id,label])=>`<button type="button" data-method="${id}" aria-pressed="${method===id}">${t(label)}</button>`).join('')}</div><div id="material"></div><div class="setup-actions"><button class="primary">${t(isLandlord()?'upload.nextMode':'upload.nextSpaces')}</button></div></form></section></div>`;
+ return `<div class="panel"><section class="card"><div class="steps">${t('flow.step',{n:2,total:isLandlord()?5:4})}</div><h2>${t('upload.title')}</h2><form id="setup"><label>${t('upload.name')} <input name="name" required placeholder="${t('upload.namePlaceholder')}" value="${esc(foundProperty?.name||draft.name||'')}"></label><div class="grid"><label>${t('upload.address')} ${optional()}<input name="address" value="${esc(foundProperty?.address||draft.address||'')}"></label><label>${t(isLandlord()?'upload.availableDate':'upload.date')} ${optional()}<input type="date" name="date" value="${esc(draft.date||'')}"></label></div>${isLandlord()?'':`<details class="own-deposit"${draft.deposit?' open':''}><summary>${t('dep.ownTitle')} ${optional()}</summary><p class="help">${t('dep.ownHelp')}</p><div class="grid"><label>${t('dep.amount')} <input name="dep-amount" type="number" min="0" step="1" inputmode="numeric" value="${draft.deposit?.amount||''}"></label><label>${t('dep.scheme')} <select name="dep-scheme"><option value="">${t('dep.unsure')}</option>${Object.keys(DEPOSIT_SCHEMES).map(k=>`<option ${draft.deposit?.scheme===k?'selected':''}>${k}</option>`).join('')}</select></label><label>${t('dep.ref')} <input name="dep-ref" maxlength="30" value="${esc(draft.deposit?.ref||'')}"></label></div></details>`}${orgOf(me())?`<label>${t('ag.ownerPick')} ${optional()}<select name="clientId"><option value="">${t('ag.ownerNone')}</option>${orgOwners(me().org).map(o=>`<option value="${o.id}" ${draft.clientId===o.id?'selected':''}>${esc(o.name)}</option>`).join('')}</select></label>`:''}<div class="choices setup-actions">${[['upload','upload.methodPlan'],['video','upload.methodVideo']].map(([id,label])=>`<button type="button" data-method="${id}" aria-pressed="${method===id}">${t(label)}</button>`).join('')}</div><div id="material"></div><div class="setup-actions"><button class="primary">${t(isLandlord()?'upload.nextMode':'upload.nextSpaces')}</button></div></form></section></div>`;
 }
 function showMaterial(){
  const box=document.querySelector('#material');if(!box)return;
@@ -1220,14 +1426,14 @@ function repair(){
  // The person who reported it signs off.
  const canSignOff=x.status===3&&(mine||(p.selfManaged&&manage));
  const waiting=x.status<3&&!manage?t('repair.tenantWaiting'):x.status===3&&!canSignOff?t(manage?'repair.waitingSignOff':'repair.waitingReporter'):'';
- const log=(x.updates||[]).slice().reverse().map(u=>`<li><div><strong>${esc(personName(u.by))}</strong> · ${u.status!=null?statusLabel(u.status):t('update.comment')} <small>${dateText(u.at)}</small></div>${u.visit?`<small>${t('step.visitOn',{date:dateText(u.visit)})}</small>`:''}${u.contractor?`<small> ${t('step.contractorIs',{name:esc(u.contractor)})}</small>`:''}${u.cost!=null&&manage?`<small> · ${t('step.costIs',{amount:money(u.cost)})}</small>`:''}${u.note?`<p>${userText(u.note)}</p>`:''}</li>`).join('');
+ const log=(x.updates||[]).slice().reverse().map(u=>`<li><div><strong>${u.byName?esc(u.byName)+' · '+t('job.contractorTag'):esc(personName(u.by))}</strong> · ${u.status!=null?statusLabel(u.status):t('update.comment')} <small>${dateText(u.at)}</small></div>${u.visit?`<small>${t('step.visitOn',{date:dateText(u.visit)})}</small>`:''}${u.contractor?`<small> ${t('step.contractorIs',{name:esc(u.contractor)})}</small>`:''}${u.cost!=null&&manage?`<small> · ${t('step.costIs',{amount:money(u.cost)})}</small>`:''}${u.note?`<p>${userText(u.note)}</p>`:''}</li>`).join('');
  const afterItem=x.after||x.completion;
  const signOff=canSignOff?`<section class="card"><h3>${t('repair.reviewTitle')}</h3>${x.completion?.notes?`<p><strong>${t('step.doneNote')}</strong></p><p class="notes">${esc(x.completion.notes)}</p>`:''}<p>${t('repair.reviewHint')}</p><form id="accept"><label>${t('repair.signOffNotes')} <textarea name="notes" required></textarea></label><label>${t('repair.afterPhoto')} ${optional()}${filePicker('name="photo" type="file" accept="image/png,image/jpeg,image/webp"')}</label><label>${t('common.photoTakenOn')} ${optional()}<input type="date" name="photoDate"></label><button class="primary">${t('repair.signOff')}</button></form>${actionBtn(t('repair.reopen'),'reopen',false,'style="margin-top:10px"')}</section>`:'';
- return `<section class="card"><div class="row spread"><h2>${roomName} · ${esc(x.location)}</h2>${pill(status)}</div><p>${priorityPill(x.priority)||esc(priorityLabel(x.priority))}${x.noticed?` · ${t('repair.firstNoticed',{date:dateText(x.noticed)})}`:''}${reporter?' · '+reporter:''}${shared?' · '+pill(t('kind.shared')):''}</p><p>${userText(x.description)}</p>${x.contractor||(manage&&x.cost)?`<p class="help">${[x.contractor&&t('step.contractorIs',{name:esc(x.contractor)}),manage&&x.cost&&t('step.costIs',{amount:money(x.cost)})].filter(Boolean).join(' · ')}</p>`:''}${isOverdue(x)?`<p>${pill(t('sla.overdue'),'urgent')} ${t(manage?'sla.landlordHelp':'sla.tenantHelp')}</p>`:''}${people.length>1?`<p><strong>${t('affected.count',{n:people.length})}</strong>: ${people.map(id=>esc(firstName(id))).join(', ')}</p>`:''}<progress class="repair-meter" aria-label="${t('repair.progressAria',{status})}" value="${x.status+1}" max="5"></progress><ol class="timeline steps-inline">${[0,1,2,3,4].map(i=>`<li ${i===x.status?'aria-current="step"':''}>${i<x.status?'✓ ':''}${statusLabel(i)}</li>`).join('')}</ol>${waiting?`<p class="help">${waiting}</p>`:''}${!manage&&shared&&x.status<4?affectBtn(x):''}${stepForm}</section>${signOff}<div class="grid evidence ${afterItem?'comparison':''}"><section class="card"><h3>${t('repair.atMoveIn',{room:roomName})}</h3>${evidence(x.baseline,t('repair.noBaseline'))}</section><section class="card"><h3>${t('repair.before')}</h3>${evidence(x,'')}</section>${afterItem?`<section class="card evidence"><h3>${t('repair.after')}</h3>${evidence(afterItem,'')}</section>`:''}</div><section class="card"><h3>${t('repair.updates')}</h3>${log?`<ol class="update-log">${log}</ol>`:''}<details><summary>${t('update.add')}</summary><form id="repair-comment"><label>${t('update.note')} <textarea name="note" required></textarea></label><button class="primary">${t('update.save')}</button></form></details></section>`;
+ return `<section class="card"><div class="row spread"><h2>${roomName} · ${esc(x.location)}</h2>${pill(status)}</div><p>${priorityPill(x.priority)||esc(priorityLabel(x.priority))}${x.noticed?` · ${t('repair.firstNoticed',{date:dateText(x.noticed)})}`:''}${reporter?' · '+reporter:''}${shared?' · '+pill(t('kind.shared')):''}</p><p>${userText(x.description)}</p>${x.contractor||(manage&&x.cost)?`<p class="help">${[x.contractor&&t('step.contractorIs',{name:esc(x.contractor)}),manage&&x.cost&&t('step.costIs',{amount:money(x.cost)})].filter(Boolean).join(' · ')}</p>`:''}${isOverdue(x)?`<p>${pill(t('sla.overdue'),'urgent')} ${t(manage?'sla.landlordHelp':'sla.tenantHelp')}</p>`:''}${people.length>1?`<p><strong>${t('affected.count',{n:people.length})}</strong>: ${people.map(id=>esc(firstName(id))).join(', ')}</p>`:''}<progress class="repair-meter" aria-label="${t('repair.progressAria',{status})}" value="${x.status+1}" max="5"></progress><ol class="timeline steps-inline">${[0,1,2,3,4].map(i=>`<li ${i===x.status?'aria-current="step"':''}>${i<x.status?'✓ ':''}${statusLabel(i)}</li>`).join('')}</ol>${waiting?`<p class="help">${waiting}</p>`:''}${!manage&&shared&&x.status<4?affectBtn(x):''}${!manage&&x.dispatch?.status==='accepted'?`<p class="job-line">🔧 ${t('job.tenantLine',{name:esc(x.dispatch.name),date:x.dispatch.visit?dateText(x.dispatch.visit):'—'})}</p>`:''}${stepForm}</section>${manage&&!p.selfManaged||manage&&x.dispatch?dispatchCard(p,x):''}${signOff}<div class="grid evidence ${afterItem?'comparison':''}"><section class="card"><h3>${t('repair.atMoveIn',{room:roomName})}</h3>${evidence(x.baseline,t('repair.noBaseline'))}</section><section class="card"><h3>${t('repair.before')}</h3>${evidence(x,'')}</section>${afterItem?`<section class="card evidence"><h3>${t('repair.after')}</h3>${evidence(afterItem,'')}</section>`:''}</div><section class="card"><h3>${t('repair.updates')}</h3>${log?`<ol class="update-log">${log}</ol>`:''}<details><summary>${t('update.add')}</summary><form id="repair-comment"><label>${t('update.note')} <textarea name="note" required></textarea></label><button class="primary">${t('update.save')}</button></form></details></section>`;
 }
 
 // ── Rendering ───────────────────────────────────────────────────────
-const PAGES={moveout:moveoutPage,past:pastPage,start,signin:signIn,'move-in':moveIn,link:linkRoom,setup,upload,mode:modePage,spaces:spacesPage,records,home,property:propertyPage,asset:assetDetail,report,repair,profile,check:checkPage,inbox,checkout:checkoutPage,pack:packPage,about:aboutPage};
+const PAGES={'agency-signup':agencySignUp,signup:signUp,job:jobPage,owner:ownerHome,moveout:moveoutPage,past:pastPage,start,signin:signIn,'move-in':moveIn,link:linkRoom,setup,upload,mode:modePage,spaces:spacesPage,records,home,property:propertyPage,asset:assetDetail,report,repair,profile,check:checkPage,inbox,checkout:checkoutPage,pack:packPage,about:aboutPage};
 // Languages shown in the menu as "coming soon" (not translated yet). Chosen for
 // the largest groups of international students in the UK. Once a block for one
 // of these codes is added to i18n.js it moves into the working list on its own.
@@ -1240,7 +1446,7 @@ function render(){
  applyTheme();
  document.querySelector('nav').setAttribute('aria-label',t('nav.label'));
  document.querySelector('nav .logo').setAttribute('aria-label',t('nav.home'));
- document.querySelector('nav [data-go="home"]').textContent=t(isLandlord()?'nav.properties':'nav.dashboard');
+ document.querySelector('nav [data-go="home"]').textContent=t(isLandlord()||isOwner()?'nav.properties':'nav.dashboard');
  document.querySelector('#account-nav').textContent=me()?t('nav.account'):t('nav.signIn');
  document.querySelector('#account-nav').dataset.go=me()?'profile':'signin';
  const inboxNav=document.querySelector('#inbox-nav'),unread=me()?unreadCount():0;
@@ -1313,7 +1519,7 @@ document.addEventListener('error',e=>{
 function keepRecordDraft(){readRecordForm()}
 function showIntro(){
  const a=me();if(!a||a.seenIntro)return;
- const role=a.role==='landlord'?'landlord':'tenant';
+ const role=a.role==='owner'?'owner':['landlord','agent'].includes(a.role)?'landlord':'tenant';
  showDialog(`<h2 id="info-title">${t('intro.title',{name:esc(a.name.split(' ')[0])})}</h2><p>${t('intro.'+role+'.lead')}</p><ol class="intro-steps">${[1,2,3].map(n=>`<li><strong>${t('intro.'+role+'.'+n+'.title')}</strong><br>${t('intro.'+role+'.'+n+'.body')}</li>`).join('')}</ol><p class="help">${t('intro.help')}</p>`);
  a.seenIntro=true;save();
 }
@@ -1324,11 +1530,14 @@ function login(id){
 function startAddProperty(){draft={};editId=null;foundProperty=null;material=null;materialPending=false;materialVersion++;postcodeQuery='';postcodeSearched=false;go('setup')}
 document.addEventListener('change',async e=>{
  const nm=e.target.name||'';
+ if(e.target.matches?.('[data-signup-role]')){for(const box of document.querySelectorAll('#signup .follow-up')){const on=box.dataset.show===e.target.value;box.hidden=!on;for(const el of box.querySelectorAll('[data-req]'))el.required=on}return}
  if(e.target.type==='radio'&&/^(agree|act)-/.test(nm)){for(const box of document.querySelectorAll(`.follow-up[data-for="${nm}"]`)){const on=e.target.value===box.dataset.show;box.hidden=!on;const req=box.querySelector('textarea[name^="comment-"],input[name^="amt-"]');if(req)req.required=on;if(on)box.querySelector('textarea,input')?.focus()}return}
  if(/^(cr|ir)-/.test(nm)){const x=e.target.closest('.inv-edit')?.querySelector('.inv-extra');if(x&&e.target.value!=='good')x.hidden=false;return}
  if(/^it-/.test(nm)){const q=e.target.closest('.inv-edit')?.querySelector('.qty');if(q)q.hidden=e.target.value!=='group';return}
  if(e.target.name==='space'&&e.target.closest('#report')){const box=document.querySelector('#dup-hint');if(box)box.innerHTML=dupHint(prop(propId),e.target.value);return}
  if(/^(type|shared)-/.test(nm)&&e.target.closest('#spaces')&&draft?.recognised){readSpacesForm();render();return}
+ if(e.target.dataset.staffRole){const a=db.accounts[e.target.dataset.staffRole],org=orgOf(me());if(!a||!org||a.org!==org.id||me().orgRole!=='admin')return;a.orgRole=e.target.value==='admin'?'admin':'manager';render();save(t('ag.roleChanged',{name:a.name}));return}
+ if(e.target.dataset.propAssign){const p=prop(e.target.dataset.propAssign);if(!p||!agencyAdminOf(p))return;p.ownerId=e.target.value;notify([p.ownerId],'note.assigned',{name:me().name},{prop:p.id});render();save(t('ag.reassigned',{name:personName(p.ownerId)}));return}
  if(e.target.id==='lang-switch'){
   if(!i18n[e.target.value])return;
   keepRecordDraft();readSpacesForm();
@@ -1381,6 +1590,19 @@ document.addEventListener('click',e=>{
  if(d.prepMark){const p=tenantHome(),tn=p&&tenancyOf(p);if(!tn)return;const pr=((tn.prep||={})[db.session]||={});(pr.done||={})[d.prepMark]=today();prepOpen=null;render();document.querySelector('#prep-'+d.prepMark)?.scrollIntoView({block:'center'});save(t('prep.saved'));return}
  if(d.prepEdit){const p=tenantHome(),tn=p&&tenancyOf(p);if(!tn)return;if(d.prepEdit==='review'||d.prepEdit==='clean'){delete tn.prep[db.session].done[d.prepEdit];save()}else prepOpen=d.prepEdit;render();document.querySelector('#prep-'+d.prepEdit)?.scrollIntoView({block:'center'});return}
  if(d.outcome){const p=prop(propId),x=p?.pastTenancies?.find(y=>y.id===pastSel),o=x?.deposit?.outcome;if(!o||o.confirm||o.by===db.session)return;o.confirm={by:db.session,at:today(),status:'ok'};notify([o.by],'note.outcomeConfirmed',{name:me().name},{prop:p.id,page:'past',past:x.id});render();save(t('msg.saved'));return}
+ if(d.fillPostcode){const f=document.querySelector('#postcode-search');f.querySelector('[name=postcode]').value=d.fillPostcode;f.querySelector('.suggest-list').hidden=true;f.requestSubmit();return}
+ if(d.fill||d.fillPass){const em=document.querySelector('#si-email'),pw=document.querySelector('#si-pass');if(d.fill){em.value=d.fill;const a=Object.values(db.accounts).find(x=>x.email===d.fill);if(a?.demo)pw.value=DEMO_PASSWORD}else pw.value=d.fillPass;
+  for(const l of document.querySelectorAll('.suggest-list'))l.hidden=true;(d.fill?pw:document.querySelector('#signin button.primary')).focus();return}
+ if(d.staffOk||d.staffNo){const a=db.accounts[d.staffOk||d.staffNo],org=orgOf(me());if(!a||!org||a.org!==org.id||me().orgRole!=='admin')return;
+  if(d.staffOk){a.orgRole='manager';notify([a.id],'note.staffApproved',{name:me().name,org:org.name})}else{delete a.org;delete a.orgRole;a.role='landlord';notify([a.id],'note.staffRejected',{name:me().name,org:org.name})}
+  render();save(t(d.staffOk?'ag.approved':'ag.rejected',{name:a.name}));return}
+ if(d.newTeamCode){const org=db.orgs?.[d.newTeamCode];if(!org||!orgAdmins(org.id).includes(db.session))return;org.teamCode=newCode(org.name,'TEAM');render();document.querySelector('#team')?.scrollIntoView({block:'center'});save(t('ag.codeChanged'));return}
+ if(d.copyLink){const url=jobUrl(d.copyLink);Promise.resolve(navigator.clipboard?.writeText(url)).then(()=>{notice.textContent=t('job.copied')},()=>{notice.textContent=url});return}
+ if(d.jobCancel){const p=prop(propId),x=p?.tickets.find(k=>k.id===d.jobCancel);if(!x?.dispatch||!isManager(p))return;x.dispatch.status='cancelled';render();save(t('job.cancelled'));return}
+ if(d.approve||d.refuse){const [pid,tid]=(d.approve||d.refuse).split('|'),p=prop(pid),x=p?.tickets.find(k=>k.id===tid);if(!x?.dispatch||p.clientId!==db.session||x.dispatch.status!=='approval')return;
+  const ok=!!d.approve,note=document.querySelector('#ap-note-'+tid)?.value.trim()||'';x.dispatch.approval={status:ok?'approved':'refused',by:db.session,at:today(),...(note?{note}:{})};x.dispatch.status=ok?'sent':'refused';
+  (x.updates||=[]).push({by:db.session,at:today(),note:t(ok?'own.logApproved':'own.logRefused',{name:x.dispatch.name,amount:money(x.dispatch.budget)})+(note?' · '+note:'')});
+  notify([p.ownerId],ok?'note.approved':'note.refused',{name:me().name,what:x.location},{prop:p.id,ticket:x.id});render();save(t(ok?'own.approved':'own.refused'));return}
  if(d.past){const [pid,id]=d.past.split('|');propId=pid;pastSel=id;go('past');return}
  if(d.renew){const p=prop(propId);if(!p||!landlordView(p))return;const c=p.compliance||={};
   if(d.renew==='deposit')c.deposit={protectedOn:today()};
@@ -1479,8 +1701,42 @@ document.addEventListener('submit',async e=>{
   switch(form.dataset.form||form.id){
    case 'signin':{
     const a=Object.values(db.accounts).find(x=>x.email===v('email').toLowerCase());
-    if(!a||data.get('password')!==DEMO_PASSWORD)throw new Error(t('err.signIn'));
+    if(!a||data.get('password')!==(a.password||DEMO_PASSWORD))throw new Error(t('err.signIn'));
     login(a.id);break;
+   }
+   case 'agency-signup':{
+    const email=v('email').toLowerCase(),pass=String(data.get('password')||'');
+    if(!v('orgName'))throw new Error(t('err.orgName'));
+    if(!v('name')||!email)throw new Error(t('err.signupFields'));
+    if(Object.values(db.accounts).some(a=>a.email===email))throw new Error(t('err.emailTaken'));
+    if(pass.length<4)throw new Error(t('err.passwordShort'));
+    if(!data.get('authorised'))throw new Error(t('err.authorised'));
+    const oid='org'+(db.seq++),id='u'+(db.seq++);
+    (db.orgs||={})[oid]={id:oid,name:v('orgName'),companyNo:v('companyNo'),redress:v('redress')?{scheme:v('redress'),no:v('redressNo')}:null,cmp:v('cmp'),verified:false,teamCode:newCode(v('orgName'),'TEAM')};
+    db.accounts[id]={id,name:v('name'),email,password:pass,role:'agent',org:oid,orgRole:'admin'};
+    login(id);save(t('agsu.done',{org:v('orgName')}));break;
+   }
+   case 'signup':{
+    const email=v('email').toLowerCase(),kind=v('role')||'tenant',pass=String(data.get('password')||'');
+    if(!v('name')||!email)throw new Error(t('err.signupFields'));
+    if(Object.values(db.accounts).some(a=>a.email===email))throw new Error(t('err.emailTaken'));
+    if(pass.length<4)throw new Error(t('err.passwordShort'));
+    const base={name:v('name'),email,password:pass};
+    if(kind==='owner'){
+     // An owner the agency already added: claim that record, so their properties come with it.
+     const rec=Object.values(db.accounts).find(a=>a.role==='owner'&&a.invited&&a.inviteCode===v('ownerCode').toUpperCase());
+     if(!rec)throw new Error(t('err.ownerCode'));
+     Object.assign(rec,base);delete rec.invited;
+     notify(orgAdmins(rec.org),'note.ownerJoined',{name:rec.name});login(rec.id);save(t('signup.done',{name:rec.name}));break;
+    }
+    const id='u'+(db.seq++);
+    if(kind==='staff'){
+     const org=Object.values(db.orgs||{}).find(o=>o.teamCode===v('teamCode').toUpperCase());
+     if(!org)throw new Error(t('err.teamCode'));
+     db.accounts[id]={id,...base,role:'agent',org:org.id,orgRole:'pending'};
+     notify(orgAdmins(org.id),'note.staffRequest',{name:v('name')});
+    }else db.accounts[id]={id,...base,role:kind==='landlord'?'landlord':'tenant'};
+    login(id);save(t('signup.done',{name:v('name')}));break;
    }
    case 'link-room':{
     const code=v('code').toUpperCase();
@@ -1503,7 +1759,7 @@ document.addEventListener('submit',async e=>{
     if(!v('name'))throw new Error(t('err.nameRequired'));
     {const plan=material||draft?.plan||null;if(plan!==draft?.plan){delete draft?.recognised;delete draft?.spaces}
     const da=Math.round(Number(v('dep-amount'))||0),deposit=da?{amount:da,...(DEPOSIT_SCHEMES[v('dep-scheme')]?{scheme:v('dep-scheme')}:{}),...(v('dep-ref')?{ref:v('dep-ref')}:{}),receivedOn:v('date')||undefined}:null;
-    draft={...draft,name:v('name'),address:v('address'),date:v('date'),plan,deposit};foundProperty=null;}
+    draft={...draft,name:v('name'),address:v('address'),date:v('date'),plan,deposit,clientId:v('clientId')||undefined};foundProperty=null;}
     go(isLandlord()?'mode':'spaces');break;
    case 'spaces':{
     readSpacesForm();
@@ -1512,7 +1768,7 @@ document.addEventListener('submit',async e=>{
     const landlord=isLandlord(),mode=landlord?draft.mode:'joint';
     if(mode==='rooms'&&!list.some(s=>!s.shared))throw new Error(t('err.needLettable'));
     const plan=draft.recognised?{...draft.plan,svg:draft.recognised}:draft.plan;
-    const p={id:'p'+(db.seq++),ownerId:db.session,selfManaged:!landlord,name:draft.name,address:draft.address,date:draft.date,mode,ready:false,plan,...(draft.deposit&&!landlord?{selfDeposit:draft.deposit}:{}),
+    const p={id:'p'+(db.seq++),ownerId:db.session,...(orgOf(me())?{agency:me().org}:{}),...(draft.clientId?{clientId:draft.clientId}:{}),selfManaged:!landlord,name:draft.name,address:draft.address,date:draft.date,mode,ready:false,plan,...(draft.deposit&&!landlord?{selfDeposit:draft.deposit}:{}),
      spaces:list.map((s,i)=>({id:s.zone||'s'+(i+1),type:s.type,name:s.name,shared:mode==='rooms'&&s.shared})),records:{},tickets:[],items:[],tenancies:[]};
     db.properties.push(p);editId=p.id;recordSpace=p.spaces[0].id;draft=null;
     go('records',{replace:true});save(t('msg.spacesSaved'));break;
@@ -1613,6 +1869,47 @@ document.addEventListener('submit',async e=>{
     if(prepCount(p,tn)===6)notify([p.ownerId],'note.prepDone',{name:me().name},{prop:p.id});
     render();document.querySelector('#prep-'+step)?.scrollIntoView({block:'center'});save(t('prep.saved'));break;
    }
+   case 'add-owner':{
+    const org=orgOf(me());if(!org||me().orgRole!=='admin')break;
+    if(!v('name'))throw new Error(t('err.ownerName'));
+    const id='ow'+(db.seq++);db.accounts[id]={id,name:v('name'),email:'',role:'owner',org:org.id,approvalLimit:Math.max(0,Math.round(Number(v('limit'))||0)),inviteCode:newCode(org.name,'OWN'),invited:true};
+    render();document.querySelector('#owners')?.scrollIntoView({block:'center'});save(t('ag.ownerAdded',{name:v('name')}));break;
+   }
+   case 'owner-off':{
+    const p=prop(propId),x=p?.tickets.find(k=>k.id===ticketSel),d=x?.dispatch;if(!d||d.status!=='approval'||!isManager(p))break;
+    const ok=v('ok')==='yes';d.approval={status:ok?'approved':'refused',by:db.session,at:today(),note:v('note'),offPlatform:true};d.status=ok?'sent':'refused';
+    (x.updates||=[]).push({by:db.session,at:today(),note:t(ok?'own.logApproved':'own.logRefused',{name:d.name,amount:money(d.budget)})+' · '+t('job.ownerOffTag')+' · '+v('note')});
+    render();save(t(ok?'own.approved':'own.refused'));break;
+   }
+   case 'dispatch':{
+    const p=prop(propId),x=p?.tickets.find(k=>k.id===ticketSel);if(!x||!isManager(p))break;
+    if(!v('name'))throw new Error(t('err.jobName'));
+    const budget=Math.max(0,Math.round(Number(v('budget'))||0)),limit=ownerLimit(p),needs=limit!=null&&budget>limit;
+    x.dispatch={token:newToken(),name:v('name'),contact:v('contact'),trade:TRADES.includes(v('trade'))?v('trade'):'general',budget:budget||null,access:v('access'),at:today(),by:db.session,status:needs?'approval':'sent'};
+    if(needs)notify([p.clientId],'note.approvalNeeded',{name:me().name,what:x.location,amount:budget},{prop:p.id,page:'owner'});
+    render();save(t(needs?'job.sentForApproval':'job.created'));break;
+   }
+   case 'job-accept':case 'job-done':case 'job-decline':{
+    const found=jobToken&&findJob(jobToken);if(!found||!jobActive(found.x.dispatch))break;
+    const {p,x}=found,d=x.dispatch,kind=form.id.slice(4),who=[p.ownerId,x.reporterId,...(x.affected||[])];
+    const u={by:'contractor',byName:d.name,at:today()};
+    if(kind==='accept'){
+     d.status='accepted';d.visit=v('visit');d.acceptedAt=today();x.contractor=d.name;
+     if(x.status<2){x.status=2;u.status=2}u.visit=d.visit;u.contractor=d.name;if(v('note'))u.note=v('note');
+     notify(who,'note.jobAccepted',{name:d.name,what:x.location,date:d.visit},{prop:p.id,ticket:x.id},true);
+    }
+    if(kind==='done'){
+     if(!v('note'))throw new Error(t('err.noteRequired'));
+     const shot=await photo();x.status=3;u.status=3;u.note=v('note');
+     if(v('cost')){x.cost=Math.max(0,Math.round(Number(v('cost'))||0));u.cost=x.cost}
+     x.completion={notes:v('note'),photo:shot,photoDate:shot?today():'',by:'contractor',byName:d.name};
+     d.status='done';d.doneAt=today();
+     notify(who,'note.jobDone',{name:d.name,what:x.location},{prop:p.id,ticket:x.id},true);
+    }
+    if(kind==='decline'){d.status='declined';d.declineNote=v('note');u.note=v('note');notify([p.ownerId],'note.jobDeclined',{name:d.name,what:x.location},{prop:p.id,ticket:x.id},true)}
+    (x.updates||=[]).push(u);
+    render();window.scrollTo(0,0);save(t('job.saved.'+kind));break;
+   }
    case 'protect':{
     const p=prop(propId),tn=findTenancy(p,form.dataset.target);if(!tn||!landlordView(p))break;
     // The amount can be saved on its own; protection is registered once there is a reference.
@@ -1711,6 +2008,6 @@ document.addEventListener('submit',async e=>{
   }
  }catch(err){notice.textContent=err.message}finally{delete form.dataset.busy}
 });
-render();
+if(!openJobFromHash())render();
 // Installable and usable offline when served over http(s).
 if('serviceWorker' in navigator&&location.protocol.startsWith('http'))navigator.serviceWorker.register('sw.js').catch(()=>{});

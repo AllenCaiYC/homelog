@@ -24,10 +24,16 @@ Use the **Demo** button (bottom right) to switch accounts or start the 9-step gu
 | Aisha Khan | Tenant | Just moved in; inventory check still open |
 | Tom Becker | Tenant | Joint tenancy (Riverside Flat 4B), lead tenant; his joint tenant Sofia isn't on HomeLog |
 | Lucas Silva | Tenant | Moving out in 5 days; move-out checklist (own photos, meters, keys), then the landlord's move-out check with a second round |
+| Chen Jing | Tenant | Harbour Court Flat 3, managed by an agency; signs off the contractor's repair |
 | Yuki Tanaka | Tenant | Moved out; deposit dispute over a carpet stain, decided by the deposit scheme |
 | Test User | Tenant | No home yet; join with `ALDER-B2` or `RIVER-4B` |
 | Priya Shah | Landlord | Two properties |
+| Olivia Grant | Agency admin | Harbour Lettings: portfolio dashboard, team, both Harbour Court flats |
+| Sam Patel | Property manager | Harbour Lettings: only the flats assigned to him; sends contractor job links |
+| Margaret Hughes | Owner | Owns Harbour Court Flat 3; approves a £320 plumbing quote over her £250 limit |
 | Alex Morgan | Landlord | New landlord with no properties |
+
+New accounts can be created from the sign-in page: tenant, landlord, staff joining an agency with its team code (e.g. `HARB-TEAM-7K2P`, confirmed by an admin), or an owner with an invite code (e.g. `HARB-OWN-JW`). Letting agencies register separately from the card at the bottom right of the home page (the person registering becomes the agency admin). Accounts live only in this browser.
 
 **Account → Reset all demo data** (or the Demo panel) restores the original demo.
 
