@@ -33,6 +33,13 @@ Use the **Demo** button (bottom right) to switch accounts or start the 9-step gu
 | Margaret Hughes | Owner | Owns Harbour Court Flat 3; approves a £320 plumbing quote over her £250 limit |
 | Alex Morgan | Landlord | New landlord with no properties |
 
+**Years of history.** The demo carries records from before the current tenants:
+
+- **Facilities** have repairs and services on one timeline. The boiler shows its 2018 install, a 2023 pressure-valve repair and yearly services. The bathroom extractor fan shows the mould story: treated in 2024, back in 2025, fan replaced, dry at the 2026 winter check. A **Repeat repairs** tag appears from two repairs on. Smoke and carbon monoxide alarms are facilities too.
+- **Older repairs** (2022–2025) have before and after photos, the contractor and the cost.
+- **Earlier tenancies** of the same rooms can be opened by the landlord (Priya): Ines (no deductions, full deposit back), Mateo (Blu Tack marks judged normal wear), Priyanka (worktop scorch, £85 agreed) and Leo and Hana at Riverside (sofa stain, £150 claimed, settled at £90). They can also sign in by email (e.g. `ines@homelog.demo`).
+- **Harbour Lettings** manages six properties for three owners (Maple House, Canal View, Victoria Terrace and Park Studios as well as Harbour Court), so the dashboard shows an overdue urgent repair, a vacant house and a gas check coming up.
+
 New accounts can be created from the sign-in page: tenant, landlord, staff joining an agency with its team code (e.g. `HARB-TEAM-7K2P`, confirmed by an admin), or an owner with an invite code (e.g. `HARB-OWN-JW`). Letting agencies register separately from the card at the bottom right of the home page (the person registering becomes the agency admin). Accounts live only in this browser.
 
 **Account → Reset all demo data** (or the Demo panel) restores the original demo.

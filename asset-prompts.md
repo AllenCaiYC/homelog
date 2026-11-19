@@ -189,3 +189,121 @@ Close-ups for three inventory lines rated "Fair" (Bedroom 5 wardrobe, living-roo
 |---|---|
 | `deposit-carpet-movein.jpg` | Close-up phone photo looking down at a light grey short-pile carpet in a UK student bedroom, next to the wooden leg of a single bed at the left edge of the frame and a white skirting board along the top edge. On the carpet, about 20 cm from the bed leg, one small faint light-brown stain about the size of a 2-pence coin, slightly blurred edges. The rest of the carpet is clean with normal light wear. Shot from standing height, angled about 45 degrees down. |
 | `deposit-carpet-moveout.jpg` | Same room, same camera position, same angle and same lighting as the attached photo. The stain in the same place next to the bed leg is now clearly larger, about the size of a palm, darker brown in the middle with an irregular, slightly faded edge, as if a drink was spilled on it and not fully cleaned. The rest of the carpet looks the same, with a little more everyday wear. |
+
+---
+
+## 11. Harbour Court（中介代管的公寓，5 张）
+
+用于中介版演示（Harbour Lettings 代管的 Harbour Court 3 号和 7 号）。两套公寓户型相同，共用一套照片即可。户型参考 `demo/plan-harbour.png`：左边一条入户走廊，上方是开放式厨房和客厅（中岛、三人沙发、一根圆柱），下方是卧室，旁边是窄长的淋浴间，顶墙有拱形仓库窗。
+
+**房屋设定（C. Harbour Court，每条 prompt 里都加上）：**
+
+```
+Flat: a 1-bedroom flat in a converted Victorian brick warehouse by the docks in East London. Exposed red-brick walls in places, tall arched warehouse windows with slim black frames, dark grey oak-effect floor, white walls, black metal light fittings, a round white structural column in the living area. Modern, clean, mid-range rental standard.
+```
+
+| 文件名 | 比例 | Prompt（接在「通用风格」和「房屋设定 C」之后） |
+|---|---|---|
+| `harbour-court-exterior` | 横版 16:9 | Street view of the converted red-brick warehouse building from the pavement on a bright overcast day. Rows of tall arched windows, a black metal entrance door with a small canopy, a few bicycles locked to railings. No readable signs, no house numbers, no people. Not a phone photo: a clean exterior shot. |
+| `harbour-kitchen-living` | 横版 4:3 | Wide shot of the open-plan kitchen and living room. Galley kitchen along the back wall under an arched window with white units, black worktop, sink, induction hob and an integrated fridge. A kitchen island with two stools in the middle. On the left a grey three-seater sofa facing a low TV unit, a rug, and the round white column standing between the sofa and the island. |
+| `harbour-bedroom` | 横版 4:3 | Double bedroom with a double bed against the back wall, two small bedside tables with lamps, a tall white fitted wardrobe along the left wall, grey carpet, one exposed-brick wall, a window with a roller blind. |
+| `harbour-shower-room` | 横版 4:3 | Narrow shower room: a walk-in shower with a glass screen and a white shower tray on the left, a wall-hung white basin with a mirror cabinet, a white toilet, light grey tiles, a heated towel rail. Clean and in good condition. |
+| `repair-harbour-shower-before` | 横版 4:3 | Close-up looking down at the base of the same walk-in shower: a puddle of water spreading out from under the edge of the white shower tray across the grey floor tiles, the silicone seal along the tray edge cracked and lifting in one place. Taken by a tenant to report a leak. |
+
+---
+
+## 12. 安全设施：烟雾和一氧化碳报警器（2 张）
+
+用于设施档案里的「安全」类别（12 Alder Road），会在户型图上加两个设施标记，并配上每年检查的提醒。房屋设定用 A（12 Alder Road）。比例：1:1，约 1024×1024，和其他物品特写一致。
+
+| 文件名 | Prompt（接在「通用风格」和「房屋设定 A」之后） |
+|---|---|
+| `item-alder-smoke` | Close-up looking up at a round white smoke alarm fixed to the white ceiling of a hallway in a Victorian house, with a small test button in the middle and a tiny green status light. Part of a ceiling rose and the top of the staircase visible at the edge of the frame. No text or brand names readable. |
+| `item-alder-co` | Close-up of a small white carbon monoxide alarm mounted on a kitchen wall at head height, next to a tall white boiler cupboard door, with a test button and a small green light. Oak-effect kitchen worktop just visible below. No text or brand names readable. |
+
+---
+
+## 13. 长期使用的积累（34 张）
+
+目的：让演示看起来像 HomeLog 已经用了几年，记录越积越多，而不是只有这一个租期。每一组对应一个能体现「积累」价值的功能。图片到位后，我会补上对应的历史数据：往年的租约、设施的多次维修和保养、反复出现的问题等。
+
+**同一角度的系列照片：** 先生成第一张，然后在同一个对话里上传它作参考，用这句编辑 prompt 生成后面几张：
+
+```
+Same room, same camera position, same angle and same lighting as the attached photo. Change only what is described below. Keep everything else identical.
+```
+
+所有照片都接在「通用风格」和对应的「房屋设定」（A = 12 Alder Road，B = Riverside，C = Harbour Court）之后。比例：房间 4:3，特写 1:1，外观 16:9。照片里不要出现可读的文字、证书、发票或品牌名（生图写字容易出错，而且不像真实照片）。
+
+### 13.1 同一个房间的多年入住照片（3 张）
+
+**体现的功能：** 一个房间跨越多届租客的历史。房东能看到这间房三年来怎么变化，新租客能看到之前的状况。数据上，卧室 2 会多一段 2024–25 年的过往租约。
+
+| 文件名 | 设定 | Prompt |
+|---|---|---|
+| `hist-alder-b2-2024` | A | 用 `demo/alder-bedroom-2` 作参考，同一角度。The same bedroom two years earlier, freshly redecorated: brand-new light grey carpet without any wear, crisp white paint, the same furniture looking newer. |
+| `hist-alder-b2-2025` | A | 用 `hist-alder-b2-2024` 作参考，同一角度。The same bedroom one year later, after a year of use: slight wear on the carpet near the desk chair, two small scuff marks on the wall beside the desk, a faint coin-sized stain on the carpet by the bed. |
+| `hist-riverside-living-2024` | B | 用 `demo/riverside-kitchen-living` 作参考，同一角度。The same open-plan kitchen and living room two years earlier, when the flat was first let: everything new and spotless, a different sofa (light beige), no rug. |
+
+### 13.2 设施的一生（10 张）
+
+**体现的功能：** 设施档案里按时间排列的维修和保养记录：安装、每年保养、故障、维修。房东能据此判断该修还是该换；维修方上门前能看到之前修过什么。
+
+| 文件名 | 设定 | 比例 | Prompt |
+|---|---|---|---|
+| `fac-boiler-install-2018` | A | 1:1 | 用 `demo/item-alder-boiler` 作参考。The same combi boiler on the day it was installed: brand-new and shiny, new copper pipework below with fresh joints, a protective film still on the front panel, a dust sheet on the worktop. |
+| `fac-boiler-service-2024` | A | 1:1 | The same combi boiler during its annual service: the white front cover removed and leaning against the wall, internal parts visible, an open engineer's tool case and a handheld flue gas analyser on the worktop below. No people. |
+| `fac-boiler-pressure-2023-before` | A | 1:1 | Close-up of the boiler's round pressure gauge with the needle at zero, and a drip of water from the copper pressure relief pipe below, with a small puddle on the cupboard shelf. |
+| `fac-boiler-pressure-2023-after` | A | 1:1 | 用上一张作参考，同一角度。The pressure gauge needle now sits at 1.5 bar, the relief pipe is dry and the shelf has been wiped clean; a new brass valve is visible on the pipe. |
+| `fac-fridge-seal-2025-before` | A | 1:1 | Close-up of the bottom corner of a white fridge-freezer door, the rubber door seal torn and hanging loose, with a little frost build-up inside. |
+| `fac-fridge-seal-2025-after` | A | 1:1 | 用上一张作参考，同一角度。A new, clean rubber door seal fitted neatly all around the door corner, no frost, door closing flush. |
+| `fac-shower-old-2021` | A | 1:1 | 用 `demo/item-alder-shower` 作参考，同一角度。An older electric shower unit in the same place before it was replaced: yellowed plastic casing with a hairline crack, heavy limescale on the shower head and hose. |
+| `fac-washer-2024` | B | 1:1 | A washing machine pulled out from its kitchen cabinet space with the back panel removed during a repair, the drum and belt visible, hoses disconnected and a towel on the floor. No people. |
+| `fac-window-seal-2023-before` | A | 1:1 | Close-up of a white uPVC double-glazed bay window pane with misty condensation trapped between the two panes of glass, a sign the seal has failed. |
+| `fac-window-seal-2023-after` | A | 1:1 | 用上一张作参考，同一角度。The same window with a new sealed glass unit: perfectly clear glass, new black gasket, view outside crisp. |
+
+### 13.3 反复出现的问题（5 张，同一角度系列）
+
+**体现的功能：** 同一个位置的问题年年出现，记录连起来才看得出根源。卫生间 1 的天花板每年冬天发霉，最后发现是排气扇坏了，换掉后问题消失。这个故事很适合答辩讲：「单看一次报修看不出原因，HomeLog 的历史记录让根源浮出水面。」也和英国对潮湿发霉越来越严格的维修要求相关。
+
+| 文件名 | 设定 | Prompt |
+|---|---|---|
+| `recur-bath1-mould-2024` | A | Bathroom ceiling corner above a bath in winter: patches of black mould spreading across the white ceiling paint near a small square extractor fan grille, the paint slightly bubbled. Shot looking up from the bath. |
+| `recur-bath1-mould-2024-after` | A | 用上一张作参考，同一角度。The ceiling has been treated and repainted bright white, no mould visible; the extractor fan grille is the same as before. |
+| `recur-bath1-mould-2025` | A | 用 `recur-bath1-mould-2024-after` 作参考，同一角度。One winter later: small new spots of black mould coming back around the edge of the extractor fan grille, dust and grime on the grille slats. |
+| `recur-bath1-fan-2025-after` | A | 用上一张作参考，同一角度。The old grille replaced by a new white humidity-sensing extractor fan with a small indicator light; ceiling cleaned and repainted, no mould. |
+| `recur-bath1-ceiling-2026` | A | 用上一张作参考，同一角度。A year later in winter: the ceiling is still clean and white with no mould, the new extractor fan in place. Slight condensation on the window just visible at the edge of the frame. |
+
+### 13.4 历届退租检查（6 张，3 对）
+
+**体现的功能：** 往年租约的押金结果，有扣款的也有不扣的，体现「证据对双方都公平」：正常损耗不扣钱，真实损坏有据可查。数据上会多三段过往租约，各有入住和退租照片对照。
+
+| 文件名 | 设定 | Prompt |
+|---|---|---|
+| `past-b4-2025-wall-movein` | A | Close-up of a clean white bedroom wall above a desk in a loft room with a sloping ceiling, smooth paint, no marks. |
+| `past-b4-2025-wall-moveout` | A | 用上一张作参考，同一角度。The same wall at move-out: a few faint greasy marks and two tiny paint lifts where Blu Tack held posters, otherwise fine. Looks like ordinary fair wear and tear. |
+| `past-kitchen-2024-worktop-movein` | A | Close-up of an oak-effect laminate kitchen worktop next to a hob, clean and undamaged. |
+| `past-kitchen-2024-worktop-moveout` | A | 用上一张作参考，同一角度。The same worktop at move-out with a dark round scorch mark about 10 cm across, where a hot pan was put down, the laminate surface slightly bubbled. Clearly damage, not wear. |
+| `past-riverside-sofa-2024-movein` | B | Close-up of the seat cushions of a light beige fabric two-seater sofa in a modern flat, clean and new. |
+| `past-riverside-sofa-2026-moveout` | B | 用上一张作参考，同一角度。The same sofa cushions two years later: general softening and slight fading, plus one large dark red wine stain on the middle cushion. |
+
+### 13.5 更多历史维修（6 张，3 对）
+
+**体现的功能：** 让报修列表和设施记录有足够多的历史条目：已验收的、不同维修方的、不同年份的。统计数字（平均维修时长、维修支出）也会更有说服力。
+
+| 文件名（before / after） | 设定 | 维修前 Prompt（维修后用第 5 节的通用编辑 prompt） |
+|---|---|---|
+| `hist-door-handle-before` / `-after` | A | Close-up of a white bedroom door with its lever handle hanging loose and drooping downwards, a screw missing from the backplate. |
+| `hist-radiator-valve-before` / `-after` | A | Close-up of a white radiator valve at floor level leaking: water droplets on the valve, a folded towel and a small bowl underneath, a damp patch on the carpet edge. |
+| `hist-front-lock-before` / `-after` | A | Close-up of a white front door lock from the inside: the thumb-turn knob broken off, the lock cylinder scratched, a key stuck in the outside half visible through the gap. |
+
+### 13.6 中介代管的更多房产（4 张外观）
+
+**体现的功能：** 中介的组合概览和团队工作量需要更多房产才显得真实。这几套只放外观照和少量数据（入住率、几条报修、合规状态），分给 Olivia 和 Sam，让「团队工作量」表有内容。
+
+| 文件名 | 比例 | Prompt（外观照，不用「通用风格」里的 phone photo 部分） |
+|---|---|---|
+| `prop-maple-house-exterior` | 16:9 | An Edwardian semi-detached red-brick house in a North London street, bay windows on two floors, a small front garden with a low wall and wheelie bins. Bright overcast day, no people, no readable house numbers. |
+| `prop-canal-view-exterior` | 16:9 | A modern six-storey apartment block beside a canal in East London, grey brick and large windows with small balconies, a towpath and a narrowboat in the foreground. No people, no readable signs. |
+| `prop-victoria-terrace-exterior` | 16:9 | A row of three-storey Victorian terraced houses in South London, one house in the middle painted pale blue with a black front door, steps up to the door, railings. No people, no readable numbers. |
+| `prop-studio-block-exterior` | 16:9 | A small modern block of student studios near a university campus, light brick and timber cladding, bike racks outside the entrance, young trees. No people, no readable signs. |

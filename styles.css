@@ -360,3 +360,50 @@ a.button:hover{background:var(--tint)}
 @media(max-width:640px){.agency-entry{margin-left:0;max-width:none;flex-direction:column;align-items:flex-start}}
 #agency-signup h2{font-size:18px;margin:18px 0 6px}
 .plan-card .button,.plan-card button{margin-top:6px}
+
+/* Agency teamwork */
+.admin-top{margin-top:0}
+.table-wrap{overflow-x:auto}
+.workload{width:100%;border-collapse:collapse;font-size:14px}
+.workload th,.workload td{padding:8px 6px;border-top:1px solid var(--border);text-align:center;vertical-align:middle}
+.workload thead th{border-top:0;color:var(--muted);font-weight:600;font-size:13px}
+.workload tbody th{text-align:left;font-weight:600}
+.workload .warn-num{color:#a4262c;font-weight:700}
+:root[data-theme=dark] .workload .warn-num{color:#ffb4b4}
+.attention-card .repair-list button{text-align:left}
+.filter-chip{display:flex;align-items:center;gap:8px;padding:8px 12px;border-radius:6px;background:var(--tint);font-size:14px}
+.internal{border-left:4px solid #8a8886}
+.internal h3{margin-top:0}
+.workload tbody th{white-space:nowrap}
+.workload td:last-child button{white-space:nowrap}
+.workload thead th{white-space:normal;min-width:56px}
+
+/* Facilities and floor-plan layers */
+.fac-history{padding-left:0;list-style:none;margin:0}
+.fac-history li{padding:10px 0;border-top:1px solid var(--border)}
+.fac-history li:first-child{border-top:0}
+.fac-history p{margin:6px 0}
+.guide ol{padding-left:22px}
+.guide li{margin:6px 0}
+.link-fac{display:flex;align-items:center;gap:8px;font-size:14px;margin:6px 0}
+.link-fac select{width:auto;margin:0;padding:4px 8px}
+.issue-svg{cursor:pointer}
+.issue-svg circle{fill:#f7a300;stroke:#fff}
+.issue-svg.flagged circle{fill:#d83b01}
+.issue-svg text{fill:#fff;font-weight:800;stroke:none}
+.issue-count{cursor:pointer}
+.issue-count rect{fill:#f7a300;stroke:#fff;stroke-width:2}
+.issue-count text{fill:#fff;font-weight:700;stroke:none}
+.floorplan.hide-items .pin-svg,.floorplan.hide-issues .issue-svg,.floorplan.hide-issues .issue-count,.floorplan.hide-repairs .repair-dot{display:none}
+.layer-toggles{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin:-4px 0 12px}
+.layer-toggles button{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;font-size:13px;border-radius:16px}
+.layer-toggles button[aria-pressed=false]{opacity:.5;text-decoration:line-through}
+.layer-toggles i{display:inline-block;width:12px;height:12px;border-radius:50%}
+.lay-items i{background:var(--accent)}
+.lay-issues i{background:#f7a300}
+.lay-repairs i{background:#d13438}
+
+/* Facility timeline: services and installs sit between numbered repairs. */
+.fac-history .fac-service{border-left:3px solid var(--line);padding-left:10px;color:var(--muted)}
+.fac-history .fac-service strong{color:var(--text)}
+.fac-svc-photo{display:block;max-width:220px;width:100%;border-radius:10px;margin-top:6px}
