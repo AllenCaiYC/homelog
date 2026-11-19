@@ -16,7 +16,7 @@ const addDays=(date,n)=>new Date(Date.parse(date+'T00:00:00Z')+n*864e5).toISOStr
 // ── Demo data ────────────────────────────────────────────────────────
 // Everything lives in one browser "database" so several demo accounts can
 // work on the same properties (landlord, tenants in a shared house, …).
-const STORE='homelog-v2',LEGACY='zhujidemo-v1',DEMO_PASSWORD='test',SEED_REV=11;
+const STORE='homelog-v2',LEGACY='zhujidemo-v1',DEMO_PASSWORD='test',SEED_REV=12;
 const SPACE_TYPES=['bedroom','kitchen','living','bathroom','other'];
 // Room inventory. Each room has a few fixed condition checks (cleanliness,
 // walls, floor…) and a list of items. Key items, anything that would cost
@@ -109,7 +109,7 @@ function seedDb(){
  };
  const riverside={id:'riverside',ownerId:'ll-main',name:'Riverside Flat 4B',address:'Riverside Walk, London SE16 · Demo',mode:'joint',ready:true,plan:{svg:'riverside'},cover:'riverside-flat-exterior',
   spaces:[{id:'rkl',type:'kitchen',nameKey:'space.kitchenLiving',shared:false,photo:'riverside-kitchen-living'},sp('rb1','bedroom',false,'riverside-bedroom-1',1),sp('rb2','bedroom',false,'riverside-bedroom-2',2),sp('rbath','bathroom',false,'riverside-bathroom')],
-  tenancies:[{id:'river-joint',spaceIds:['rkl','rb1','rb2','rbath'],tenantIds:['t-tom','t-sofia'],code:'RIVER-4B',start:'2026-09-15',end:'2027-09-14',inventory:'confirmed'}],
+  tenancies:[{id:'river-joint',spaceIds:['rkl','rb1','rb2','rbath'],tenantIds:['t-tom'],outside:[{id:'o-sofia',name:'Sofia Rossi'}],lead:'t-tom',code:'RIVER-4B',start:'2026-09-15',end:'2027-09-14',inventory:'confirmed'}],
   records:riverRecords,
   items:[
    {id:'river-washer',spaceId:'rkl',floor:'f',x:185,y:88,photo:'item-riverside-washer'},
@@ -170,6 +170,7 @@ function seedDb(){
     {id:'carpet',space:'b2',ref:'cond:floor',what:'Carpet stain by the bed',claim:120,response:'dispute',offer:30,final:45,
      landlordNote:'The stain by the bed is much larger and darker than at move-in. Professional cleaning and a patch repair were quoted at £120.',
      tenantNote:'The stain was already there when I moved in and is in the inventory I confirmed. It did get bigger, so I offered £30 towards cleaning. The carpet was not new.',
+     comments:[{by:'ll-main',at:'2026-09-04',text:'The stain is much bigger now. Do you have anything showing how big it was when you moved in?'},{by:'t-yuki',at:'2026-09-05',text:'Yes. The Floor line of the move-in inventory has a photo from 28 August 2025, and I confirmed it on 3 September.'}],
      outcomeReason:'The move-in inventory, confirmed by the tenant, records a coin-sized stain by the bed, so the landlord cannot charge as if the carpet was unmarked. The move-out photo shows the stain grew noticeably, which is more than fair wear and tear. The carpet was about six years old. £45 is awarded towards professional cleaning; the rest of the claim is returned to the tenant.'}],
    // Done outside HomeLog: the tenant exported the evidence pack and raised
    // the dispute with the scheme; the outcome was noted afterwards (optional).
@@ -182,6 +183,7 @@ function seedDb(){
    outside:[['2025-09-10','protected',{},'ll-main'],['2026-09-12','returned',{amount:720},'t-yuki'],['2026-09-15','raised',{},'t-yuki'],['2026-10-28','decided',{award:45,back:75},'t-yuki'],['2026-10-30','returned',{amount:75},'t-yuki']]}}];
  // Lucas moves out soon, so the move-out check can be demonstrated.
  const b4=alder.tenancies[3];b4.end=addDays(today(),5);
+ b4.prep={'t-lucas':{done:{review:addDays(today(),-3),clean:addDays(today(),-1)}}};
  const note=(to,at,key,vars,link,read=false)=>({to,at:at+'T09:00:00Z',key,vars,link,read});
  const notifications=[
   note('ll-main','2026-11-14','note.reported',{name:'Aisha Khan',what:'Silicone along the bath'},{prop:'alder',ticket:'k2'}),
@@ -316,7 +318,7 @@ const personName=id=>id===db.session?t('people.you'):(db.accounts[id]?.name||t('
 // ── Navigation state ────────────────────────────────────────────────
 let page='start',trail=[];
 let propId=null,spaceSel=null,floorSel=null,itemSel=null,ticketSel=null,editId=null,recordSpace=null;
-let pastSel=null,packTn=null,onDialogClose=null,signinRole='tenant',repairFilter='All',reportCtx={},draft=null,checkOpen=null,checkoutTn=null,demoOpen=false,tourStep=-1;
+let pastSel=null,prepOpen=null,justSaved=null,packTn=null,onDialogClose=null,signinRole='tenant',repairFilter='All',reportCtx={},draft=null,checkOpen=null,checkoutTn=null,demoOpen=false,tourStep=-1;
 let method='upload',material=null,materialPending=false,materialVersion=0,importText='',drafts={};
 let postcodeQuery='',postcodeSearched=false,foundProperty=null;
 const sampleProperty={name:'Harbour Court · Flat 3',address:'Harbour Street, London E1 · Demo'};
@@ -330,7 +332,7 @@ function save(message=''){
  try{localStorage.setItem(STORE,JSON.stringify(db));notice.textContent=message}
  catch{notice.textContent=t('msg.storageFull')}
 }
-const SIGNED_IN=['past','move-in','link','setup','upload','mode','spaces','records','property','report','repair','asset','check','inbox','checkout','pack'];
+const SIGNED_IN=['moveout','past','move-in','link','setup','upload','mode','spaces','records','property','report','repair','asset','check','inbox','checkout','pack'];
 function go(next,{replace=false}={}){
  if(!me()&&SIGNED_IN.includes(next))next='signin';
  if(isLandlord()&&['move-in','link'].includes(next))next='home';
@@ -429,7 +431,7 @@ function spaceCaption(p,s,st){
  if(st.kind==='locked')return t('plan.private');
  if(st.kind==='shared')return t('plan.shared');
  if(st.kind==='vacant')return t('plan.vacant');
- if(st.kind==='let')return st.tn.tenantIds.map(firstName).join(', ');
+ if(st.kind==='let')return [...st.tn.tenantIds.map(firstName),...(st.tn.outside||[]).map(o=>esc(o.name.split(' ')[0]))].join(', ');
  return p.mode==='rooms'&&!s.shared?t('plan.yours'):'';
 }
 function floorPlan(p){
@@ -496,10 +498,10 @@ function occupancy(p){
 function attention(p){
  const open=p.tickets.filter(x=>x.status<4),urgent=open.filter(x=>x.priority==='Urgent').length;
  const pending=p.tenancies.filter(x=>x.inventory==='pending'&&x.due&&today()<=x.due).length,vacant=p.tenancies.filter(x=>!x.tenantIds.length).length;
- const ending=p.tenancies.filter(endingSoon).length,compliance=complianceAlerts(p),overdue=p.tickets.filter(isOverdue).length;
- const score=urgent*100+overdue*60+compliance*30+ending*20+open.length*10+pending*5+vacant;
- const line=urgent?t('ll.attnUrgent',{n:urgent}):overdue?t('ll.attnOverdue',{n:overdue}):compliance?t('ll.attnCompliance',{n:compliance}):ending?t('ll.attnEnding',{n:ending}):pending?t('ll.attnInventory',{n:pending}):open.length?t('ll.attnOpen',{n:open.length}):vacant?t('ll.attnVacant',{n:vacant}):t('ll.attnNone');
- return {open:open.length,urgent,score,line,warn:urgent>0};
+ const ending=p.tenancies.filter(endingSoon).length,compliance=complianceAlerts(p),overdue=p.tickets.filter(isOverdue).length,answer=p.tenancies.filter(needsAnswer).length;
+ const score=urgent*100+answer*80+overdue*60+compliance*30+ending*20+open.length*10+pending*5+vacant;
+ const line=urgent?t('ll.attnUrgent',{n:urgent}):answer?t('ll.attnAnswer',{n:answer}):overdue?t('ll.attnOverdue',{n:overdue}):compliance?t('ll.attnCompliance',{n:compliance}):ending?t('ll.attnEnding',{n:ending}):pending?t('ll.attnInventory',{n:pending}):open.length?t('ll.attnOpen',{n:open.length}):vacant?t('ll.attnVacant',{n:vacant}):t('ll.attnNone');
+ return {open:open.length,urgent,score,line,warn:urgent>0||answer>0};
 }
 function portfolio(){
  const a=me(),mine=myProps(),ready=mine.filter(p=>p.ready),unfinished=mine.filter(p=>!p.ready);
@@ -549,7 +551,7 @@ function tenanciesCard(p){
   const base=x.inventory==='pending'?(tnLocked(x)?t('inventory.autoLocked'):t('inventory.pendingDue',{date:dateText(x.due)})):t('inventory.'+(x.inventory||'none'));
   return base+(issues?' · '+t('inventory.flagged',{n:issues}):'');
  };
- return `<section class="card"><h2>${t('tenancy.title')} ${term(p.mode==='rooms'?'hmo':'joint')}</h2><p class="help">${t(p.mode==='rooms'?'tenancy.helpRooms':'tenancy.helpJoint')}</p><ul class="tenancy-list">${p.tenancies.map(x=>`<li><div><strong>${x.spaceIds.length===p.spaces.length?t('tenancy.wholeHome'):x.spaceIds.map(id=>esc(spaceName(spaceOf(p,id)))).join(', ')}</strong> · ${x.tenantIds.length?x.tenantIds.map(id=>esc(personName(id))).join(', '):`<em>${t('plan.vacant')}</em>`}<br><small>${x.start?t('tenancy.dates',{start:dateText(x.start),end:x.end?dateText(x.end):t('tenancy.open')})+' · ':''}${x.tenantIds.length?inv(x)+ending(x):t('tenancy.shareCode')}</small>${x.tenantIds.length?depositLine(x):''}</div><div class="code-box"><code>${esc(x.code)}</code><button type="button" data-copy="${esc(x.code)}" aria-label="${t('tenancy.copyLabel',{code:esc(x.code)})}">${t('tenancy.copy')}</button></div>${x.tenantIds.length?`<div class="tenancy-actions row"><button type="button" data-pack="${x.id}">${t('pack.button')}</button>${x.checkout?`<button type="button" data-checkout="${x.id}">${t('checkout.view')} · ${t('checkout.status.'+x.checkout.status)}</button>`:`<button type="button" data-start-checkout="${x.id}">${t('checkout.start')}</button>`}</div>`:''}</li>`).join('')}</ul>${pastList((p.pastTenancies||[]).map(x=>({p,x})),false)}</section>`;
+ return `<section class="card"><h2>${t('tenancy.title')} ${term(p.mode==='rooms'?'hmo':'joint')}</h2><p class="help">${t(p.mode==='rooms'?'tenancy.helpRooms':'tenancy.helpJoint')}</p><ul class="tenancy-list">${p.tenancies.map(x=>`<li><div><strong>${x.spaceIds.length===p.spaces.length?t('tenancy.wholeHome'):x.spaceIds.map(id=>esc(spaceName(spaceOf(p,id)))).join(', ')}</strong> · ${x.tenantIds.length?allTenants(x).map(id=>nameTag(x,id)).join(', '):`<em>${t('plan.vacant')}</em>`}<br><small>${x.start?t('tenancy.dates',{start:dateText(x.start),end:x.end?dateText(x.end):t('tenancy.open')})+' · ':''}${x.tenantIds.length?inv(x)+ending(x):t('tenancy.shareCode')}</small>${x.tenantIds.length?depositLine(x):''}${x.prep?`<small class="prep-line">${t('prep.landlordLine',{n:Math.max(...Object.keys(x.prep).map(w=>prepCount(p,x,w))),total:6})}</small>`:''}</div><div class="code-box"><code>${esc(x.code)}</code><button type="button" data-copy="${esc(x.code)}" aria-label="${t('tenancy.copyLabel',{code:esc(x.code)})}">${t('tenancy.copy')}</button></div>${x.tenantIds.length?`<div class="tenancy-actions row"><button type="button" data-pack="${x.id}">${t('pack.button')}</button>${x.checkout?`<button type="button" data-checkout="${x.id}">${t('checkout.view')} · ${t('checkout.status.'+x.checkout.status)}</button>`:`<button type="button" data-start-checkout="${x.id}">${t('checkout.start')}</button>`}</div>`:''}</li>`).join('')}</ul>${pastList((p.pastTenancies||[]).map(x=>({p,x})),false)}</section>`;
 }
 const ticketRow=p=>x=>`<li><button type="button" data-ticket="${x.id}"><strong>${esc(x.location)}</strong>${priorityPill(x.priority)}${isOverdue(x)?' '+pill(t('sla.overdue'),'urgent'):''}<br><small>${statusLabel(x.status)} · ${esc(spaceName(spaceOf(p,x.spaceId)))}${x.affected?.length?' · '+t('affected.short',{n:x.affected.length+1}):''}${x.reporterId&&x.reporterId!==db.session?' · '+t('repair.by',{name:esc(personName(x.reporterId))}):''}</small></button></li>`;
 function repairQueue(p){
@@ -568,7 +570,7 @@ function propertyView(p){
  const eyebrow=lv?t(p.mode==='rooms'?'mode.rooms':'mode.joint'):p.selfManaged?t('dash.personal'):t(p.mode==='rooms'?'dash.roomTenant':'dash.jointTenant');
  const meta=[p.address&&esc(p.address),p.selfManaged&&p.date&&t('home.moveInDate',{date:dateText(p.date)}),!lv&&!p.selfManaged&&tn?.start&&t('tenancy.dates',{start:dateText(tn.start),end:tn.end?dateText(tn.end):t('tenancy.open')}),lv&&occupancy(p)].filter(Boolean).join(' · ');
  const uploaded=p.plan?.src&&!p.plan.sample?(p.plan.type.startsWith('image/')?`<details class="uploaded-plan"><summary>${t('home.viewUpload')}</summary><div class="property-plan">${media(p.plan)}</div></details>`:`<details class="uploaded-plan"><summary>${t('home.viewUpload')}</summary>${media(p.plan)}</details>`):'';
- return `<div class="row spread dash-head"><div><div class="eyebrow">${t('dash.eyebrow')} · ${eyebrow}</div><h1>${esc(p.name)}</h1><p>${meta}</p></div><div class="row">${lv?'':actionBtn(t('home.report'),'report',true)}${!lv&&tn?`<button type="button" data-pack="${tn.id}">${t('pack.button')}</button>`:''}</div></div>${inventoryBanner(p)}<div class="grid"><div><section class="card"><h2>${t('dash.floorPlan')}</h2>${floorPlan(p)}${uploaded}${spacePanel(p)}</section>${itemsCard(p)}</div><div>${lv?tenanciesCard(p):''}${lv?complianceCard(p):''}${lv?'':depositCard(p)}${spacesCard(p)}${repairQueue(p)}</div></div>`;
+ return `<div class="row spread dash-head"><div><div class="eyebrow">${t('dash.eyebrow')} · ${eyebrow}</div><h1>${esc(p.name)}</h1><p>${meta}</p></div><div class="row">${lv?'':actionBtn(t('home.report'),'report',true)}${!lv&&tn?`<button type="button" data-pack="${tn.id}">${t('pack.button')}</button>`:''}</div></div>${landlordView(p)?landlordBanner(p):inventoryBanner(p)}<div class="grid"><div><section class="card"><h2>${t('dash.floorPlan')}</h2>${floorPlan(p)}${uploaded}${spacePanel(p)}</section>${lv?itemsCard(p)+spacesCard(p):itemsCard(p)+depositCard(p)}</div><div>${lv?tenanciesCard(p)+repairQueue(p)+complianceCard(p):spacesCard(p)+repairQueue(p)}</div></div>`;
 }
 
 // ── Room inventory ──────────────────────────────────────────────────
@@ -605,9 +607,11 @@ function invView(p,s,{open=false,who=null}={}){
 function inventoryBanner(p){
  const own=tenancyOf(p),co=own?.checkout;
  if(co&&co.status!=='draft'&&!p.selfManaged){
+  if(co.status==='revised'&&!co.responses2?.[db.session]&&Object.values(co.revised||{}).some(r=>r.amount>0))return `<section class="card banner"><div><h2>${t('checkout.banner2Title')}</h2><p>${t('checkout.banner2Body',{amount:money(checkoutTotals(own).disputed)})}</p></div><button type="button" class="primary" data-checkout="${own.id}">${t('checkout.review')}</button></section>`;
   if(co.status==='sent'&&!co.responses?.[db.session])return `<section class="card banner"><div><h2>${t('checkout.bannerTitle')}</h2><p>${t('checkout.bannerBody',{amount:money(checkoutTotals(own).proposed)})}</p></div><button type="button" class="primary" data-checkout="${own.id}">${t('checkout.review')}</button></section>`;
   return `<section class="card banner"><p>${t('checkout.bannerDone')}</p><button type="button" data-checkout="${own.id}">${t('checkout.viewSummary')}</button></section>`;
  }
+ if(movingOut(p,own)){const n=prepCount(p,own);return `<section class="card banner"><div><h2>${t('prep.bannerTitle',{n:daysLeft(own.end)})}</h2><p>${t('prep.bannerBody')}</p><small>${t('prep.progress',{n,total:6})}</small></div><button type="button" class="primary" data-go="moveout">${t(n?'prep.continue':'prep.start')}</button></section>`}
  const due=myCheckDue(p);
  if(due){
   const done=Object.values(due.checks?.[db.session]||{}).filter(c=>c.at).length,total=checkSpaceIds(p,due).length;
@@ -616,6 +620,17 @@ function inventoryBanner(p){
  const tn=tenancyOf(p);
  if(tn&&!p.selfManaged&&tn.inventory==='pending'&&tn.submitted?.[db.session]&&!tnLocked(tn))return `<section class="card banner"><p>${t('check.waitingHousemates')}</p></section>`;
  return '';
+}
+// Landlord: move-out work waiting on them, shown as big banners at the top.
+const needsAnswer=tn=>tn.checkout?.status==='responded'&&round1Disputed(tn.checkout).size>0;
+function landlordBanner(p){
+ const out=[];
+ for(const tn of p.tenancies){
+  const names=allTenants(tn).map(id=>esc(tenantName(tn,id))).join(', '),where=tenancyLabel(p,tn);
+  if(needsAnswer(tn))out.push(`<section class="card banner"><div><h2>${t('llb.answerTitle',{name:names})}</h2><p>${t('llb.answerBody',{where,amount:money(checkoutTotals(tn).disputed)})}</p></div><button type="button" class="primary" data-checkout="${tn.id}">${t('llb.answer')}</button></section>`);
+  else if(!tn.checkout&&tn.prep&&Object.keys(tn.prep).some(w=>prepCount(p,tn,w)===6))out.push(`<section class="card banner"><div><h2>${t('llb.prepTitle',{name:names})}</h2><p>${t('llb.prepBody',{where})}</p></div><button type="button" class="primary" data-start-checkout="${tn.id}">${t('checkout.start')}</button></section>`);
+ }
+ return out.join('');
 }
 const addendumForm=id=>`<details class="addendum-form"><summary>${t('addendum.add')}</summary><form id="addendum"><input type="hidden" name="space" value="${id}"><label>${t('addendum.note')} <textarea name="note" required></textarea></label><button class="primary">${t('addendum.save')}</button></form></details>`;
 const lockedNote=id=>`<p class="help lock-note">🔒 ${t('lock.spaceLocked')}</p>${addendumForm(id)}`;
@@ -681,48 +696,108 @@ function openNote(link={}){
 const findTenancy=(p,id)=>p?.tenancies.find(x=>x.id===id);
 const endingSoon=x=>x.tenantIds.length&&x.end&&x.end>=today()&&daysLeft(x.end)<=14&&(!x.checkout||x.checkout.status==='draft');
 const tenancyLabel=(p,tn)=>tn.spaceIds.length===p.spaces.length?t('tenancy.wholeHome'):tn.spaceIds.map(id=>esc(spaceName(spaceOf(p,id)))).join(', ');
+// Everyone on a tenancy, including joint tenants who haven't joined HomeLog.
+const allTenants=tn=>[...tn.tenantIds,...(tn.outside||[]).map(o=>o.id)];
+const tenantName=(tn,id)=>tn.outside?.find(o=>o.id===id)?.name||personName(id);
+const isOutside=(tn,id)=>!!tn.outside?.some(o=>o.id===id);
+const nameTag=(tn,id)=>esc(tenantName(tn,id))+(tn.lead===id?` <small class="muted">(${t('joint.lead')})</small>`:'')+(isOutside(tn,id)?` <small class="muted">(${t('joint.notJoined')})</small>`:'');
+// A reply counts for everyone once the lead tenant (if named) or every tenant
+// has answered, in HomeLog or off it as recorded by the landlord.
+const round1Done=(tn,co)=>!!(tn.lead&&co.responses?.[tn.lead])||allTenants(tn).every(id=>co.responses?.[id]||co.offline?.[id]);
+function round1Disputed(co){
+ const ids=new Set(Object.values(co.responses||{}).flatMap(r=>Object.entries(r).filter(([,x])=>!x.agree).map(([id])=>id)));
+ if(Object.values(co.offline||{}).some(o=>!o.agree))for(const [id,i] of Object.entries(co.items||{}))if(i.outcome==='damage')ids.add(id);
+ return ids;
+}
+const maxOffer=(co,id)=>Math.max(-1,...Object.values(co.responses||{}).map(r=>r[id]&&!r[id].agree&&r[id].offer!=null?r[id].offer:-1));
 function checkoutTotals(tn){
  const co=tn.checkout||{},damage=Object.entries(co.items||{}).filter(([,i])=>i.outcome==='damage');
- const disputedIds=new Set(Object.values(co.responses||{}).flatMap(r=>Object.entries(r).filter(([,x])=>!x.agree).map(([id])=>id)));
- const sum=list=>list.reduce((a,[,i])=>a+(i.amount||0),0);
+ const amt=([id,i])=>co.revised?.[id]?co.revised[id].amount:(i.amount||0);
+ const r2=Object.keys(co.responses2||{}).length?new Set(Object.values(co.responses2).flatMap(r=>Object.entries(r).filter(([,x])=>!x.agree).map(([id])=>id))):null;
+ const disputedIds=r2||new Set([...round1Disputed(co)].filter(id=>!(co.revised?.[id]&&co.revised[id].amount===0)));
+ const sum=list=>list.reduce((a,e)=>a+amt(e),0);
  const proposed=sum(damage),disputed=sum(damage.filter(([id])=>disputedIds.has(id)));
- return {proposed,disputed,agreed:proposed-disputed};
+ return {proposed,disputed,agreed:proposed-disputed,original:damage.reduce((a,[,i])=>a+(i.amount||0),0)};
 }
 const outcomePill=i=>pill(t('checkout.outcome.'+i.outcome),i.outcome==='damage'?'urgent':'');
 function checkoutCard(p,tn,id,mode){
- const s=spaceOf(p,id),co=tn.checkout,item=co.items?.[id];
+ const s=spaceOf(p,id),co=tn.checkout,item=co.items?.[id],rec=p.records[id];
  const flagged=checksFor(p,id).filter(c=>tn.tenantIds.includes(c.who)&&c.status==='issue'&&c.note);
- const lines=invLines(s.type,p.records[id]),flags=flagsFor(p,id,tn.tenantIds),changes=item?.changes||{};
- const atMoveIn=ref=>flags.some(f=>f.ref===ref)?' '+pill(t('checkout.flaggedAtMoveIn'),'flag-pill'):'';
- const moveIn=`<div><h3>${t('checkout.moveIn')}</h3>${evidence(p.records[id],t('home.noRecord'))}${invView(p,s,{who:tn.tenantIds})}${flagged.map(c=>`<p class="notes issue-note"><small>${t('check.resultsTitle')} · ${esc(personName(c.who))}</small><br>${esc(c.note)}</p>`).join('')}</div>`;
- const compareEdit=lines.length?`<details class="line-compare"${Object.keys(changes).length?' open':''}><summary>${t('checkout.compareLines')}</summary><p class="help">${t('checkout.compareHelp')}</p><ul class="inv-list">${lines.map(([ref,label,e])=>`<li class="inv-row${changes[ref]?' noted':''}"><div class="inv-main"><span class="inv-name">${label}${atMoveIn(ref)}</span><small>${t('checkout.moveIn')}: ${t('rating.'+e.r)}</small>${ratingSelect('line-'+ref,changes[ref]||e.r)}</div></li>`).join('')}</ul></details>`:'';
- const changeList=Object.entries(changes).map(([ref,r])=>{const l=lines.find(x=>x[0]===ref);return l?`<li class="inv-row noted"><div class="inv-main"><span class="inv-name">${l[1]}${atMoveIn(ref)}</span><span class="change">${ratingPill(l[2].r)} → ${ratingPill(r)}</span></div></li>`:''}).join('');
- const changesView=changeList?`<h4>${t('checkout.changedTitle')}</h4><ul class="inv-list">${changeList}</ul>`:'';
- const moveOut=mode==='edit'
-  ?`<form data-form="checkout-item" data-target="${id}"><h3>${t('checkout.moveOut')}</h3><label>${t('checkout.outcome')} <select name="outcome">${['same','wear','damage'].map(o=>`<option value="${o}" ${(item?.outcome||'same')===o?'selected':''}>${t('checkout.outcome.'+o)}</option>`).join('')}</select></label>${compareEdit}<label>${t('checkout.notes')} <textarea name="notes" required>${esc(item?.notes||'')}</textarea></label><label>${t('checkout.amount')} <small>${t('checkout.amountHelp')}</small><input type="number" name="amount" min="0" step="1" inputmode="numeric" value="${item?.amount||''}"></label><label>${t('checkout.photo')} ${optional(true)}${filePicker('name="photo" type="file" accept="image/png,image/jpeg,image/webp" capture="environment"')}</label>${item?.photo?media(item.photo):''}<div class="row"><button class="primary">${t('checkout.save')}</button>${item?pill('✓ '+t('checkout.saved')):''}</div></form>`
-  :`<div><h3>${t('checkout.moveOut')}</h3>${item?`${outcomePill(item)}${changesView}${evidence(item,'')}${item.outcome==='damage'?`<p><strong>${t('checkout.proposed')}: ${money(item.amount)}</strong></p>`:''}`:`<p>${t('checkout.notRecorded')}</p>`}</div>`;
+ const lines=invLines(s.type,rec),flags=flagsFor(p,id,tn.tenantIds),changes=item?.changes||{};
+ const flagsOn=ref=>flags.filter(f=>f.ref===ref),extras=flags.filter(f=>f.ref.startsWith('extra:'));
  const reps=p.tickets.filter(x=>x.spaceId===id&&(!tn.start||x.created>=tn.start)&&(!tn.end||x.created<=tn.end));
- const repairs=reps.length?`<h4>${t('checkout.repairsDuring')}</h4><ul class="repair-list">${reps.map(ticketRow(p)).join('')}</ul>`:'';
- const responses=Object.entries(co.responses||{}).map(([who,r])=>r[id]?`<p class="${r[id].agree?'':'issue-note'}"><strong>${t(r[id].agree?'checkout.responseAgree':'checkout.responseDispute',{name:esc(personName(who))})}</strong>${r[id].comment?` · <span class="notes">${esc(r[id].comment)}</span>`:''}</p>`:'').join('');
- const reply=mode==='reply'&&item?.outcome==='damage'?`<fieldset class="reply"><legend>${t('checkout.yourResponse',{amount:money(item.amount)})}</legend><label class="check"><input type="radio" name="agree-${id}" value="agree" required> ${t('checkout.agree')}</label><label class="check"><input type="radio" name="agree-${id}" value="dispute"> ${t('checkout.dispute')}</label><label>${t('checkout.comment')} <small>${t('checkout.commentHelp')}</small><textarea name="comment-${id}"></textarea></label></fieldset>`:'';
- return `<section class="card"><h2>${esc(spaceName(s))}</h2><div class="compare">${moveIn}${moveOut}</div>${repairs}${responses}${reply}</section>`;
+ const noted=lines.filter(l=>l[2].r!=='good').length,nFlags=flags.length;
+ // Summary chips: is there any history in this room worth a look?
+ const chips=[noted&&pill(t('cc.noted',{n:noted}),'rating-fair'),nFlags&&pill(t('cc.flags',{n:nFlags}),'flag-pill'),reps.length&&pill(t('cc.repairs',{n:reps.length}))].filter(Boolean).join(' ');
+ // Photo strip: move-in, the tenant's own move-out photos, the landlord's move-out photo.
+ const fig=(label,file,date)=>`<figure><figcaption><small><strong>${label}</strong>${date?' · '+dateText(date):''}</small></figcaption>${media(file)}</figure>`;
+ const tenantShots=Object.entries(tn.prep||{}).filter(([,pr])=>pr.photos?.[id]).map(([who,pr])=>fig(t('cc.tenantPhoto',{name:esc(personName(who))}),pr.photos[id].photo,pr.photos[id].at));
+ const shots=[rec?.photo&&fig(t('checkout.moveIn'),rec.photo,rec.photoDate),...tenantShots,item?.photo&&fig(t('cc.landlordPhoto'),item.photo,item.photoDate||co.sentAt)].filter(Boolean);
+ const strip=shots.length?`<div class="photo-strip">${shots.join('')}</div>`:'';
+ // Line-by-line comparison: lines with history or a change first, the rest folded.
+ const attn=l=>l[2].r!=='good'||flagsOn(l[0]).length||changes[l[0]];
+ const detail=l=>{const e=l[2],f=flagsOn(l[0]);return e.note||e.photo||f.length?`<details class="line-detail"><summary>${t('cc.atMoveIn')}</summary>${e.note?`<p class="inv-note">${userText(e.note)}</p>`:''}${e.photo?`<div class="inv-photo">${media(e.photo)}</div>`:''}${f.map(flagHtml).join('')}</details>`:''};
+ const row=(l,edit)=>{const [ref,label,e]=l,f=flagsOn(ref).length;return `<li class="inv-row${changes[ref]?' noted':''}${f?' flagged':''}"><div class="inv-main"><span class="inv-name">${f?'⚠ ':''}${label}${changes[ref]?' '+pill(t('cc.changed'),'changed-pill'):''}</span><span class="cc-rates">${ratingPill(e.r)}${edit?` → ${ratingSelect('line-'+ref,changes[ref]||e.r)}`:changes[ref]?` → ${ratingPill(changes[ref])}`:''}</span></div>${detail(l)}</li>`};
+ const extraRows=extras.map(f=>`<li class="inv-row flagged"><div class="inv-main"><span class="inv-name">⚠ ${t('check.unlisted')}</span></div>${flagHtml(f)}</li>`).join('');
+ const compare=edit=>{const a=lines.filter(attn),rest=lines.filter(l=>!attn(l));
+  return lines.length?`<h4>${t('cc.compareTitle')}</h4><p class="help">${t(edit?'cc.compareHelpEdit':'cc.compareHelpView')}</p><ul class="inv-list cc-list">${a.map(l=>row(l,edit)).join('')}${extraRows}</ul>${rest.length?`<details class="cc-rest"><summary>${t('cc.rest',{n:rest.length})}</summary><ul class="inv-list cc-list">${rest.map(l=>row(l,edit)).join('')}</ul></details>`:''}`:''};
+ const main=mode==='edit'
+  ?`<form data-form="checkout-item" data-target="${id}" class="cc-main"><label>${t('checkout.outcome')} <select name="outcome">${['same','wear','damage'].map(o=>`<option value="${o}" ${(item?.outcome||'same')===o?'selected':''}>${t('checkout.outcome.'+o)}</option>`).join('')}</select></label>${compare(true)}<label>${t('checkout.notes')} <textarea name="notes" required>${esc(item?.notes||'')}</textarea></label><label>${t('checkout.amount')} <small>${t('checkout.amountHelp')}</small><input type="number" name="amount" min="0" step="1" inputmode="numeric" value="${item?.amount||''}"></label><label>${t('checkout.photo')} ${optional(true)}${filePicker('name="photo" type="file" accept="image/png,image/jpeg,image/webp" capture="environment"')}</label><div class="row"><button class="primary">${t('checkout.save')}</button>${item?`<span class="save-ok${justSaved===id?' flash':''}" role="status">✓ ${t('cc.savedAt',{time:new Date(item.savedAt||Date.now()).toLocaleTimeString(t('locale'),{hour:'2-digit',minute:'2-digit'})})}</span>`:''}</div></form>`
+  :`<div class="cc-main">${item?`<p>${outcomePill(item)}${item.outcome==='damage'?` <strong>${t('checkout.proposed')}: ${money(item.amount)}</strong>`:''}</p>${item.notes?`<p>${userText(item.notes)}</p>`:''}${compare(false)}`:`<p>${t('checkout.notRecorded')}</p>`}</div>`;
+ // Full move-in record, folded: reference only.
+ const refSummary=[t('cc.refTitle'),noted&&t('cc.noted',{n:noted}),nFlags&&t('cc.flags',{n:nFlags}),reps.length&&t('cc.repairs',{n:reps.length})].filter(Boolean).join(' · ');
+ const reference=`<details class="movein-ref${nFlags?' has-flags':''}"><summary>${refSummary}</summary>${evidence(rec,t('home.noRecord'))}${invView(p,s,{who:tn.tenantIds})}${flagged.map(c=>`<p class="notes issue-note"><small>${t('check.resultsTitle')} · ${esc(personName(c.who))}</small><br>${userText(c.note)}</p>`).join('')}${reps.length?`<h4>${t('checkout.repairsDuring')}</h4><ul class="repair-list">${reps.map(ticketRow(p)).join('')}</ul>`:''}</details>`;
+ const responses=Object.entries(co.responses||{}).map(([who,r])=>r[id]?`<p class="${r[id].agree?'':'issue-note'}"><strong>${t(r[id].agree?'checkout.responseAgree':'checkout.responseDispute',{name:esc(personName(who))})}</strong>${!r[id].agree&&r[id].offer!=null?' · '+t('co.offered',{amount:money(r[id].offer)}):''}${r[id].comment?` · ${userText(r[id].comment)}`:''}</p>`:'').join('');
+ const damage=item?.outcome==='damage',disputed=damage&&round1Disputed(co).has(id),rev=co.revised?.[id],offer=maxOffer(co,id);
+ const reply=mode==='reply'&&damage?`<fieldset class="reply"><legend>${t('checkout.yourResponse',{amount:money(item.amount)})}</legend><label class="check"><input type="radio" name="agree-${id}" value="agree" required> ${t('checkout.agree')}</label><label class="check"><input type="radio" name="agree-${id}" value="dispute"> ${t('checkout.dispute')}</label><div class="follow-up" data-for="agree-${id}" data-show="dispute" hidden><label>${t('checkout.comment')} <small>${t('checkout.commentHelp')}</small><textarea name="comment-${id}"></textarea></label><label>${t('co.offerLabel')} ${optional()}<input type="number" name="offer-${id}" min="0" step="1" inputmode="numeric"></label></div></fieldset>`:'';
+ const revise=mode==='revise'&&disputed?`<fieldset class="reply"><legend>${t('co.reviseLegend')}</legend>${offer>=0?`<label class="check"><input type="radio" name="act-${id}" value="accept" required> ${t('co.acceptOffer',{amount:money(offer)})}</label>`:''}<label class="check"><input type="radio" name="act-${id}" value="revise" ${offer<0?'required':''}> ${t('co.reviseTo')}</label><div class="follow-up" data-for="act-${id}" data-show="revise" hidden><label>${t('co.newAmount')} <input type="number" name="amt-${id}" min="0" step="1" inputmode="numeric"></label></div><label class="check"><input type="radio" name="act-${id}" value="keep"> ${t('co.keep',{amount:money(item.amount)})}</label><label>${t('checkout.comment')} ${optional()}<textarea name="rc-${id}"></textarea></label></fieldset>`:'';
+ const revView=rev?`<p class="revision"><strong>${t('co.round2')}</strong> · ${t('co.rev.'+rev.action,{amount:money(rev.amount),was:money(item.amount)})}${rev.comment?` · ${userText(rev.comment)}`:''}</p>`:'';
+ const r2=Object.entries(co.responses2||{}).map(([who,r])=>r[id]?`<p class="${r[id].agree?'':'issue-note'}"><strong>${t(r[id].agree?'co.r2Agree':'co.r2Dispute',{name:esc(personName(who)),amount:money(rev?.amount||0)})}</strong></p>`:'').join('');
+ const reply2=mode==='reply2'&&rev&&rev.amount>0?`<fieldset class="reply"><legend>${t('co.reply2Legend',{amount:money(rev.amount)})}</legend><label class="check"><input type="radio" name="agree2-${id}" value="agree" required> ${t('checkout.agree')}</label><label class="check"><input type="radio" name="agree2-${id}" value="dispute"> ${t('co.stillDispute')}</label></fieldset>`:'';
+ const thread=(co.comments?.[id]||[]);
+ const canTalk=co.status!=='draft'&&(landlordView(p)||tn.tenantIds.includes(db.session));
+ const comments=damage&&(thread.length||mode==='view'&&canTalk)?`<div class="thread"><h4>${t('co.comments')}</h4>${commentList(thread)}${mode==='view'&&canTalk?`<form data-form="co-comment" data-target="${id}" class="comment-form"><label class="sr-only" for="cc-${id}">${t('co.addComment')}</label><textarea id="cc-${id}" name="text" required maxlength="600" placeholder="${t('co.addComment')}"></textarea><button>${t('co.send')}</button></form>`:''}</div>`:'';
+ return `<section class="card cc-card"><div class="row spread cc-head"><h2>${esc(spaceName(s))}</h2><span class="cc-chips">${chips}</span></div>${strip}${main}${reference}${responses}${reply}${revView}${revise}${r2}${reply2}${comments}</section>`;
 }
+// Comments on one deduction: short, dated, and translatable like any user text.
+const commentList=list=>list.length?`<ul class="comments">${list.map(c=>`<li><small><strong>${esc(personName(c.by))}</strong> · ${dateText(c.at)}</small><br>${userText(c.text)}</li>`).join('')}</ul>`:'';
 function checkoutPage(){
  const p=prop(propId),tn=findTenancy(p,checkoutTn),co=tn?.checkout;
  if(!co)return home();
  const lv=landlordView(p),tenant=tn.tenantIds.includes(db.session);
  if(!lv&&!(tenant&&co.status!=='draft'))return home();
  const myReply=co.responses?.[db.session],replying=tenant&&co.status==='sent'&&!myReply;
- const mode=lv&&co.status==='draft'?'edit':replying?'reply':'view';
- const totals=checkoutTotals(tn),recorded=tn.spaceIds.every(id=>co.items?.[id]);
- const head=`<section class="card"><div class="eyebrow">${t('checkout.eyebrow')} · ${esc(p.name)}</div><div class="row spread"><h1>${t('checkout.title')} ${term('wearTear')}</h1>${pill(t('checkout.status.'+co.status))}</div><p>${tenancyLabel(p,tn)} · ${tn.tenantIds.map(id=>esc(personName(id))).join(', ')}${tn.start?' · '+t('tenancy.dates',{start:dateText(tn.start),end:tn.end?dateText(tn.end):t('tenancy.open')}):''}</p><p>${t(lv?'checkout.introLandlord':'checkout.introTenant')}</p></section>`;
+ const totals=checkoutTotals(tn),recorded=tn.spaceIds.every(id=>co.items?.[id]),r1=round1Disputed(co);
+ const revising=lv&&co.status==='responded'&&r1.size>0;
+ const reply2=tenant&&co.status==='revised'&&!co.responses2?.[db.session]&&Object.values(co.revised||{}).some(r=>r.amount>0);
+ const mode=lv&&co.status==='draft'?'edit':replying?'reply':revising?'revise':reply2?'reply2':'view';
+ const people=allTenants(tn).map(id=>nameTag(tn,id)).join(', ');
+ const head=`<section class="card"><div class="eyebrow">${t('checkout.eyebrow')} · ${esc(p.name)}</div><div class="row spread"><h1>${t('checkout.title')} ${term('wearTear')}</h1>${pill(t('checkout.status.'+co.status))}</div><p>${tenancyLabel(p,tn)} · ${people}${tn.start?' · '+t('tenancy.dates',{start:dateText(tn.start),end:tn.end?dateText(tn.end):t('tenancy.open')}):''}</p><p>${t(lv?'checkout.introLandlord':'checkout.introTenant')}</p>${lv&&tn.prep?prepSummary(p,tn):''}</section>`;
  const cards=tn.spaceIds.map(id=>checkoutCard(p,tn,id,mode)).join('');
  const total=`<p><strong>${t('checkout.total',{amount:money(totals.proposed)})}</strong></p>`;
  if(mode==='edit')return `<div class="panel">${head}${cards}<section class="card">${total}<p class="help">${t('checkout.sendHelp')}</p>${actionBtn(t('checkout.send'),'send-checkout',true,recorded?'':'aria-disabled="true"')}</section></div>`;
  if(mode==='reply')return `<div class="panel">${head}<form id="checkout-reply">${cards}<section class="card">${total}<button class="primary">${t('checkout.reply')}</button></section></form></div>`;
- const dep=tn.deposit?.amount?`<div class="dep-maths"><span>${t('dep.mathsDeposit')} <strong>${money(tn.deposit.amount)}</strong></span><span>− ${t('dep.mathsProposed')} <strong>${money(totals.proposed)}</strong></span><span>= ${t('dep.mathsBack')} <strong>${money(Math.max(0,tn.deposit.amount-totals.proposed))}</strong></span></div>${co.status==='responded'?`<p class="help">${t('dep.after10',{agreed:money(Math.max(0,tn.deposit.amount-totals.proposed)),disputed:money(totals.disputed),scheme:esc(tn.deposit.scheme||t('dep.theScheme'))})} ${term('adr')}</p>`:''}`:'';
- const summary=`<section class="card summary"><h2>${t('checkout.summaryTitle')}</h2>${dep}${totals.proposed?`<ul class="totals"><li>${t('checkout.summaryProposed',{amount:money(totals.proposed)})}</li>${co.status==='responded'?`<li>${t('checkout.summaryAgreed',{amount:money(totals.agreed)})}</li><li><strong>${t('checkout.summaryDisputed',{amount:money(totals.disputed)})}</strong></li>`:''}</ul>`:`<p>${t('checkout.noDamage')}</p>`}${co.status==='sent'?`<p class="help">${t('checkout.waiting',{date:dateText(co.sentAt)})}</p>`:''}${myReply?`<p class="help">${t('checkout.youResponded',{date:dateText(co.respondedBy?.[db.session])})}</p>`:''}${co.status==='responded'&&totals.disputed&&!tn.deposit?.amount?`<p class="help">${t('checkout.disputeHelp')} ${term('deposit')}</p>`:''}${actionBtn(t('checkout.print'),'print')}</section>`;
- return `<div class="panel">${head}${summary}${cards}</div>`;
+ if(mode==='revise')return `<div class="panel">${head}${replyStatus(p,tn,co,lv)}<form id="checkout-revise">${cards}<section class="card"><p class="help">${t('co.reviseHelp')}</p><button class="primary">${t('co.sendRevised')}</button></section></form></div>`;
+ if(mode==='reply2')return `<div class="panel">${head}<form id="checkout-reply2">${cards}<section class="card"><p class="help">${t('co.reply2Help')}</p><button class="primary">${t('checkout.reply')}</button></section></form></div>`;
+ const dep=tn.deposit?.amount?`<div class="dep-maths"><span>${t('dep.mathsDeposit')} <strong>${money(tn.deposit.amount)}</strong></span><span>− ${t('dep.mathsProposed')} <strong>${money(totals.proposed)}</strong></span><span>= ${t('dep.mathsBack')} <strong>${money(Math.max(0,tn.deposit.amount-totals.proposed))}</strong></span></div>`:'';
+ const settled=co.status==='final'||(co.status==='responded'&&!r1.size);
+ const outcome=settled?(totals.disputed?`<div class="unresolved"><p><strong>${t('co.unresolved',{amount:money(totals.disputed)})}</strong></p><p class="help">${t('co.unresolvedHelp',{agreed:money(Math.max(0,(tn.deposit?.amount||0)-totals.proposed)),scheme:esc(tn.deposit?.scheme||t('dep.theScheme'))})} ${term('adr')}</p><button type="button" class="primary" data-pack="${tn.id}">${t('past.export')}</button></div>`:`<p class="all-agreed">✓ ${t('co.allAgreed')}${tn.deposit?.amount?' '+t('co.return10',{amount:money(Math.max(0,tn.deposit.amount-totals.proposed))}):''}</p>`):'';
+ const summary=`<section class="card summary"><h2>${t('checkout.summaryTitle')}</h2>${dep}${totals.proposed||totals.original?`<ul class="totals">${totals.original!==totals.proposed?`<li>${t('co.summaryOriginal',{amount:money(totals.original)})}</li>`:''}<li>${t('checkout.summaryProposed',{amount:money(totals.proposed)})}</li>${co.status!=='sent'?`<li>${t('checkout.summaryAgreed',{amount:money(totals.agreed)})}</li><li><strong>${t('checkout.summaryDisputed',{amount:money(totals.disputed)})}</strong></li>`:''}</ul>`:`<p>${t('checkout.noDamage')}</p>`}${co.status==='sent'?`<p class="help">${t('checkout.waiting',{date:dateText(co.sentAt)})}</p>`:''}${co.status==='revised'?`<p class="help">${t('co.waitingRound2')}</p>`:''}${outcome}${actionBtn(t('checkout.print'),'print')}</section>`;
+ return `<div class="panel">${head}${summary}${replyStatus(p,tn,co,lv)}${cards}</div>`;
+}
+// Who has replied: in HomeLog, off HomeLog (noted by the landlord), or not yet.
+// It never blocks the landlord; it only shows where things stand.
+function replyStatus(p,tn,co,lv){
+ if(co.status==='draft')return '';
+ const rows=allTenants(tn).map(id=>{
+  const r=co.responses?.[id],o=co.offline?.[id];
+  const state=r?`<span class="ok">✓ ${t('joint.repliedIn',{date:dateText(co.respondedBy?.[id])})}</span>`:o?`<span>${t(o.agree?'joint.offAgree':'joint.offDispute')} · <small>${t('joint.notedBy',{name:esc(nameMid(o.by)),date:dateText(o.at)})}</small>${o.note?`<br>${userText(o.note)}`:''}</span>`:`<span class="muted">${t('joint.waiting')}</span>`;
+  const form=lv&&!r&&!o&&co.status==='sent'?`<details class="protect"><summary>${t('joint.recordOff')}</summary><form data-form="co-offline" data-target="${id}"><label class="check"><input type="radio" name="agree" value="agree" required> ${t('joint.offAgree')}</label><label class="check"><input type="radio" name="agree" value="dispute"> ${t('joint.offDispute')}</label><label>${t('joint.offNote')} <textarea name="note" required maxlength="300"></textarea></label><button class="primary">${t('dep.save')}</button></form></details>`:'';
+  return `<li><strong>${nameTag(tn,id)}</strong><br>${state}${form}</li>`;
+ }).join('');
+ const total=allTenants(tn).length;
+ if(total<2&&!lv)return '';
+ return `<section class="card"><h2>${t('joint.title')}</h2>${tn.lead?`<p class="help">${t('joint.leadHelp',{name:esc(tenantName(tn,tn.lead))})}</p>`:total>1?`<p class="help">${t('joint.help')}</p>`:''}<ul class="reply-status">${rows}</ul></section>`;
 }
 
 // ── Translation of user-written content ─────────────────────────────
@@ -730,6 +805,8 @@ function checkoutPage(){
 // the original, which stays the reference. The demo ships translations for its
 // sample content; a real product would call a translation service.
 const CONTENT_TR={'zh-CN':{
+ 'The stain is much bigger now. Do you have anything showing how big it was when you moved in?':'现在污渍大了很多。你有能证明入住时污渍大小的东西吗？',
+ 'Yes. The Floor line of the move-in inventory has a photo from 28 August 2025, and I confirmed it on 3 September.':'有的。入住清单的「地面」一项有 2025 年 8 月 28 日的照片，我在 9 月 3 日确认过。',
  'Carpet professionally cleaned after the last tenancy; a faint mark remains by the bed. Chest of drawers and desk in good condition. Window opens and locks.':'上一段租约结束后地毯已专业清洗，床边还留有一点淡淡的印记。五斗柜和书桌状况良好。窗户能正常开关和上锁。',
  'Faint mark on the carpet by the bed after professional cleaning.':'专业清洗后，床边地毯上仍有一点淡淡的印记。',
  'Carpet has one small faint stain by the bed. Chest of drawers and desk in good condition. Window opens and locks.':'床边地毯上有一小块浅色污渍。五斗柜和书桌状况良好。窗户能正常开关和上锁。',
@@ -825,11 +902,55 @@ function fingerprint(value){
  return (a.toString(16).padStart(8,'0')+b.toString(16).padStart(8,'0')).replace(/(.{4})(?=.)/g,'$1 ');
 }
 const fpLine=v=>`<small class="fingerprint">${t('pack.fingerprint')}: <code>${fingerprint(v)}</code></small>`;
+// ── Move-out checklist (tenant) ─────────────────────────────────────
+// In the last 30 days of a tenancy the tenant works through six steps. Their
+// own move-out photos, meter readings and key handover become evidence the
+// landlord sees during the move-out check.
+const PREP_STEPS=['review','clean','photos','meters','keys','forward'];
+const prepOf=(tn,who=db.session)=>tn?.prep?.[who]||{};
+const prepRooms=(p,tn)=>tn.spaceIds.filter(id=>spaceOf(p,id));
+function prepDone(p,tn,k,who=db.session){
+ const pr=prepOf(tn,who);
+ if(k==='photos')return prepRooms(p,tn).every(id=>pr.photos?.[id]);
+ if(k==='review'||k==='clean')return !!pr.done?.[k];
+ return !!pr[k];
+}
+const prepCount=(p,tn,who=db.session)=>PREP_STEPS.filter(k=>prepDone(p,tn,k,who)).length;
+const movingOut=(p,tn)=>!!tn&&!p.selfManaged&&!!tn.end&&tn.end>=addDays(today(),-14)&&daysLeft(tn.end)<=30&&(!tn.checkout||tn.checkout.status==='draft');
+function moveoutPage(){
+ const p=tenantHome(),tn=p&&tenancyOf(p);
+ if(!tn||p.selfManaged)return home();
+ propId=p.id;
+ const pr=prepOf(tn),n=prepCount(p,tn),edit=k=>prepOpen===k||!prepDone(p,tn,k);
+ const doneTag=k=>prepDone(p,tn,k)?`<span class="prep-done">✓ ${t('prep.done')}</span>`:'';
+ const undo=k=>k!=='photos'&&prepDone(p,tn,k)&&prepOpen!==k?`<button type="button" class="link" data-prep-edit="${k}">${t('prep.edit')}</button>`:'';
+ const mark=k=>`<button type="button" class="primary" data-prep-mark="${k}">${t('prep.markDone')}</button>`;
+ const body={
+  review:()=>`<p>${t('prep.review.body')}</p><div class="row"><button type="button" data-go="property">${t('prep.review.open')}</button>${prepDone(p,tn,'review')?'':mark('review')}</div>`,
+  clean:()=>`<ul class="tips">${t('prep.clean.tips').split('|').map(x=>`<li>${x}</li>`).join('')}</ul>${prepDone(p,tn,'clean')?'':mark('clean')}`,
+  photos:()=>`<p>${t('prep.photos.body')}</p>${prepRooms(p,tn).map(id=>{const s=spaceOf(p,id),r=p.records[id],mine=pr.photos?.[id];
+   return `<div class="prep-room"><h4>${esc(spaceName(s))}</h4><div class="compare evidence-compare"><figure><figcaption><strong>${t('checkout.moveIn')}</strong>${r?.photoDate?' · '+dateText(r.photoDate):''}</figcaption>${r?.photo?media(r.photo):`<p class="help">${t('home.noRecord')}</p>`}</figure><figure><figcaption><strong>${t('prep.photos.yours')}</strong>${mine?' · '+dateText(mine.at):''}</figcaption>${mine?media(mine.photo):''}<form data-form="prep-photo" data-target="${id}"><label>${t(mine?'prep.photos.replace':'prep.photos.take')} ${filePicker('name="photo" type="file" accept="image/png,image/jpeg,image/webp" capture="environment" required')}</label><button class="primary">${t('prep.photos.save')}</button></form></figure></div></div>`}).join('')}`,
+  meters:()=>edit('meters')?`<p>${t('prep.meters.body')}</p><form data-form="prep-meters"><label class="check"><input type="checkbox" name="na" ${pr.meters?.na?'checked':''}> ${t('prep.meters.na')}</label><div class="grid">${['electric','gas','water'].map(m=>`<label>${t('prep.meters.'+m)} ${optional()}<input name="${m}" inputmode="numeric" maxlength="12" value="${esc(pr.meters?.[m]||'')}"></label>`).join('')}</div><label>${t('prep.meters.photo')} ${optional(true)}${filePicker('name="photo" type="file" accept="image/png,image/jpeg,image/webp" capture="environment"')}</label><button class="primary">${t('prep.save')}</button></form>`:`<p>${pr.meters.na?t('prep.meters.naDone'):['electric','gas','water'].filter(m=>pr.meters[m]).map(m=>`${t('prep.meters.'+m)}: <strong>${esc(pr.meters[m])}</strong>`).join(' · ')} <small>· ${dateText(pr.meters.at)}</small></p>${pr.meters.photo?media(pr.meters.photo):''}`,
+  keys:()=>edit('keys')?`<p>${t('prep.keys.body')}</p><form data-form="prep-keys"><div class="grid"><label>${t('prep.keys.count')} <input name="count" type="number" min="1" max="20" required value="${pr.keys?.count||''}"></label><label>${t('prep.keys.to')} <input name="to" required maxlength="60" value="${esc(pr.keys?.to||personName(p.ownerId))}"></label><label>${t('prep.keys.date')} <input name="date" type="date" required value="${pr.keys?.at||tn.end}"></label></div><button class="primary">${t('prep.save')}</button></form>`:`<p>${t('prep.keys.summary',{n:pr.keys.count,to:esc(pr.keys.to),date:dateText(pr.keys.at)})}</p>`,
+  forward:()=>edit('forward')?`<p>${t('prep.forward.body')}</p><form data-form="prep-forward"><label>${t('prep.forward.label')} <textarea name="address" required maxlength="300">${esc(pr.forward?.text||'')}</textarea></label><button class="primary">${t('prep.save')}</button></form>`:`<p class="notes">${esc(pr.forward.text)}</p><p class="help">${t('prep.forward.shared',{name:esc(personName(p.ownerId))})}</p>`
+ };
+ const steps=PREP_STEPS.map((k,i)=>`<li class="prep-step${prepDone(p,tn,k)?' done':''}" id="prep-${k}"><div class="row spread"><h3><span class="step-no">${i+1}</span>${t('prep.'+k+'.title')}</h3><span>${doneTag(k)} ${undo(k)}</span></div>${body[k]()}</li>`).join('');
+ return `<div class="panel"><section class="card"><div class="eyebrow">${t('prep.eyebrow')} · ${esc(p.name)}</div><h1>${t('prep.title')}</h1><p>${tenancyLabel(p,tn)} · ${t('prep.endsOn',{date:dateText(tn.end),n:daysLeft(tn.end)})}</p><div class="progress" role="progressbar" aria-valuemin="0" aria-valuemax="6" aria-valuenow="${n}"><span style="width:${n/6*100}%"></span></div><p class="help">${t('prep.progress',{n,total:6})} · ${t('prep.help')}</p></section><ol class="prep-steps">${steps}</ol><section class="card"><p>${t('prep.after')}</p><button type="button" data-pack="${tn.id}">${t('pack.button')}</button></section></div>`;
+}
+// The tenant's own move-out photos, shown to the landlord on the move-out check.
+function prepPhotos(tn,id){
+ const list=Object.entries(tn.prep||{}).filter(([,pr])=>pr.photos?.[id]);
+ return list.length?`<div class="prep-photos">${list.map(([who,pr])=>`<figure><figcaption><small>${t('prep.photos.byTenant',{name:esc(personName(who)),date:dateText(pr.photos[id].at)})}</small></figcaption>${media(pr.photos[id].photo)}</figure>`).join('')}</div>`:'';
+}
+function prepSummary(p,tn){
+ return Object.entries(tn.prep||{}).map(([who,pr])=>`<p class="prep-sum"><strong>${esc(personName(who))}</strong> · ${t('prep.progress',{n:prepCount(p,tn,who),total:6})}${pr.meters?` · ${pr.meters.na?t('prep.meters.naDone'):t('prep.meters.short')+': '+['electric','gas','water'].filter(m=>pr.meters[m]).map(m=>t('prep.meters.'+m)+' '+esc(pr.meters[m])).join(', ')}`:''}${pr.keys?' · '+t('prep.keys.summary',{n:pr.keys.count,to:esc(pr.keys.to),date:dateText(pr.keys.at)}):''}</p>`).join('');
+}
+
 // ── Deposit (recorded, not held) ────────────────────────────────────
 function depositCard(p){
  const tn=tenancyOf(p);if(!tn||landlordView(p))return '';
  const d=tn.deposit,st=depositState(tn),self=p.selfManaged;
- const others=tn.tenantIds.filter(id=>id!==db.session).map(id=>esc(personName(id)));
+ const others=allTenants(tn).filter(id=>id!==db.session).map(id=>esc(tenantName(tn,id))+(isOutside(tn,id)?` (${t('joint.notJoined')})`:''));
  const by=`<p class="help">${t(self?'dep.bySelf':'dep.byLandlord',{name:esc(personName(p.ownerId))})}</p>`;
  if(!d)return `<section class="card deposit-card"><h2>${t('deposit.title')} ${term('deposit')}</h2><p>${t(self?'dep.noneSelf':'dep.none')}</p>${self?'':`<p class="help">${t('dep.rule')}</p>`}</section>`;
  const joint=others.length?`<p>${t('dep.joint',{names:others.join(', ')})}</p>`:'';
@@ -842,7 +963,7 @@ function depositCard(p){
 function depositLine(tn){
  const d=tn.deposit,st=depositState(tn);
  const text=!d?t('dep.lineNone'):st.status==='ok'?t('dep.lineOk',{amount:money(d.amount),scheme:esc(d.scheme),ref:esc(d.ref||'')}):t('dep.linePending',{amount:money(d.amount),date:dateText(st.date)});
- const form=st.status==='ok'?'':`<details class="protect"><summary>${t('dep.record')}</summary><form data-form="protect" data-target="${tn.id}"><div class="grid"><label>${t('dep.amount')} <input name="amount" type="number" min="0" step="1" inputmode="numeric" required value="${d?.amount||''}"></label><label>${t('dep.scheme')} <select name="scheme">${Object.keys(DEPOSIT_SCHEMES).map(k=>`<option>${k}</option>`).join('')}</select></label><label>${t('dep.ref')} <input name="ref" required maxlength="30"></label><label>${t('dep.protectedOn')} <input name="date" type="date" required value="${today()}"></label></div><p class="help">${t('dep.recordHelp')}</p><button class="primary">${t('dep.save')}</button></form></details>`;
+ const form=st.status==='ok'?'':`<details class="protect"><summary>${t(d?'dep.record':'dep.recordAmount')}</summary><form data-form="protect" data-target="${tn.id}"><div class="grid"><label>${t('dep.amount')} <input name="amount" type="number" min="0" step="1" inputmode="numeric" required value="${d?.amount||''}"></label><label>${t('dep.scheme')} <select name="scheme">${Object.keys(DEPOSIT_SCHEMES).map(k=>`<option>${k}</option>`).join('')}</select></label><label>${t('dep.ref')} <small>${t('dep.refOptional')}</small><input name="ref" maxlength="30"></label><label>${t('dep.protectedOn')} <input name="date" type="date" value="${today()}"></label></div><p class="help">${t('dep.recordHelp')}</p><button class="primary">${t('dep.save')}</button></form></details>`;
  return `<div class="dep-line">${pill(t('dep.status.'+st.status),'dep-'+st.status)} <small>${text}</small>${form}</div>`;
 }
 
@@ -860,6 +981,13 @@ function pastList(list,own){
  const body=`<ul class="account-list past-list">${rows}</ul>`;
  return own?`<section class="card"><h2>${t('past.title')}</h2><p class="help">${t('past.help')}</p>${body}</section>`:`<h3 class="past-head">${t('past.title')}</h3>${body}`;
 }
+// One side notes the outcome; the other confirms it or marks a difference.
+function outcomeConfirm(p,x,o){
+ const parties=[p.ownerId,...x.tenantIds],other=parties.filter(id=>id!==o.by),c=o.confirm;
+ if(c)return `<p class="${c.status==='ok'?'confirmed':'issue-note'}">${c.status==='ok'?'✓ ':'⚠ '}${t(c.status==='ok'?'outcome.confirmed':'outcome.differs',{name:esc(personName(c.by)),date:dateText(c.at)})}${c.note?` · ${userText(c.note)}`:''}</p>`;
+ if(!other.includes(db.session))return `<p class="help">${t('outcome.waiting',{name:other.map(id=>esc(personName(id))).join(', ')})}</p>`;
+ return `<div class="outcome-confirm"><p class="help">${t('outcome.ask',{name:esc(personName(o.by))})}</p><div class="row"><button type="button" class="primary" data-outcome="ok">${t('outcome.ok')}</button><details class="protect"><summary>${t('outcome.diff')}</summary><form data-form="outcome-differs"><label>${t('outcome.diffNote')} <textarea name="note" required maxlength="300"></textarea></label><button>${t('dep.save')}</button></form></details></div></div>`;
+}
 function pastPage(){
  const p=prop(propId),x=p?.pastTenancies?.find(y=>y.id===pastSel);
  if(!x||!(isManager(p)||x.tenantIds.includes(db.session)))return home();
@@ -876,11 +1004,11 @@ function pastPage(){
   if(c.response==='agree')return `<li class="deduction">${top}<p>✓ ${t('deposit.agreed',{name:people,amount:money(c.final)})}</p></li>`;
   const l=lineOf(c.space,c.ref),mo=x.moveOut[c.space],chk=x.checks&&Object.entries(x.checks).find(([,v])=>v[c.space]?.status==='ok');
   const compare=l?`<div class="compare evidence-compare"><figure><figcaption><strong>${t('checkout.moveIn')}</strong> · ${dateText(x.moveIn[c.space].photoDate)} ${ratingPill(l[2].r)}</figcaption>${media(l[2].photo)}<p class="inv-note">${userText(l[2].note)}</p>${chk?`<p class="confirmed">✓ ${t('deposit.confirmedAtMoveIn',{name:esc(personName(chk[0])),date:dateText(chk[1][c.space].at)})}</p>`:''}</figure><figure><figcaption><strong>${t('checkout.moveOut')}</strong> · ${dateText(mo.at)} ${ratingPill(mo.changes[c.ref])}</figcaption>${media(mo.photo)}<p class="inv-note">${userText(mo.note)}</p></figure></div>`:'';
-  return `<li class="deduction disputed">${top}<p class="help">${esc(spaceName(spaceOf(p,c.space)))} · ${l?l[1]:''}</p>${compare}<div class="positions"><blockquote><small>${t('deposit.landlordSays',{name:esc(personName(p.ownerId))})}</small>${userText(c.landlordNote)}</blockquote><blockquote><small>${t('deposit.tenantSays',{name:people,amount:money(c.offer)})}</small>${userText(c.tenantNote)}</blockquote></div><p class="disputed-note">⚠ ${t('deposit.unresolved',{amount:money(c.claim)})}</p></li>`;
+  return `<li class="deduction disputed">${top}<p class="help">${esc(spaceName(spaceOf(p,c.space)))} · ${l?l[1]:''}</p>${compare}<div class="positions"><blockquote><small>${t('deposit.landlordSays',{name:esc(personName(p.ownerId))})}</small>${userText(c.landlordNote)}</blockquote><blockquote><small>${t('deposit.tenantSays',{name:people,amount:money(c.offer)})}</small>${userText(c.tenantNote)}</blockquote></div>${c.comments?.length?`<div class="thread"><h4>${t('co.comments')}</h4>${commentList(c.comments)}</div>`:''}<p class="disputed-note">⚠ ${t('deposit.unresolved',{amount:money(c.claim)})}</p></li>`;
  };
  const deductions=`<section class="card"><h2>${t('deposit.deductions')} ${term('wearTear')}</h2><p class="help">${t('deposit.deductionsHelp')}</p><ul class="deductions">${d.deductions.map(ded).join('')}</ul></section>`;
  const ex=d.exported,reason=d.deductions.find(c=>c.outcomeReason)?.outcomeReason;
- const after=`<section class="card"><h2>${t('deposit.afterTitle')}</h2>${ex?`<div class="step-card"><strong>📤 ${t('deposit.exportedTitle')}</strong><p>${t('deposit.exportedBody',{name:esc(personName(ex.by)),date:dateText(ex.at),scheme:esc(d.scheme)})} ${term('adr')}</p></div>`:''}${o?`<div class="step-card outcome"><div class="row spread"><strong>${t('deposit.outcomeTitle')}</strong><small>${t('deposit.outcomeBy',{name:esc(nameMid(o.by)),scheme:esc(d.scheme),date:dateText(o.at)})}</small></div><p>${t('deposit.outcomeLine',{scheme:esc(d.scheme),date:dateText(o.decidedAt),award:money(o.award),back:money(o.back)})}</p>${reason?`<details><summary>${t('deposit.reasonToggle')}</summary><p>${userText(reason)}</p></details>`:''}</div>`:''}</section>`;
+ const after=`<section class="card"><h2>${t('deposit.afterTitle')}</h2>${ex?`<div class="step-card"><strong>📤 ${t('deposit.exportedTitle')}</strong><p>${t('deposit.exportedBody',{name:esc(personName(ex.by)),date:dateText(ex.at),scheme:esc(d.scheme)})} ${term('adr')}</p></div>`:''}${o?`<div class="step-card outcome"><div class="row spread"><strong>${t('deposit.outcomeTitle')}</strong><small>${t('deposit.outcomeBy',{name:esc(nameMid(o.by)),scheme:esc(d.scheme),date:dateText(o.at)})}</small></div><p>${t('deposit.outcomeLine',{scheme:esc(d.scheme),date:dateText(o.decidedAt),award:money(o.award),back:money(o.back)})}</p>${reason?`<details><summary>${t('deposit.reasonToggle')}</summary><p>${userText(reason)}</p></details>`:''}${outcomeConfirm(p,x,o)}</div>`:''}</section>`;
  const tlRow=([at,k,v={},by])=>{const vars={scheme:esc(d.scheme),name:people};for(const [kk,vv] of Object.entries(v))vars[kk]=money(vv);return `<li class="tl-${k}"><span class="tl-date">${dateText(at)}</span><span>${t('deposit.tl.'+k,vars)}${by?` <small class="muted">· ${t('deposit.recordedBy',{name:esc(nameMid(by))})}</small>`:''}</span></li>`};
  const tl=`<section class="card"><h2>${t('deposit.timeline')}</h2><h3 class="tl-head">${t('deposit.inApp')}</h3><ol class="timeline">${d.timeline.map(tlRow).join('')}</ol>${d.outside?.length?`<h3 class="tl-head">${t('deposit.outside')}</h3><ol class="timeline outside">${d.outside.map(tlRow).join('')}</ol>`:''}</section>`;
  const records=x.spaceIds.map(sid=>{const s=spaceOf(p,sid);return `<section class="card"><h2>${t('past.moveInRecord')} · ${esc(spaceName(s))}</h2>${evidence(x.moveIn[sid],'')}${invView(pv,s,{who:x.tenantIds})}${fpLine(x.moveIn[sid])}</section>`}).join('');
@@ -896,12 +1024,12 @@ function packPage(){
  const section=id=>{
   const s=spaceOf(p,id),r=p.records[id],checks=checksFor(p,id).filter(c=>tn.tenantIds.includes(c.who));
   const tickets=p.tickets.filter(x=>x.spaceId===id&&inTenancy(x)&&canSee(p,x.spaceId));
-  return `<section class="card pack-space"><h2>${esc(spaceName(s))}${p.mode==='rooms'&&s.shared?' · '+t('kind.shared'):''}</h2><h3>${t('pack.moveIn')}</h3>${evidence(r,t('home.noRecord'))}${invView(p,s,{open:true,who:tn.tenantIds})}${r?fpLine(r):''}${checks.some(c=>c.at)?`<h3>${t('check.resultsTitle')}</h3><ul class="check-results">${checks.filter(c=>c.at).map(checkLine).join('')}</ul>`:''}${tickets.length?`<h3>${t('pack.repairs')}</h3>${tickets.map(x=>`<div class="pack-ticket"><p><strong>${esc(x.location)}</strong> · ${statusLabel(x.status)} · ${t('repair.reportedBy',{name:esc(personName(x.reporterId)),date:dateText(x.created)})}</p><p>${userText(x.description)}</p>${media(x.photo)}<ol class="update-log">${(x.updates||[]).map(u=>`<li><strong>${esc(personName(u.by))}</strong> · ${u.status!=null?statusLabel(u.status):t('update.comment')} <small>${dateText(u.at)}</small>${u.note?`<br>${userText(u.note)}`:''}</li>`).join('')}</ol>${x.after?evidence(x.after,''):''}${fpLine(x)}</div>`).join('')}`:''}</section>`;
+  return `<section class="card pack-space"><h2>${esc(spaceName(s))}${p.mode==='rooms'&&s.shared?' · '+t('kind.shared'):''}</h2><h3>${t('pack.moveIn')}</h3>${evidence(r,t('home.noRecord'))}${invView(p,s,{open:true,who:tn.tenantIds})}${r?fpLine(r):''}${prepPhotos(tn,id)?`<h3>${t('prep.photos.packTitle')}</h3>${prepPhotos(tn,id)}`:''}${checks.some(c=>c.at)?`<h3>${t('check.resultsTitle')}</h3><ul class="check-results">${checks.filter(c=>c.at).map(checkLine).join('')}</ul>`:''}${tickets.length?`<h3>${t('pack.repairs')}</h3>${tickets.map(x=>`<div class="pack-ticket"><p><strong>${esc(x.location)}</strong> · ${statusLabel(x.status)} · ${t('repair.reportedBy',{name:esc(personName(x.reporterId)),date:dateText(x.created)})}</p><p>${userText(x.description)}</p>${media(x.photo)}<ol class="update-log">${(x.updates||[]).map(u=>`<li><strong>${esc(personName(u.by))}</strong> · ${u.status!=null?statusLabel(u.status):t('update.comment')} <small>${dateText(u.at)}</small>${u.note?`<br>${userText(u.note)}`:''}</li>`).join('')}</ol>${x.after?evidence(x.after,''):''}${fpLine(x)}</div>`).join('')}`:''}</section>`;
  };
  const co=tn.checkout,tot=co?checkoutTotals(tn):null;
  const checkout=co&&co.status!=='draft'?`<section class="card"><h2>${t('checkout.title')}</h2><p>${t('checkout.status.'+co.status)} · ${t('checkout.summaryProposed',{amount:money(tot.proposed)})}${co.status==='responded'?` · ${t('checkout.summaryAgreed',{amount:money(tot.agreed)})} · ${t('checkout.summaryDisputed',{amount:money(tot.disputed)})}`:''}</p>${tn.spaceIds.map(id=>{const i=co.items?.[id],sp=spaceOf(p,id),ls=invLines(sp.type,p.records[id]);return i?`<p><strong>${esc(spaceName(sp))}</strong> · ${t('checkout.outcome.'+i.outcome)}${i.outcome==='damage'?' · '+money(i.amount):''}${Object.entries(i.changes||{}).map(([ref,r])=>{const l=ls.find(x=>x[0]===ref);return l?`<br><small>${l[1]}: ${t('rating.'+l[2].r)} → ${t('rating.'+r)}</small>`:''}).join('')}<br>${userText(i.notes)}</p>`:''}).join('')}${fpLine(co)}</section>`:'';
  const whole={property:p.id,tenancy:tn,records:ids.map(id=>p.records[id]||null),tickets:p.tickets.filter(x=>ids.includes(x.spaceId)&&inTenancy(x))};
- return `<div class="panel pack"><section class="card"><div class="eyebrow">${t('pack.eyebrow')}</div><div class="row spread"><h1>${esc(p.name)}</h1>${actionBtn(t('checkout.print'),'print',true)}</div><p>${esc(p.address||'')}</p><p>${tenancyLabel(p,tn)}${people?' · '+people:''}${tn.start?' · '+t('tenancy.dates',{start:dateText(tn.start),end:tn.end?dateText(tn.end):t('tenancy.open')}):''}</p><p class="help">${t('pack.generated',{date:dateText(today()),name:esc(me().name)})}</p><p class="help">${t('pack.help')}</p>${fpLine(whole)}</section>${ids.map(section).join('')}${checkout}</div>`;
+ return `<div class="panel pack"><section class="card"><div class="eyebrow">${t('pack.eyebrow')}</div><div class="row spread"><h1>${esc(p.name)}</h1>${actionBtn(t('checkout.print'),'print',true)}</div><p>${esc(p.address||'')}</p><p>${tenancyLabel(p,tn)}${people?' · '+people:''}${tn.start?' · '+t('tenancy.dates',{start:dateText(tn.start),end:tn.end?dateText(tn.end):t('tenancy.open')}):''}</p><p class="help">${t('pack.generated',{date:dateText(today()),name:esc(me().name)})}</p><p class="help">${t('pack.help')}</p>${tn.prep?prepSummary(p,tn):''}${fpLine(whole)}</section>${ids.map(section).join('')}${checkout}</div>`;
 }
 
 // ── Usability feedback ──────────────────────────────────────────────
@@ -1099,7 +1227,7 @@ function repair(){
 }
 
 // ── Rendering ───────────────────────────────────────────────────────
-const PAGES={past:pastPage,start,signin:signIn,'move-in':moveIn,link:linkRoom,setup,upload,mode:modePage,spaces:spacesPage,records,home,property:propertyPage,asset:assetDetail,report,repair,profile,check:checkPage,inbox,checkout:checkoutPage,pack:packPage,about:aboutPage};
+const PAGES={moveout:moveoutPage,past:pastPage,start,signin:signIn,'move-in':moveIn,link:linkRoom,setup,upload,mode:modePage,spaces:spacesPage,records,home,property:propertyPage,asset:assetDetail,report,repair,profile,check:checkPage,inbox,checkout:checkoutPage,pack:packPage,about:aboutPage};
 // Languages shown in the menu as "coming soon" (not translated yet). Chosen for
 // the largest groups of international students in the UK. Once a block for one
 // of these codes is added to i18n.js it moves into the working list on its own.
@@ -1196,6 +1324,7 @@ function login(id){
 function startAddProperty(){draft={};editId=null;foundProperty=null;material=null;materialPending=false;materialVersion++;postcodeQuery='';postcodeSearched=false;go('setup')}
 document.addEventListener('change',async e=>{
  const nm=e.target.name||'';
+ if(e.target.type==='radio'&&/^(agree|act)-/.test(nm)){for(const box of document.querySelectorAll(`.follow-up[data-for="${nm}"]`)){const on=e.target.value===box.dataset.show;box.hidden=!on;const req=box.querySelector('textarea[name^="comment-"],input[name^="amt-"]');if(req)req.required=on;if(on)box.querySelector('textarea,input')?.focus()}return}
  if(/^(cr|ir)-/.test(nm)){const x=e.target.closest('.inv-edit')?.querySelector('.inv-extra');if(x&&e.target.value!=='good')x.hidden=false;return}
  if(/^it-/.test(nm)){const q=e.target.closest('.inv-edit')?.querySelector('.qty');if(q)q.hidden=e.target.value!=='group';return}
  if(e.target.name==='space'&&e.target.closest('#report')){const box=document.querySelector('#dup-hint');if(box)box.innerHTML=dupHint(prop(propId),e.target.value);return}
@@ -1222,6 +1351,7 @@ document.addEventListener('keydown',e=>{
 });
 // Renaming a recognised room updates its label on the plan as you type.
 document.addEventListener('input',e=>{
+ if(e.target.name==='amount'&&e.target.closest('form[data-form="checkout-item"]')){const sel=e.target.form.querySelector('[name=outcome]');if(Number(e.target.value)>0&&sel&&sel.value!=='damage')sel.value='damage';return}
  const m=/^name-(\d+)$/.exec(e.target.name||'');if(!m||!e.target.closest('#spaces'))return;
  const label=document.querySelector(`[data-zone-label="${m[1]}"]`);if(label)label.textContent=e.target.value;
 });
@@ -1248,6 +1378,9 @@ document.addEventListener('click',e=>{
  if(d.note){const n=(db.notifications||[]).find(x=>x.id===d.note);if(!n)return;n.read=true;save();openNote(n.link);return}
  if(d.checkout){checkoutTn=d.checkout;go('checkout');return}
  if(d.pack){packTn=d.pack;go('pack');return}
+ if(d.prepMark){const p=tenantHome(),tn=p&&tenancyOf(p);if(!tn)return;const pr=((tn.prep||={})[db.session]||={});(pr.done||={})[d.prepMark]=today();prepOpen=null;render();document.querySelector('#prep-'+d.prepMark)?.scrollIntoView({block:'center'});save(t('prep.saved'));return}
+ if(d.prepEdit){const p=tenantHome(),tn=p&&tenancyOf(p);if(!tn)return;if(d.prepEdit==='review'||d.prepEdit==='clean'){delete tn.prep[db.session].done[d.prepEdit];save()}else prepOpen=d.prepEdit;render();document.querySelector('#prep-'+d.prepEdit)?.scrollIntoView({block:'center'});return}
+ if(d.outcome){const p=prop(propId),x=p?.pastTenancies?.find(y=>y.id===pastSel),o=x?.deposit?.outcome;if(!o||o.confirm||o.by===db.session)return;o.confirm={by:db.session,at:today(),status:'ok'};notify([o.by],'note.outcomeConfirmed',{name:me().name},{prop:p.id,page:'past',past:x.id});render();save(t('msg.saved'));return}
  if(d.past){const [pid,id]=d.past.split('|');propId=pid;pastSel=id;go('past');return}
  if(d.renew){const p=prop(propId);if(!p||!landlordView(p))return;const c=p.compliance||={};
   if(d.renew==='deposit')c.deposit={protectedOn:today()};
@@ -1469,26 +1602,85 @@ document.addEventListener('submit',async e=>{
     const r=p.records[sid]||={notes:''};
     (r.addenda||=[]).push({by:db.session,at:today(),note:v('note')});render();save(t('msg.addendumSaved'));break;
    }
+   case 'prep-photo':case 'prep-meters':case 'prep-keys':case 'prep-forward':{
+    const p=tenantHome(),tn=p&&tenancyOf(p);if(!tn)break;
+    const pr=((tn.prep||={})[db.session]||={}),kind=(form.dataset.form).slice(5);
+    if(kind==='photo'){const f=await fileData(data.get('photo'),images);if(!f)throw new Error(t('err.photoRequired'));(pr.photos||={})[form.dataset.target]={photo:f,at:today()}}
+    if(kind==='meters'){const na=!!data.get('na'),m={at:today(),...(na?{na:true}:{})};for(const k of ['electric','gas','water'])if(!na&&v(k))m[k]=v(k);if(!na&&!m.electric&&!m.gas&&!m.water)throw new Error(t('err.meters'));const f=await photo();if(f)m.photo=f;else if(pr.meters?.photo&&!na)m.photo=pr.meters.photo;pr.meters=m}
+    if(kind==='keys')pr.keys={count:Math.max(1,Math.round(Number(v('count'))||1)),to:v('to'),at:v('date')||today()};
+    if(kind==='forward')pr.forward={text:v('address'),at:today()};
+    const step=kind==='photo'?'photos':kind;prepOpen=null;
+    if(prepCount(p,tn)===6)notify([p.ownerId],'note.prepDone',{name:me().name},{prop:p.id});
+    render();document.querySelector('#prep-'+step)?.scrollIntoView({block:'center'});save(t('prep.saved'));break;
+   }
    case 'protect':{
     const p=prop(propId),tn=findTenancy(p,form.dataset.target);if(!tn||!landlordView(p))break;
+    // The amount can be saved on its own; protection is registered once there is a reference.
     const amount=Math.round(Number(v('amount'))||0);
-    if(!amount||!v('ref'))throw new Error(t('err.depositFields'));
-    tn.deposit={...tn.deposit,amount,scheme:DEPOSIT_SCHEMES[v('scheme')]?v('scheme'):'DPS',ref:v('ref'),protectedOn:v('date')||today(),receivedOn:tn.deposit?.receivedOn||tn.start||today()};
-    notify(tn.tenantIds,'note.depositRecorded',{name:me().name,scheme:tn.deposit.scheme},{prop:p.id});
-    render();save(t('msg.depositSaved'));break;
+    if(!amount)throw new Error(t('err.depositFields'));
+    const base={...tn.deposit,amount,receivedOn:tn.deposit?.receivedOn||tn.start||today()};
+    if(v('ref')){tn.deposit={...base,scheme:DEPOSIT_SCHEMES[v('scheme')]?v('scheme'):'DPS',ref:v('ref'),protectedOn:v('date')||today()};notify(tn.tenantIds,'note.depositRecorded',{name:me().name,scheme:tn.deposit.scheme},{prop:p.id})}
+    else tn.deposit=base;
+    render();save(t(v('ref')?'msg.depositSaved':'msg.depositAmountSaved'));break;
    }
    case 'checkout-item':{
     const p=prop(propId),tn=findTenancy(p,checkoutTn),co=tn?.checkout,sid=form.dataset.target;
     if(!co||co.status!=='draft'||!landlordView(p)||!tn.spaceIds.includes(sid))break;
     if(!v('notes'))throw new Error(t('err.noteRequired'));
-    const outcome=['same','wear','damage'].includes(v('outcome'))?v('outcome'):'same';
-    const amount=outcome==='damage'?Math.max(0,Math.round(Number(v('amount'))||0)):0;
+    // An amount only makes sense for damage, so entering one means damage.
+    const typed=Math.max(0,Math.round(Number(v('amount'))||0));
+    const outcome=typed>0?'damage':['same','wear','damage'].includes(v('outcome'))?v('outcome'):'same';
+    const amount=outcome==='damage'?typed:0;
     if(outcome==='damage'&&!amount)throw new Error(t('err.amountRequired'));
     const prev=co.items?.[sid];
     const s=spaceOf(p,sid),changes={};
     for(const [ref,,e] of invLines(s.type,p.records[sid])){const r=v('line-'+ref);if(RATINGS.includes(r)&&r!==e.r)changes[ref]=r}
-    (co.items||={})[sid]={outcome,notes:v('notes'),amount,changes,photo:await photo()||prev?.photo||null,photoDate:today()};
-    render();save(t('msg.checkoutItemSaved',{room:spaceName(spaceOf(p,sid))}));break;
+    (co.items||={})[sid]={outcome,notes:v('notes'),amount,changes,photo:await photo()||prev?.photo||null,photoDate:today(),savedAt:new Date().toISOString()};
+    justSaved=sid;render();justSaved=null;save(t('msg.checkoutItemSaved',{room:spaceName(spaceOf(p,sid))}));
+    const ok=document.querySelector(`form[data-form="checkout-item"][data-target="${sid}"] .save-ok`);ok?.scrollIntoView({block:'center'});break;
+   }
+   case 'outcome-differs':{
+    const p=prop(propId),x=p?.pastTenancies?.find(y=>y.id===pastSel),o=x?.deposit?.outcome;if(!o||o.confirm||o.by===db.session)break;
+    o.confirm={by:db.session,at:today(),status:'differs',note:v('note')};
+    notify([o.by],'note.outcomeDiffers',{name:me().name},{prop:p.id,page:'past',past:x.id});render();save(t('msg.saved'));break;
+   }
+   case 'co-offline':{
+    const p=prop(propId),tn=findTenancy(p,checkoutTn),co=tn?.checkout,who=form.dataset.target;
+    if(!co||co.status!=='sent'||!landlordView(p)||!allTenants(tn).includes(who))break;
+    (co.offline||={})[who]={agree:v('agree')!=='dispute',note:v('note'),at:today(),by:db.session};
+    if(round1Done(tn,co)){co.status='responded';co.respondedAt=today()}
+    render();save(t('msg.saved'));break;
+   }
+   case 'checkout-revise':{
+    const p=prop(propId),tn=findTenancy(p,checkoutTn),co=tn?.checkout;
+    if(!co||co.status!=='responded'||!landlordView(p))break;
+    const revised={};
+    for(const id of round1Disputed(co)){
+     const i=co.items[id],act=v('act-'+id),offer=maxOffer(co,id);
+     const amount=act==='accept'&&offer>=0?offer:act==='revise'?Math.max(0,Math.round(Number(v('amt-'+id))||0)):i.amount;
+     if(act==='revise'&&v('amt-'+id)==='')throw new Error(t('err.amountRequired'));
+     revised[id]={action:act==='accept'&&offer>=0?'accept':act==='revise'?'revise':'keep',amount,comment:v('rc-'+id)};
+    }
+    co.revised=revised;co.revisedAt=today();
+    co.status=Object.values(revised).some(r=>r.amount>0)?'revised':'final';
+    notify(tn.tenantIds,'note.checkoutRevised',{name:me().name},{prop:p.id,page:'checkout',tenancy:tn.id});
+    render();window.scrollTo(0,0);save(t('msg.checkoutRevised'));break;
+   }
+   case 'checkout-reply2':{
+    const p=prop(propId),tn=findTenancy(p,checkoutTn),co=tn?.checkout;
+    if(!co||co.status!=='revised'||!tn.tenantIds.includes(db.session)||co.responses2?.[db.session])break;
+    const r={};for(const [id,rv] of Object.entries(co.revised||{}))if(rv.amount>0)r[id]={agree:v('agree2-'+id)!=='dispute'};
+    (co.responses2||={})[db.session]=r;
+    if((tn.lead&&co.responses2[tn.lead])||tn.tenantIds.every(id=>co.responses2[id]))co.status='final';
+    notify([p.ownerId],'note.checkoutFinal',{name:me().name},{prop:p.id,page:'checkout',tenancy:tn.id});
+    render();window.scrollTo(0,0);save(t('msg.checkoutReplied'));break;
+   }
+   case 'co-comment':{
+    const p=prop(propId),tn=findTenancy(p,checkoutTn),co=tn?.checkout,id=form.dataset.target;
+    if(!co||!co.items?.[id]||!(landlordView(p)||tn.tenantIds.includes(db.session))||!v('text'))break;
+    ((co.comments||={})[id]||=[]).push({by:db.session,at:today(),text:v('text')});
+    notify(landlordView(p)?tn.tenantIds:[p.ownerId],'note.coComment',{name:me().name,space:id},{prop:p.id,page:'checkout',tenancy:tn.id});
+    render();save();break;
    }
    case 'checkout-reply':{
     const p=prop(propId),tn=findTenancy(p,checkoutTn),co=tn?.checkout;
@@ -1496,12 +1688,12 @@ document.addEventListener('submit',async e=>{
     const reply={};
     for(const [id,i] of Object.entries(co.items||{})){
      if(i.outcome!=='damage')continue;
-     const agree=v('agree-'+id)!=='dispute',comment=v('comment-'+id);
+     const agree=v('agree-'+id)!=='dispute',comment=v('comment-'+id),offer=v('offer-'+id);
      if(!agree&&!comment)throw new Error(t('err.disputeComment'));
-     reply[id]={agree,comment};
+     reply[id]={agree,comment,...(!agree&&offer!==''?{offer:Math.max(0,Math.round(Number(offer)||0))}:{})};
     }
     (co.responses||={})[db.session]=reply;(co.respondedBy||={})[db.session]=today();
-    if(tn.tenantIds.every(id=>co.responses[id])){co.status='responded';co.respondedAt=today()}
+    if(round1Done(tn,co)){co.status='responded';co.respondedAt=today()}
     const tot=checkoutTotals(tn);
     notify([p.ownerId],'note.checkoutReply',{name:me().name,agreed:tot.agreed,disputed:tot.disputed},{prop:p.id,page:'checkout',tenancy:tn.id});
     render();window.scrollTo(0,0);save(t('msg.checkoutReplied'));break;

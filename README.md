@@ -22,8 +22,8 @@ Use the **Demo** button (bottom right) to switch accounts or start the 9-step gu
 |---|---|---|
 | Wei Zhang | Tenant | Bedroom 1 in a shared house (12 Alder Road) |
 | Aisha Khan | Tenant | Just moved in; inventory check still open |
-| Tom Becker | Tenant | Joint tenancy (Riverside Flat 4B) |
-| Lucas Silva | Tenant | Moving out soon; move-out check |
+| Tom Becker | Tenant | Joint tenancy (Riverside Flat 4B), lead tenant; his joint tenant Sofia isn't on HomeLog |
+| Lucas Silva | Tenant | Moving out in 5 days; move-out checklist (own photos, meters, keys), then the landlord's move-out check with a second round |
 | Yuki Tanaka | Tenant | Moved out; deposit dispute over a carpet stain, decided by the deposit scheme |
 | Test User | Tenant | No home yet; join with `ALDER-B2` or `RIVER-4B` |
 | Priya Shah | Landlord | Two properties |

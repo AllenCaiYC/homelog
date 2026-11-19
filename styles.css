@@ -225,3 +225,77 @@ button.link{border:0;background:none;color:var(--accent);padding:4px 0;text-deco
 .protect form{margin-top:8px}
 .dep-maths{display:flex;flex-wrap:wrap;gap:6px 14px;padding:12px 14px;border-radius:8px;background:var(--surface);margin:8px 0 12px}
 .own-deposit{margin:8px 0}
+
+/* Move-out checklist */
+.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.progress{height:8px;border-radius:4px;background:var(--surface);overflow:hidden;margin:10px 0 6px}
+.progress span{display:block;height:100%;background:var(--wall)}
+.prep-steps{list-style:none;padding:0;margin:0}
+.prep-step{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:16px 18px;margin-bottom:14px}
+.prep-step h3{margin:0;display:flex;align-items:center;gap:10px}
+.prep-step .step-no{display:inline-grid;place-items:center;width:26px;height:26px;border-radius:50%;background:var(--surface);font-size:14px;flex:none}
+.prep-step.done .step-no{background:var(--wall);color:#fff}
+.prep-done{color:#0e700e;font-weight:600;font-size:14px}
+:root[data-theme=dark] .prep-done{color:#9fd89f}
+.prep-step .tips{margin:8px 0 12px;padding-left:20px}
+.prep-room{margin-top:12px}
+.prep-room h4{margin:0 0 6px}
+.prep-room form{margin-top:8px}
+.prep-photos{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px;margin-top:10px}
+.prep-photos figure{margin:0}
+.prep-photos img{border-radius:6px;width:100%;aspect-ratio:4/3;object-fit:cover}
+.prep-line{display:block;margin-top:4px;color:var(--muted)}
+.prep-sum{margin:6px 0;font-size:14px}
+/* Second round, comments and reply status */
+.revision{padding:8px 12px;border-left:3px solid var(--wall);background:var(--surface);border-radius:0 6px 6px 0}
+.thread{margin-top:12px;border-top:1px solid var(--border);padding-top:10px}
+.thread h4{margin:0 0 6px}
+.comments{list-style:none;padding:0;margin:0 0 8px}
+.comments li{padding:6px 0;border-bottom:1px dashed var(--border)}
+.comment-form{display:flex;gap:8px;align-items:flex-end}
+.comment-form textarea{flex:1;min-height:44px;margin:0}
+.reply-status{list-style:none;padding:0;margin:0}
+.reply-status li{padding:8px 0;border-top:1px solid var(--border)}
+.reply-status li:first-child{border-top:0}
+.reply-status .ok{color:#0e700e}
+:root[data-theme=dark] .reply-status .ok{color:#9fd89f}
+.unresolved{margin:12px 0;padding:12px 14px;border:2px solid var(--wall);border-radius:8px}
+.unresolved p{margin:0 0 8px}
+.all-agreed{color:#0e700e;font-weight:600}
+:root[data-theme=dark] .all-agreed{color:#9fd89f}
+.outcome-confirm{margin-top:10px}
+.outcome-confirm .row{align-items:flex-start}
+@media(max-width:400px){nav{gap:2px}nav button{padding:6px 5px}nav select.lang-switch{max-width:82px}}
+
+/* Move-out room card: chips, photo strip, line-by-line first, move-in record folded */
+.cc-head{align-items:flex-start;gap:8px}
+.cc-head h2{margin:0}
+.cc-chips{display:flex;flex-wrap:wrap;gap:4px;justify-content:flex-end}
+.cc-chips .pill{margin:0;font-size:12px;padding:2px 8px}
+.photo-strip{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;margin:12px 0}
+.photo-strip figure{margin:0}
+.photo-strip img{display:block;width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:6px;max-height:none}
+.photo-strip figcaption{margin-bottom:4px}
+.cc-main{margin-top:6px}
+.cc-main h4{margin:14px 0 4px}
+.cc-list .inv-main{align-items:center}
+.cc-rates{display:flex;align-items:center;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+.cc-rates select{width:auto;margin:0;padding:4px 6px}
+.line-detail{margin-top:6px}
+.line-detail summary{font-size:13px;color:var(--muted);cursor:pointer}
+.line-detail .inv-photo img{max-width:220px}
+.cc-rest{margin:6px 0 12px}
+.cc-rest summary{cursor:pointer;color:var(--muted);font-size:14px}
+.movein-ref{margin:14px 0 4px;border:1px solid var(--border);border-radius:8px;padding:10px 12px}
+.movein-ref summary{cursor:pointer;font-weight:600}
+.movein-ref.has-flags summary{color:#a4262c}
+:root[data-theme=dark] .movein-ref.has-flags summary{color:#ffb4b4}
+.movein-ref[open] summary{margin-bottom:10px}
+.save-ok{display:inline-flex;align-items:center;padding:4px 10px;border-radius:20px;background:#dff6dd;color:#0e700e;font-size:14px;font-weight:600}
+:root[data-theme=dark] .save-ok{background:#1f3a1e;color:#9fd89f}
+.save-ok.flash{animation:save-flash 1.6s ease-out}
+@keyframes save-flash{0%{transform:scale(1.15);box-shadow:0 0 0 6px #0e700e55}100%{transform:none;box-shadow:none}}
+@media(prefers-reduced-motion:reduce){.save-ok.flash{animation:none}}
+.pill.changed-pill{background:var(--wall);color:#fff;font-size:12px;padding:1px 7px}
+.follow-up{margin:4px 0 8px 26px;padding-left:12px;border-left:2px solid var(--border)}
+.follow-up[hidden]{display:none}
