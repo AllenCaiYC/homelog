@@ -407,3 +407,22 @@ a.button:hover{background:var(--tint)}
 .fac-history .fac-service{border-left:3px solid var(--line);padding-left:10px;color:var(--muted)}
 .fac-history .fac-service strong{color:var(--text)}
 .fac-svc-photo{display:block;max-width:220px;width:100%;border-radius:10px;margin-top:6px}
+
+/* Number badges keep their circle when the text beside them is long. */
+.pin,.item-number{flex:none}
+.item-list button>span:not(.item-number):not(.arrow){flex:1;min-width:0}
+
+/* Agency admin: choose which properties the list shows. */
+.list-head{margin:6px 0 12px}.list-head h2{margin:0}
+.scope-pick{margin:0}.scope-pick select{display:inline-block;width:auto;max-width:100%;margin:0}
+
+/* Agency admin tabs. On phones the row scrolls sideways. */
+.tabs{display:flex;gap:4px;border-bottom:1px solid var(--border);margin:0 0 18px;overflow-x:auto;scrollbar-width:none}
+.tabs::-webkit-scrollbar{display:none}
+.tabs [role=tab]{flex:none;border:0;border-bottom:3px solid transparent;border-radius:0;background:none;padding:10px 14px;white-space:nowrap;color:var(--muted)}
+.tabs [role=tab][aria-selected=true]{color:var(--accent);border-bottom-color:var(--accent);font-weight:600}
+.tabs [role=tab]:hover{color:var(--text)}
+.tab-badge{display:inline-grid;place-items:center;min-width:20px;height:20px;padding:0 6px;border-radius:10px;background:#c50f1f;color:#fff;font-size:12px;font-weight:700}
+.list-head .prop-search{margin:10px 0 0}
+.prop-grid>li[hidden]{display:none}
+@media(max-width:480px){.tabs [role=tab]{padding:10px 9px}}

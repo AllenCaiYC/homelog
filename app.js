@@ -462,7 +462,7 @@ const personName=id=>id===db.session?t('people.you'):(db.accounts[id]?.name||t('
 // ── Navigation state ────────────────────────────────────────────────
 let page='start',trail=[];
 let propId=null,spaceSel=null,floorSel=null,itemSel=null,ticketSel=null,editId=null,recordSpace=null;
-let planLayers={items:true,issues:true,repairs:true},teamFilter=null,jobToken=null,pastSel=null,prepOpen=null,justSaved=null,packTn=null,onDialogClose=null,signinRole='tenant',repairFilter='All',reportCtx={},draft=null,checkOpen=null,checkoutTn=null,demoOpen=false,tourStep=-1;
+let planLayers={items:true,issues:true,repairs:true},teamFilter=null,adminTabs={},propQuery='',jobToken=null,pastSel=null,prepOpen=null,justSaved=null,packTn=null,onDialogClose=null,signinRole='tenant',repairFilter='All',reportCtx={},draft=null,checkOpen=null,checkoutTn=null,demoOpen=false,tourStep=-1;
 let method='upload',material=null,materialPending=false,materialVersion=0,importText='',drafts={};
 let postcodeQuery='',postcodeSearched=false,foundProperty=null;
 const sampleProperty={name:'Harbour Court · Flat 3',address:'Harbour Street, London E1 · Demo'};
@@ -673,14 +673,35 @@ function attention(p){
  const line=urgent?t('ll.attnUrgent',{n:urgent}):answer?t('ll.attnAnswer',{n:answer}):overdue?t('ll.attnOverdue',{n:overdue}):compliance?t('ll.attnCompliance',{n:compliance}):ending?t('ll.attnEnding',{n:ending}):pending?t('ll.attnInventory',{n:pending}):open.length?t('ll.attnOpen',{n:open.length}):vacant?t('ll.attnVacant',{n:vacant}):t('ll.attnNone');
  return {open:open.length,urgent,score,line,warn:urgent>0||answer>0};
 }
+// Words a property can be found by: name, address, owner, manager, tenants.
+const searchText=p=>[p.name,p.address,p.clientId&&personName(p.clientId),personName(p.ownerId),...p.tenancies.flatMap(x=>x.tenantIds.map(personName))].filter(Boolean).join(' ').toLowerCase();
+const staffAwaiting=org=>Object.values(db.accounts).filter(a=>a.org===org.id&&a.role==='agent'&&a.orgRole==='pending').length;
 function portfolio(){
  const a=me(),mine=myProps(),ready=mine.filter(p=>p.ready),unfinished=mine.filter(p=>!p.ready);
  if(!ready.length&&!unfinished.length&&orgOf(a)&&a.orgRole==='admin')return agencyWelcome(a,orgOf(a));
  if(!ready.length&&!unfinished.length)return `<section class="panel card"><div class="eyebrow">${t('ll.eyebrow')}</div><h1>${t('ll.welcomeTitle',{name:esc(a.name.split(' ')[0])})}</h1><p>${t('ll.welcomeBody')}</p><ol class="steps-list"><li>${t('ll.step1')}</li><li>${t('ll.step2')}</li><li>${t('ll.step3')}</li></ol>${actionBtn(t('ll.addFirst'),'add-property',true)}</section>`;
- let cards=ready.map(p=>({p,at:attention(p)})).sort((x,y)=>y.at.score-x.at.score).map(({p,at})=>`<li><button type="button" class="prop-card" data-prop="${p.id}">${p.cover?demoImg(p.cover,'','cover'):''}<span class="prop-body"><span class="row spread"><strong>${esc(p.name)}</strong>${pill(t(p.mode==='rooms'?'mode.roomsShort':'mode.jointShort'))}</span><small>${esc(p.address)}</small>${p.agency?`<small class="prop-who">${t('ag.cardWho',{owner:esc(p.clientId?personName(p.clientId):'—'),manager:esc(personName(p.ownerId))})}</small>`:''}<span class="prop-stats">${occupancy(p)} · ${t('ll.openRepairs',{n:at.open})}${at.urgent?' '+priorityPill('Urgent'):''}</span><span class="attention ${at.warn?'warn':''}">${at.line}</span></span></button></li>`);
  const org=orgOf(a),admin=org&&a.orgRole==='admin';
- if(admin&&teamFilter&&db.accounts[teamFilter]?.org===org.id){const keep=ready.filter(p=>p.ownerId===teamFilter);cards=cards.filter(c=>keep.some(p=>c.includes(`data-prop="${p.id}"`)))}else teamFilter=null;
- return `<div class="row spread dash-head"><div><div class="eyebrow">${org?esc(org.name)+' · '+t('ag.role.'+a.orgRole):t('ll.eyebrow')}</div><h1>${t('ll.title')}</h1><p>${t('ll.summary',{n:ready.length})}${org&&a.orgRole!=='admin'?' · '+t('ag.yourShare'):''}</p></div>${actionBtn(t('ll.add'),'add-property',true)}</div>${org?agencyDashboard(ready):''}${admin?attentionCard(org)+workloadCard(org):''}${teamFilter?`<p class="filter-chip">${t('wl.filtered',{name:esc(personName(teamFilter))})} <button type="button" class="link" data-team-filter="">${t('wl.clear')}</button></p>`:''}${unfinished.length?`<section class="card"><h2>${t('ll.unfinished')}</h2><ul class="repair-list">${unfinished.map(p=>`<li><button type="button" data-continue="${p.id}"><strong>${esc(p.name)}</strong><br><small>${t('ll.continueSetup')}</small></button></li>`).join('')}</ul></section>`:''}<ul class="prop-grid">${cards.join('')}</ul>${org&&a.orgRole==='admin'?`<div class="grid admin-cards"><div>${teamCard(org)}</div><div>${ownersCard(org)}${orgCard(org)}</div></div>`:''}`;
+ const card=(p,at)=>`<li data-search="${esc(searchText(p))}"><button type="button" class="prop-card" data-prop="${p.id}">${p.cover?demoImg(p.cover,'','cover'):''}<span class="prop-body"><span class="row spread"><strong>${esc(p.name)}</strong>${pill(t(p.mode==='rooms'?'mode.roomsShort':'mode.jointShort'))}</span><small>${esc(p.address)}</small>${p.agency?`<small class="prop-who">${t('ag.cardWho',{owner:esc(p.clientId?personName(p.clientId):'—'),manager:esc(personName(p.ownerId))})}</small>`:''}<span class="prop-stats">${occupancy(p)} · ${t('ll.openRepairs',{n:at.open})}${at.urgent?' '+priorityPill('Urgent'):''}</span><span class="attention ${at.warn?'warn':''}">${at.line}</span></span></button></li>`;
+ const sorted=ready.map(p=>({p,at:attention(p)})).sort((x,y)=>y.at.score-x.at.score);
+ const unfinishedCard=unfinished.length?`<section class="card"><h2>${t('ll.unfinished')}</h2><ul class="repair-list">${unfinished.map(p=>`<li><button type="button" data-continue="${p.id}"><strong>${esc(p.name)}</strong><br><small>${t('ll.continueSetup')}</small></button></li>`).join('')}</ul></section>`:'';
+ const head=`<div class="row spread dash-head"><div><div class="eyebrow">${org?esc(org.name)+' · '+t('ag.role.'+a.orgRole):t('ll.eyebrow')}</div><h1>${t('ll.title')}</h1><p>${t('ll.summary',{n:ready.length})}${org&&a.orgRole!=='admin'?' · '+t('ag.yourShare'):''}</p></div>${actionBtn(t('ll.add'),'add-property',true)}</div>`;
+ if(!admin){teamFilter=null;return `${head}${org?agencyDashboard(ready):''}${unfinishedCard}<ul class="prop-grid">${sorted.map(({p,at})=>card(p,at)).join('')}</ul>`}
+ // Agency admins: tabs keep the overview, properties, team, owners and
+ // company details apart, so a long property list doesn't bury the rest.
+ const owners=orgOwners(org.id),staff=Object.values(db.accounts).filter(x=>x.org===org.id&&x.role==='agent'&&x.id!==a.id&&x.orgRole!=='pending');
+ const okFilter=teamFilter==='@others'||(teamFilter?.startsWith('owner:')&&owners.some(o=>'owner:'+o.id===teamFilter))||db.accounts[teamFilter]?.org===org.id;
+ if(!okFilter)teamFilter=null;
+ const match=p=>!teamFilter?true:teamFilter==='@others'?p.ownerId!==a.id:teamFilter.startsWith('owner:')?p.clientId===teamFilter.slice(6):p.ownerId===teamFilter;
+ const count=f=>ready.filter(f).length,opt=(v,l)=>`<option value="${v}" ${(teamFilter||'')===v?'selected':''}>${l}</option>`;
+ const scope=`<label class="scope-pick"><span class="sr-only">${t('scope.label')}</span><select data-scope>${opt('',t('scope.all',{n:ready.length}))}${opt(a.id,t('scope.mine',{n:count(p=>p.ownerId===a.id)}))}${opt('@others',t('scope.others',{n:count(p=>p.ownerId!==a.id)}))}${staff.length?`<optgroup label="${t('scope.byPerson')}">${staff.map(x=>opt(x.id,`${esc(x.name)} (${count(p=>p.ownerId===x.id)})`)).join('')}</optgroup>`:''}${owners.length?`<optgroup label="${t('scope.byOwner')}">${owners.map(o=>opt('owner:'+o.id,`${esc(o.name)} (${count(p=>p.clientId===o.id)})`)).join('')}</optgroup>`:''}</select></label>`;
+ const shown=sorted.filter(({p})=>match(p)),q=propQuery.trim().toLowerCase();
+ const search=`<label class="prop-search"><span class="sr-only">${t('scope.search')}</span><input type="search" data-prop-search value="${esc(propQuery)}" placeholder="${t('scope.searchPh')}" autocomplete="off"></label>`;
+ const list=`<div class="list-head"><div class="row spread"><h2>${t('scope.title')}</h2>${scope}</div>${search}</div>${unfinishedCard}<ul class="prop-grid">${shown.map(({p,at})=>card(p,at).replace('<li ',`<li ${q&&!searchText(p).includes(q)?'hidden ':''}`)).join('')}</ul><p class="help" id="prop-empty" ${shown.some(({p})=>!q||searchText(p).includes(q))?'hidden':''}>${t('scope.none')}</p>`;
+ const tab=adminTabs[a.id]||'overview',badge=n=>n?` <span class="tab-badge">${n}</span>`:'';
+ const tabs=[['overview',t('tab.overview'),attentionItems(org).length],['props',t('tab.props'),0,ready.length],['team',t('tab.team'),staffAwaiting(org)],['owners',t('tab.owners'),pendingApprovals(ready).length],['org',t('tab.org'),0]];
+ const bar=`<div class="tabs" role="tablist" aria-label="${t('tab.label')}">${tabs.map(([k,l,n,total])=>`<button type="button" role="tab" id="tab-${k}" aria-controls="tabpanel" aria-selected="${tab===k}" tabindex="${tab===k?0:-1}" data-admin-tab="${k}">${l}${total!=null?` <small class="muted">${total}</small>`:''}${badge(n)}</button>`).join('')}</div>`;
+ const body={overview:()=>agencyDashboard(ready)+attentionCard(org)+workloadCard(org),props:()=>list,team:()=>teamCard(org),owners:()=>ownersCard(org),org:()=>orgCard(org)}[tab]||(()=>'');
+ return `${head}${bar}<div id="tabpanel" role="tabpanel" aria-labelledby="tab-${tab}">${body()}</div>`;
 }
 function propertyPage(){const p=prop(propId);return p&&!isOwner()&&myProps().includes(p)?propertyView(p):home()}
 function spaceKindLabel(p,s){
@@ -735,7 +756,7 @@ function repairQueue(p){
 function itemsCard(p){
  const list=(p.items||[]).map((it,i)=>({it,n:i+1})).filter(({it})=>canSee(p,it.spaceId));
  if(!list.length)return '';
- return `<section class="card"><h2>${t('dash.items')}</h2><ol class="item-list">${list.map(({it,n})=>`<li><button type="button" data-item="${it.id}"><span class="item-number">${n}</span><span><strong>${esc(itemName(it))}</strong><br><small>${esc(spaceName(spaceOf(p,it.spaceId)))}${it.cat?' · '+t('fac.cat.'+it.cat):''}${repairCount(p,it)?' · '+t('fac.count',{n:repairCount(p,it)}):''}</small>${facilityRepairs(p,it).length>=2?' '+pill(t('fac.repeat'),'urgent'):''}${isManager(p)&&serviceState(it)&&serviceState(it).status!=='ok'?`<br>${pill(t('fac.svc.'+serviceState(it).status,{date:dateText(serviceState(it).date)}),serviceState(it).status==='due'?'dep-due':'dep-overdue')}`:''}</span><span class="arrow" aria-hidden="true">›</span></button></li>`).join('')}</ol></section>`;
+ return `<section class="card"><h2>${t('dash.items')}</h2><ol class="item-list">${list.map(({it,n})=>`<li><button type="button" data-item="${it.id}"><span class="item-number">${n}</span><span><strong>${esc(itemName(it))}</strong><br><small>${esc(spaceName(spaceOf(p,it.spaceId)))}${it.cat?' · '+t('fac.cat.'+it.cat):''}${repairCount(p,it)?' · '+t('fac.count',{n:repairCount(p,it)}):''}</small>${facilityRepairs(p,it).length>=2?' '+pill(t('fac.repeat'),'dep-due'):''}${isManager(p)&&serviceState(it)&&serviceState(it).status!=='ok'?`<br>${pill(t('fac.svc.'+serviceState(it).status,{date:dateText(serviceState(it).date)}),serviceState(it).status==='due'?'dep-due':'dep-overdue')}`:''}</span><span class="arrow" aria-hidden="true">›</span></button></li>`).join('')}</ol></section>`;
 }
 // Property page layout. Desktop: two columns. Phone: one column in its own
 // order, most actionable first (each card carries its phone position).
@@ -1262,7 +1283,7 @@ function workloadCard(org){
  return `<section class="card"><h2>${t('wl.title')}</h2><div class="table-wrap"><table class="workload"><thead><tr><th scope="col">${t('wl.person')}</th><th scope="col">${t('wl.props')}</th><th scope="col">${t('ag.open')}</th><th scope="col">${t('ag.overdue')}</th><th scope="col">${t('ag.approvals')}</th><th scope="col">${t('wl.disputes')}</th><th></th></tr></thead><tbody>${rows}</tbody></table></div></section>`;
 }
 // Things an admin should know about across the whole agency.
-function attentionCard(org){
+function attentionItems(org){
  const list=db.properties.filter(p=>p.agency===org.id),items=[];
  for(const p of list){const who=esc(personName(p.ownerId));
   for(const x of p.tickets){
@@ -1275,6 +1296,10 @@ function attentionCard(org){
   }
  }
  items.sort((a,b)=>b[0]-a[0]);
+ return items;
+}
+function attentionCard(org){
+ const items=attentionItems(org);
  return `<section class="card attention-card"><h2>${t('att.title')}</h2>${items.length?`<ul class="repair-list">${items.slice(0,8).map(([,html,attr])=>`<li><button type="button" ${attr}>${html}</button></li>`).join('')}</ul>`:`<p class="help">✓ ${t('att.none')}</p>`}</section>`;
 }
 // Notes only agency staff can see (not tenants, owners or contractors).
@@ -1306,7 +1331,7 @@ function teamCard(org){
 // The agency's owner clients: joined or invited, with their approval limits.
 function ownersCard(org){
  const owners=orgOwners(org.id);
- return `<section class="card" id="owners"><h2>${t('ag.owners')}</h2>${owners.length?`<ul class="reply-status">${owners.map(o=>{const n=db.properties.filter(p=>p.clientId===o.id).length;return `<li><strong>${esc(o.name)}</strong> · ${o.invited?pill(t('ag.ownerInvited'),'dep-due'):pill(t('ag.ownerJoined'),'dep-ok')}<br><small>${t(n===1?'ag.ownerLine1':'ag.ownerLine',{n,limit:money(o.approvalLimit??0)})}</small>${o.invited?`<div class="code-box"><code>${esc(o.inviteCode)}</code><button type="button" data-copy="${esc(o.inviteCode)}">${t('tenancy.copy')}</button></div>`:''}</li>`}).join('')}</ul>`:`<p class="help">${t('ag.noOwners')}</p>`}<details class="protect"><summary>${t('ag.addOwner')}</summary><form id="add-owner"><div class="grid"><label>${t('ag.ownerName')} <input name="name" required maxlength="60"></label><label>${t('ag.ownerLimit')} <input name="limit" type="number" min="0" step="10" inputmode="numeric" value="250" required></label></div><p class="help">${t('ag.addOwnerHelp')}</p><button class="primary">${t('ag.addOwnerBtn')}</button></form></details></section>`;
+ return `<section class="card" id="owners"><h2>${t('ag.owners')}</h2>${owners.length?`<ul class="reply-status">${owners.map(o=>{const n=db.properties.filter(p=>p.clientId===o.id).length;return `<li><strong>${esc(o.name)}</strong> · ${o.invited?pill(t('ag.ownerInvited'),'dep-due'):pill(t('ag.ownerJoined'),'dep-ok')}<br><small>${n?`<button type="button" class="link" data-team-filter="owner:${o.id}">${t(n===1?'ag.ownerProps1':'ag.ownerProps',{n})}</button>`:t('ag.ownerProps',{n})} · ${t('ag.limitIs',{limit:money(o.approvalLimit??0)})}</small>${o.invited?`<div class="code-box"><code>${esc(o.inviteCode)}</code><button type="button" data-copy="${esc(o.inviteCode)}">${t('tenancy.copy')}</button></div>`:''}</li>`}).join('')}</ul>`:`<p class="help">${t('ag.noOwners')}</p>`}<details class="protect"><summary>${t('ag.addOwner')}</summary><form id="add-owner"><div class="grid"><label>${t('ag.ownerName')} <input name="name" required maxlength="60"></label><label>${t('ag.ownerLimit')} <input name="limit" type="number" min="0" step="10" inputmode="numeric" value="250" required></label></div><p class="help">${t('ag.addOwnerHelp')}</p><button class="primary">${t('ag.addOwnerBtn')}</button></form></details></section>`;
 }
 function orgCard(org){
  const r=org.redress;
@@ -1658,7 +1683,7 @@ function assetDetail(){
  const svcEntry=v=>`<li class="fac-service"><div class="row spread"><strong>${v.kind==='install'?'📦 '+t('fac.installed'):'🛠 '+t('fac.serviceEntry')}</strong><small>${dateText(v.at)}</small></div>${v.note?`<p>${userText(v.note)}</p>`:''}${v.photo?demoImg(v.photo.demo,'','fac-svc-photo'):''}</li>`;
  const rows=[...reps.map((x,i)=>({at:x.created,html:entry(x,i+1+off)})),...(it.services||[]).map(v=>({at:v.at,html:svcEntry(v)}))].sort((a,b)=>a.at.localeCompare(b.at)).map(r=>r.html).join('');
  const counts=[total?t('fac.count',{n:total}):'',svcs?t('fac.svcCount',{n:svcs}):''].filter(Boolean).join(' · ');
- return `<div class="panel"><section class="card"><div class="eyebrow">${t('asset.eyebrow',{id:n,room:esc(spaceName(spaceOf(p,it.spaceId)))})}</div><div class="row spread"><h1>${esc(itemName(it))}</h1>${counts?pill(counts):''}${reps.length>=2?pill(t('fac.repeat'),'urgent'):''}</div>${demoImg(it.photo,t('asset.photoAlt',{name:itemName(it)}),'asset-photo')}<small>${t('asset.illustrative')}</small><dl class="dep-facts">${facts.map(([k,v])=>`<div><dt>${k}</dt><dd>${v}</dd></div>`).join('')}</dl>${edit}<h2>${t('asset.condition')}</h2><p>${t('item.'+it.id+'.notes')}</p>${actionBtn(t('asset.report'),'report-item',true)}</section>${guide}<section class="card"><h2>${t('asset.history')}</h2>${prev||rows?`<ol class="fac-history">${prev}${rows}</ol>`:`<p class="help">${t('asset.noHistory')}</p>`}</section></div>`;
+ return `<div class="panel"><section class="card"><div class="eyebrow">${t('asset.eyebrow',{id:n,room:esc(spaceName(spaceOf(p,it.spaceId)))})}</div><div class="row spread"><h1>${esc(itemName(it))}</h1>${counts?pill(counts):''}${reps.length>=2?pill(t('fac.repeat'),'dep-due'):''}</div>${demoImg(it.photo,t('asset.photoAlt',{name:itemName(it)}),'asset-photo')}<small>${t('asset.illustrative')}</small><dl class="dep-facts">${facts.map(([k,v])=>`<div><dt>${k}</dt><dd>${v}</dd></div>`).join('')}</dl>${edit}<h2>${t('asset.condition')}</h2><p>${t('item.'+it.id+'.notes')}</p>${actionBtn(t('asset.report'),'report-item',true)}</section>${guide}<section class="card"><h2>${t('asset.history')}</h2>${prev||rows?`<ol class="fac-history">${prev}${rows}</ol>`:`<p class="help">${t('asset.noHistory')}</p>`}</section></div>`;
 }
 function report(){
  const p=prop(propId);if(!p)return home();
@@ -1785,6 +1810,7 @@ function login(id){
 function startAddProperty(){draft={};editId=null;foundProperty=null;material=null;materialPending=false;materialVersion++;postcodeQuery='';postcodeSearched=false;go('setup')}
 document.addEventListener('change',async e=>{
  const nm=e.target.name||'';
+ if(e.target.matches?.('[data-scope]')){teamFilter=e.target.value||null;render();document.querySelector('[data-scope]')?.focus();return}
  if(e.target.matches?.('[data-signup-role]')){for(const box of document.querySelectorAll('#signup .follow-up')){const on=box.dataset.show===e.target.value;box.hidden=!on;for(const el of box.querySelectorAll('[data-req]'))el.required=on}return}
  if(e.target.type==='radio'&&/^(agree|act)-/.test(nm)){for(const box of document.querySelectorAll(`.follow-up[data-for="${nm}"]`)){const on=e.target.value===box.dataset.show;box.hidden=!on;const req=box.querySelector('textarea[name^="comment-"],input[name^="amt-"]');if(req)req.required=on;if(on)box.querySelector('textarea,input')?.focus()}return}
  if(/^(cr|ir)-/.test(nm)){const x=e.target.closest('.inv-edit')?.querySelector('.inv-extra');if(x&&e.target.value!=='good')x.hidden=false;return}
@@ -1815,7 +1841,13 @@ document.addEventListener('keydown',e=>{
  if(g&&(e.key==='Enter'||e.key===' ')){e.preventDefault();g.dispatchEvent(new MouseEvent('click',{bubbles:true}))}
 });
 // Renaming a recognised room updates its label on the plan as you type.
+document.addEventListener('keydown',e=>{
+ const tab=e.target.closest?.('[role=tab][data-admin-tab]');if(!tab||!['ArrowLeft','ArrowRight','Home','End'].includes(e.key))return;
+ const all=[...tab.parentElement.querySelectorAll('[role=tab]')],i=all.indexOf(tab),n=e.key==='Home'?0:e.key==='End'?all.length-1:(i+(e.key==='ArrowRight'?1:-1)+all.length)%all.length;
+ e.preventDefault();all[n].click();
+});
 document.addEventListener('input',e=>{
+ if(e.target.matches?.('[data-prop-search]')){propQuery=e.target.value;const q=propQuery.trim().toLowerCase();let any=false;for(const li of document.querySelectorAll('.prop-grid>li[data-search]')){const on=!q||li.dataset.search.includes(q);li.hidden=!on;any=any||on}const em=document.querySelector('#prop-empty');if(em)em.hidden=any;return}
  if(e.target.name==='amount'&&e.target.closest('form[data-form="checkout-item"]')){const sel=e.target.form.querySelector('[name=outcome]');if(Number(e.target.value)>0&&sel&&sel.value!=='damage')sel.value='damage';return}
  const m=/^name-(\d+)$/.exec(e.target.name||'');if(!m||!e.target.closest('#spaces'))return;
  const label=document.querySelector(`[data-zone-label="${m[1]}"]`);if(label)label.textContent=e.target.value;
@@ -1853,7 +1885,8 @@ document.addEventListener('click',e=>{
   if(d.staffOk){a.orgRole='manager';notify([a.id],'note.staffApproved',{name:me().name,org:org.name})}else{delete a.org;delete a.orgRole;a.role='landlord';notify([a.id],'note.staffRejected',{name:me().name,org:org.name})}
   render();save(t(d.staffOk?'ag.approved':'ag.rejected',{name:a.name}));return}
  if(d.newTeamCode){const org=db.orgs?.[d.newTeamCode];if(!org||!orgAdmins(org.id).includes(db.session))return;org.teamCode=newCode(org.name,'TEAM');render();document.querySelector('#team')?.scrollIntoView({block:'center'});save(t('ag.codeChanged'));return}
- if(d.teamFilter!==undefined){teamFilter=d.teamFilter||null;render();document.querySelector(teamFilter?'.prop-grid':'.dash-head')?.scrollIntoView({block:'start'});return}
+ if(d.teamFilter!==undefined){teamFilter=d.teamFilter||null;propQuery='';if(teamFilter)adminTabs[db.session]='props';render();document.querySelector('.tabs')?.scrollIntoView({block:'start'});return}
+ if(d.adminTab){adminTabs[db.session]=d.adminTab;render();document.querySelector(`[data-admin-tab="${d.adminTab}"]`)?.focus();return}
  if(d.propTicket){const [pid,tid]=d.propTicket.split('|');propId=pid;ticketSel=tid;go('repair');return}
  if(d.service){const p=prop(propId),it=p?.items?.find(x=>x.id===d.service);if(!it||!isManager(p)||!it.serviceEvery)return;it.lastService=today();(it.services=it.services||[]).push({at:today(),by:db.session});const dt=new Date(today());dt.setMonth(dt.getMonth()+it.serviceEvery);it.serviceDue=dt.toISOString().slice(0,10);render();save(t('fac.serviced',{name:itemName(it),date:dateText(it.serviceDue)}));return}
  if(d.layer){planLayers[d.layer]=!planLayers[d.layer];render();document.querySelector('.layer-toggles')?.scrollIntoView({block:'nearest'});return}

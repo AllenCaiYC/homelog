@@ -28,7 +28,7 @@ Use the **Demo** button (bottom right) to switch accounts or start the 9-step gu
 | Yuki Tanaka | Tenant | Moved out; deposit dispute over a carpet stain, decided by the deposit scheme |
 | Test User | Tenant | No home yet; join with `ALDER-B2` or `RIVER-4B` |
 | Priya Shah | Landlord | Two properties |
-| Olivia Grant | Agency admin | Harbour Lettings: portfolio dashboard, team, both Harbour Court flats |
+| Olivia Grant | Agency admin | Harbour Lettings: tabs for overview, properties (filter and search), team, owners and company; manages three of the six properties |
 | Sam Patel | Property manager | Harbour Lettings: only the flats assigned to him; sends contractor job links |
 | Margaret Hughes | Owner | Owns Harbour Court Flat 3; approves a £320 plumbing quote over her £250 limit |
 | Alex Morgan | Landlord | New landlord with no properties |
