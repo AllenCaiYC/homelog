@@ -49,7 +49,7 @@ nav select.lang-switch{display:inline-block;width:auto;margin:0;padding:7px 8px;
 .code-box{display:flex;align-items:center;gap:6px}.code-box code{font-size:14px;padding:5px 8px;border-radius:6px;background:var(--tint);letter-spacing:.04em}.code-box button{padding:5px 10px;font-size:14px}
 .choice-card{display:flex;flex-direction:column}.choice-card button{margin-top:auto;align-self:flex-start}
 .space-editor{padding-left:22px}.space-editor li{display:grid;grid-template-columns:2fr 1.3fr auto auto;gap:10px;align-items:end;padding:6px 0}.space-editor label{margin:0}
-.check{display:flex!important;align-items:center;gap:6px;font-weight:400;white-space:nowrap;padding-bottom:10px}.check input{width:auto!important;display:inline!important;margin:0!important}
+.check{display:flex!important;align-items:center;gap:6px;font-weight:400;white-space:normal;padding-bottom:10px}.check input{width:auto!important;display:inline!important;margin:0!important}
 .space-editor .remove{margin-bottom:2px}
 .steps-list{padding-left:22px;margin:14px 0 20px}.steps-list li{margin:6px 0}
 .uploaded-plan{margin-bottom:12px}

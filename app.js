@@ -943,7 +943,7 @@ function prepPhotos(tn,id){
  return list.length?`<div class="prep-photos">${list.map(([who,pr])=>`<figure><figcaption><small>${t('prep.photos.byTenant',{name:esc(personName(who)),date:dateText(pr.photos[id].at)})}</small></figcaption>${media(pr.photos[id].photo)}</figure>`).join('')}</div>`:'';
 }
 function prepSummary(p,tn){
- return Object.entries(tn.prep||{}).map(([who,pr])=>`<p class="prep-sum"><strong>${esc(personName(who))}</strong> · ${t('prep.progress',{n:prepCount(p,tn,who),total:6})}${pr.meters?` · ${pr.meters.na?t('prep.meters.naDone'):t('prep.meters.short')+': '+['electric','gas','water'].filter(m=>pr.meters[m]).map(m=>t('prep.meters.'+m)+' '+esc(pr.meters[m])).join(', ')}`:''}${pr.keys?' · '+t('prep.keys.summary',{n:pr.keys.count,to:esc(pr.keys.to),date:dateText(pr.keys.at)}):''}</p>`).join('');
+ return Object.entries(tn.prep||{}).map(([who,pr])=>`<p class="prep-sum"><strong>${esc(personName(who))}</strong> · ${t('prep.progress',{n:prepCount(p,tn,who),total:6})}${pr.meters?` · ${pr.meters.na?t('prep.meters.naDone'):t('prep.meters.short')+': '+['electric','gas','water'].filter(m=>pr.meters[m]).map(m=>t('prep.meters.'+m)+' '+esc(pr.meters[m])).join(', ')}`:''}${pr.keys?' · '+t('prep.keys.summary',{n:pr.keys.count,to:esc(pr.keys.to),date:dateText(pr.keys.at)}):''}${pr.forward&&isManager(p)?`<br><small>${t('prep.forward.label')}: </small><span class="notes">${esc(pr.forward.text)}</span>`:''}</p>`).join('');
 }
 
 // ── Deposit (recorded, not held) ────────────────────────────────────
